@@ -1,45 +1,91 @@
-# fuma
+# Blog Application
 
-This is a Next.js application generated with
-[Create Fumadocs](https://github.com/fuma-nama/fumadocs).
+A modern blog application built with Next.js, Better Auth, and Neon Database.
 
-Run development server:
+## Features
 
+- 🔐 Authentication with Better Auth (email/password)
+- 👥 Role-based access control (User, Admin, SuperAdmin)
+- 📝 Admin dashboard for creating and managing blog posts
+- 🔍 Integrated search for docs and blog posts
+- 🎨 Beautiful UI with Tailwind CSS and Fumadocs
+- 💾 PostgreSQL database with Neon
+- 🚀 Built on Next.js 15
+
+## Setup
+
+1. Install dependencies:
 ```bash
-npm run dev
-# or
-pnpm dev
-# or
-yarn dev
+npm install
 ```
 
-Open http://localhost:3000 with your browser to see the result.
+2. Set up environment variables:
+   - Copy `.env.example` to `.env`
+   - Add your Neon database URL
+   - Generate a secret key for Better Auth
 
-## Explore
+3. Push database schema:
+```bash
+npm run db:push
+```
 
-In the project, you can see:
+4. Run development server:
+```bash
+npm run dev
+```
 
-- `lib/source.ts`: Code for content source adapter, [`loader()`](https://fumadocs.dev/docs/headless/source-api) provides the interface to access your content.
-- `lib/layout.shared.tsx`: Shared options for layouts, optional but preferred to keep.
+5. Open http://localhost:3000
 
-| Route                     | Description                                            |
-| ------------------------- | ------------------------------------------------------ |
-| `app/(home)`              | The route group for your landing page and other pages. |
-| `app/docs`                | The documentation layout and pages.                    |
-| `app/api/search/route.ts` | The Route Handler for search.                          |
+## Usage
 
-### Fumadocs MDX
+### First Time Setup
 
-A `source.config.ts` config file has been included, you can customise different options like frontmatter schema.
+1. Go to `/sign-up` to create an account
+2. Sign in at `/sign-in`
+3. Set your account as Admin:
+   ```bash
+   npm run set-admin your@email.com Admin
+   ```
+4. Access admin dashboard at `/admin`
+5. Create your first blog post
 
-Read the [Introduction](https://fumadocs.dev/docs/mdx) for further details.
+### User Roles
 
-## Learn More
+- **User**: Default role, can view published blog posts
+- **Admin**: Can access admin dashboard and manage blog posts
+- **SuperAdmin**: Full access (same as Admin currently)
 
-To learn more about Next.js and Fumadocs, take a look at the following
-resources:
+To change a user's role:
+```bash
+npm run set-admin <email> <role>
+# Example: npm run set-admin user@example.com Admin
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js
-  features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-- [Fumadocs](https://fumadocs.dev) - learn about Fumadocs
+### Admin Dashboard (Admin/SuperAdmin only)
+
+- `/admin` - View all posts
+- `/admin/posts/new` - Create new post
+- `/admin/posts/[id]/edit` - Edit existing post
+
+### Public Pages
+
+- `/` - Home page
+- `/blog` - Blog listing with sidebar navigation (published posts only)
+- `/blog/[slug]` - Individual blog post
+- `/docs` - Documentation pages
+- Search bar includes both docs and blog posts
+
+## Database Scripts
+
+- `npm run db:generate` - Generate migrations
+- `npm run db:push` - Push schema to database
+- `npm run db:migrate` - Run migrations
+- `npm run db:studio` - Open Drizzle Studio
+
+## Tech Stack
+
+- **Framework**: Next.js 15
+- **Authentication**: Better Auth + Better Auth UI
+- **Database**: Neon (PostgreSQL)
+- **ORM**: Drizzle ORM
+- **Styling**: Tailwind CSS

@@ -1,4 +1,5 @@
 import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
+import { APP_NAME } from './config';
 
 /**
  * Shared layout configurations
@@ -20,7 +21,7 @@ export function baseOptions(): BaseLayoutProps {
           >
             <circle cx={12} cy={12} r={12} fill="currentColor" />
           </svg>
-          My App
+          {APP_NAME}
         </>
       ),
     },

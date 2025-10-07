@@ -1,0 +1,184 @@
+---
+title: Mathematical Problems & Solutions
+description: A collection of mathematical questions with detailed step-by-step solutions
+---
+
+# Mathematical Problems & Solutions
+
+This page contains various mathematical problems with detailed solutions to help you understand different mathematical concepts.
+
+## Algebra Problems
+
+### Problem 1: Quadratic Equation
+**Question:** Solve the quadratic equation: $x^2 - 5x + 6 = 0$
+
+**Solution:**
+We can solve this using the factoring method:
+
+1. Look for two numbers that multiply to 6 and add to -5
+2. These numbers are -2 and -3
+3. Factor: $(x - 2)(x - 3) = 0$
+4. Therefore: $x = 2$ or $x = 3$
+
+**Answer:** $x = 2, 3$
+
+### Problem 2: System of Linear Equations
+**Question:** Solve the system:
+
+```math
+\begin{cases}
+2x + 3y = 7 \\
+x - y = 1
+\end{cases}
+```
+
+**Solution:**
+Using substitution method:
+
+1. From equation 2: $x = y + 1$
+2. Substitute into equation 1: $2(y + 1) + 3y = 7$
+3. Simplify: $2y + 2 + 3y = 7$
+4. Combine: $5y = 5$
+5. Therefore: $y = 1$
+6. Substitute back: $x = 1 + 1 = 2$
+
+**Answer:** $x = 2, y = 1$
+
+## Calculus Problems
+
+### Problem 3: Derivative
+**Question:** Find the derivative of $f(x) = 3x^3 - 2x^2 + 5x - 1$
+
+**Solution:**
+Using the power rule: $\frac{d}{dx}[x^n] = nx^{n-1}$
+
+```math
+f'(x) = 3 \cdot 3x^2 - 2 \cdot 2x + 5 \cdot 1 - 0 = 9x^2 - 4x + 5
+```
+
+**Answer:** $f'(x) = 9x^2 - 4x + 5$
+
+### Problem 4: Integration
+**Question:** Evaluate $\int (2x + 3) dx$
+
+**Solution:**
+Using the power rule for integration:
+
+```math
+\int (2x + 3) dx = \int 2x dx + \int 3 dx = 2 \cdot \frac{x^2}{2} + 3x + C = x^2 + 3x + C
+```
+
+**Answer:** $x^2 + 3x + C$
+
+## Geometry Problems
+
+### Problem 5: Area of Triangle
+**Question:** Find the area of a triangle with vertices at A(1, 2), B(4, 6), and C(7, 2).
+
+**Solution:**
+Using the coordinate formula for triangle area:
+
+```math
+\text{Area} = \frac{1}{2}|x_1(y_2 - y_3) + x_2(y_3 - y_1) + x_3(y_1 - y_2)|
+```
+
+Substituting the coordinates:
+```math
+\begin{aligned}
+\text{Area} &= \frac{1}{2}|1(6 - 2) + 4(2 - 2) + 7(2 - 6)| \\
+&= \frac{1}{2}|1(4) + 4(0) + 7(-4)| \\
+&= \frac{1}{2}|4 + 0 - 28| \\
+&= \frac{1}{2} \cdot 24 = 12
+\end{aligned}
+```
+
+**Answer:** 12 square units
+
+## Trigonometry Problems
+
+### Problem 6: Trigonometric Identity
+**Question:** Prove that $\sin^2\theta + \cos^2\theta = 1$
+
+**Solution:**
+This is the fundamental trigonometric identity. We can prove it using the unit circle:
+
+1. Consider a point P(x, y) on the unit circle with radius 1
+2. By definition: $\cos\theta = x$ and $\sin\theta = y$
+3. Since P is on the unit circle: $x^2 + y^2 = 1$
+4. Substituting: $\cos^2\theta + \sin^2\theta = 1$
+
+Therefore: $\sin^2\theta + \cos^2\theta = 1$ ✓
+
+### Problem 7: Solving Trigonometric Equation
+**Question:** Solve $2\sin x = 1$ for $0 \leq x \leq 2\pi$
+
+**Solution:**
+1. Divide both sides by 2: $\sin x = \frac{1}{2}$
+2. Find angles where sine equals $\frac{1}{2}$:
+   - $x = \frac{\pi}{6}$ (30°)
+   - $x = \pi - \frac{\pi}{6} = \frac{5\pi}{6}$ (150°)
+
+**Answer:** $x = \frac{\pi}{6}, \frac{5\pi}{6}$
+
+## Statistics & Probability
+
+### Problem 8: Mean and Standard Deviation
+**Question:** Find the mean and standard deviation of the dataset: {2, 4, 6, 8, 10}
+
+**Solution:**
+
+**Mean:**
+```math
+\bar{x} = \frac{2 + 4 + 6 + 8 + 10}{5} = \frac{30}{5} = 6
+```
+
+**Standard Deviation:**
+1. Find deviations from mean: {-4, -2, 0, 2, 4}
+2. Square the deviations: {16, 4, 0, 4, 16}
+3. Find variance: $\sigma^2 = \frac{16 + 4 + 0 + 4 + 16}{5} = \frac{40}{5} = 8$
+4. Standard deviation: $\sigma = \sqrt{8} = 2\sqrt{2} \approx 2.83$
+
+**Answer:** Mean = 6, Standard Deviation = $2\sqrt{2}$
+
+### Problem 9: Probability
+**Question:** A bag contains 3 red balls, 4 blue balls, and 5 green balls. What is the probability of drawing a red ball?
+
+**Solution:**
+1. Total number of balls = 3 + 4 + 5 = 12
+2. Number of red balls = 3
+3. Probability = $\frac{\text{Number of favorable outcomes}}{\text{Total number of outcomes}}$
+4. P(Red) = $\frac{3}{12} = \frac{1}{4} = 0.25$
+
+**Answer:** $\frac{1}{4}$ or 25%
+
+## Number Theory
+
+### Problem 10: Prime Factorization
+**Question:** Find the prime factorization of 84.
+
+**Solution:**
+We divide by prime numbers starting from the smallest:
+
+```math
+\begin{aligned}
+84 &= 2 \times 42 \\
+42 &= 2 \times 21 \\
+21 &= 3 \times 7 \\
+7 &= 7 \times 1
+\end{aligned}
+```
+
+Therefore: $84 = 2^2 \times 3 \times 7$
+
+**Answer:** $84 = 2^2 \times 3 \times 7$
+
+---
+
+## Practice Tips
+
+1. **Always show your work** - Step-by-step solutions help identify where mistakes occur
+2. **Check your answers** - Substitute back into original equations when possible
+3. **Understand the concepts** - Don't just memorize formulas, understand why they work
+4. **Practice regularly** - Mathematics requires consistent practice to master
+
+> **Note:** These problems cover fundamental concepts in various areas of mathematics. For more advanced topics, consider consulting specialized textbooks or online resources.

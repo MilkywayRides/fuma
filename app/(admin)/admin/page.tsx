@@ -8,14 +8,9 @@ export default async function AdminPage() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-8">
+      <div className="mb-8">
         <h1 className="text-3xl font-bold">Blog Posts</h1>
-        <Link
-          href="/admin/posts/new"
-          className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
-        >
-          Create New Post
-        </Link>
+        <p className="text-muted-foreground mt-2">Manage your blog posts</p>
       </div>
 
       <div className="space-y-4">

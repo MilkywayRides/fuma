@@ -3,13 +3,17 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { PlusCircle, LayoutDashboard } from 'lucide-react';
+import { PlusCircle, LayoutDashboard, Workflow, Settings, MessageSquare, Users, FileText } from 'lucide-react';
 import { APP_NAME } from '@/lib/config';
 import { UserButton } from './user-button';
 
 const navItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/admin/posts/new', label: 'New Post', icon: PlusCircle },
+  { href: '/admin/blogs', label: 'Blogs', icon: FileText },
+  { href: '/admin/flow', label: 'Flowcharts', icon: Workflow },
+  { href: '/admin/comments', label: 'Comments', icon: MessageSquare },
+  { href: '/admin/users', label: 'Users', icon: Users },
+  { href: '/admin/settings', label: 'Settings', icon: Settings },
 ];
 
 export function AdminSidebar({ userName, userEmail }: { userName: string; userEmail: string }) {

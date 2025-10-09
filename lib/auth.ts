@@ -19,6 +19,11 @@ export const auth = betterAuth({
         defaultValue: 'User',
         required: false,
       },
+      banned: {
+        type: 'boolean',
+        defaultValue: false,
+        required: false,
+      },
     },
   },
   plugins: [
@@ -36,5 +41,6 @@ export async function hasAdminAccess(userId: string | undefined) {
   const userRecord = await db.query.user.findFirst({
     where: (users, { eq }) => eq(users.id, userId),
   });
+  if (userRecord?.banned) return false;
   return userRecord?.role === 'Admin' || userRecord?.role === 'SuperAdmin';
 }

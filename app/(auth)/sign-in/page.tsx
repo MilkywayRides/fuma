@@ -2,8 +2,13 @@
 
 import { SignInForm } from '@daveyplate/better-auth-ui';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 export default function SignInPage() {
+  const router = useRouter();
+  const [error, setError] = useState('');
+
   return (
     <div className="flex min-h-screen">
       <div className="flex flex-1 items-center justify-center p-8">
@@ -14,7 +19,20 @@ export default function SignInPage() {
               Sign in to your account to continue
             </p>
           </div>
-          <SignInForm />
+          {error && (
+            <div className="p-3 rounded-md bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 text-sm">
+              {error}
+            </div>
+          )}
+          <SignInForm 
+            onError={(err) => {
+              if (err.message === 'BANNED') {
+                router.push('/banned');
+              } else {
+                setError(err.message);
+              }
+            }}
+          />
           <p className="text-center text-sm text-muted-foreground">
             Don't have an account?{' '}
             <Link href="/sign-up" className="font-medium underline underline-offset-4 hover:text-primary">

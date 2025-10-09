@@ -104,3 +104,12 @@ export const commentReactions = pgTable('commentReactions', {
   type: text('type').notNull(),
   createdAt: timestamp('createdAt').defaultNow().notNull(),
 });
+
+export const siteVisits = pgTable('siteVisits', {
+  id: serial('id').primaryKey(),
+  userId: text('userId').references(() => user.id),
+  ipAddress: text('ipAddress'),
+  userAgent: text('userAgent'),
+  path: text('path'),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+});

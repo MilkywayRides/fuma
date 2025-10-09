@@ -39,6 +39,38 @@ interface ActiveUser {
   postCount: number;
 }
 
+interface CommentActivity {
+  userId: string;
+  userName: string;
+  commentCount: number;
+}
+
+interface PostEngagement {
+  postId: number;
+  title: string;
+  likes: number;
+  dislikes: number;
+}
+
+interface RecentComment {
+  id: number;
+  content: string;
+  authorName: string | null;
+  postTitle: string | null;
+  createdAt: Date;
+}
+
+interface GrowthData {
+  date: string;
+  userCount: number;
+}
+
+interface TrafficData {
+  date: string;
+  visits: number;
+  uniqueVisitors: number;
+}
+
 export function DashboardStats({ 
   totalUsers,
   totalPosts,
@@ -50,6 +82,11 @@ export function DashboardStats({
   topPosts,
   recentActivity,
   activeUsers,
+  commentActivity,
+  postEngagement,
+  recentComments,
+  growthData,
+  trafficData,
 }: { 
   totalUsers: number;
   totalPosts: number;
@@ -61,6 +98,11 @@ export function DashboardStats({
   topPosts: TopPost[];
   recentActivity: RecentActivity[];
   activeUsers: ActiveUser[];
+  commentActivity: CommentActivity[];
+  postEngagement: PostEngagement[];
+  recentComments: RecentComment[];
+  growthData: GrowthData[];
+  trafficData: TrafficData[];
 }) {
   const overviewData = [
     { name: 'Users', value: totalUsers, color: '#3b82f6' },
@@ -118,6 +160,8 @@ export function DashboardStats({
           </div>
         </div>
       </div>
+
+      <TrafficChart data={trafficData} />
 
       <div className="grid gap-6 md:grid-cols-2">
         <div className="border rounded-lg p-6">
@@ -314,6 +358,196 @@ export function DashboardStats({
           ))}
         </div>
       </div>
+
+      <div className="grid gap-6 md:grid-cols-2">
+        <div className="border rounded-lg p-6">
+          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <MessageSquare className="h-5 w-5" />
+            Most Active Commenters
+          </h3>
+          <div className="space-y-3">
+            {commentActivity.map((user, index) => (
+              <div key={user.userId} className="flex items-center gap-3">
+                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 font-bold text-sm">
+                  {index + 1}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{user.userName}</p>
+                  <p className="text-xs text-muted-foreground">{user.commentCount} comments</p>
+                </div>
+                <div className="w-16 h-2 bg-muted rounded-full">
+                  <div 
+                    className="h-2 bg-orange-600 rounded-full"
+                    style={{ width: `${(user.commentCount / Math.max(...commentActivity.map(u => u.commentCount))) * 100}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="border rounded-lg p-6">
+          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <TrendingUp className="h-5 w-5" />
+            Most Liked Posts
+          </h3>
+          <div className="space-y-3">
+            {postEngagement.map((post, index) => (
+              <div key={post.postId} className="flex items-center gap-3">
+                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-pink-100 dark:bg-pink-900 text-pink-800 dark:text-pink-200 font-bold text-sm">
+                  {index + 1}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{post.title}</p>
+                  <div className="flex gap-3 text-xs text-muted-foreground">
+                    <span>👍 {post.likes}</span>
+                    <span>👎 {post.dislikes}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="border rounded-lg p-6">
+        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+          <MessageSquare className="h-5 w-5" />
+          Recent Comments
+        </h3>
+        <div className="space-y-3">
+          {recentComments.map((comment) => (
+            <div key={comment.id} className="p-3 border rounded-lg hover:bg-muted transition-colors">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-sm font-medium">{comment.authorName}</span>
+                <span className="text-xs text-muted-foreground">on</span>
+                <span className="text-xs text-muted-foreground truncate">{comment.postTitle}</span>
+              </div>
+              <p className="text-sm text-muted-foreground line-clamp-2">{comment.content}</p>
+              <p className="text-xs text-muted-foreground mt-1">{new Date(comment.createdAt).toLocaleDateString()}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="border rounded-lg p-6">
+        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+          <TrendingUp className="h-5 w-5" />
+          User Growth (Last 7 Days)
+        </h3>
+        <div className="flex items-end justify-between gap-2 h-48">
+          {growthData.reverse().map((day) => {
+            const maxCount = Math.max(...growthData.map(d => d.userCount));
+            const height = maxCount > 0 ? (day.userCount / maxCount) * 100 : 0;
+            return (
+              <div key={day.date} className="flex-1 flex flex-col items-center gap-2">
+                <div className="text-xs font-bold">{day.userCount}</div>
+                <div 
+                  className="w-full bg-blue-600 rounded-t transition-all hover:bg-blue-700"
+                  style={{ height: `${height}%` }}
+                />
+                <div className="text-xs text-muted-foreground">
+                  {new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
+  );
+}
+
+import { Area, AreaChart, CartesianGrid, XAxis } from 'recharts';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import React from 'react';
+
+const chartConfig = {
+  visits: {
+    label: 'Total Visits',
+    color: 'hsl(var(--chart-1))',
+  },
+  uniqueVisitors: {
+    label: 'Unique Visitors',
+    color: 'hsl(var(--chart-2))',
+  },
+} satisfies ChartConfig;
+
+function TrafficChart({ data }: { data: TrafficData[] }) {
+  const [xAxis, setXAxis] = React.useState<number | null>(null);
+  
+  const chartData = data.reverse().map(d => ({
+    date: new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    visits: d.visits,
+    uniqueVisitors: d.uniqueVisitors,
+  }));
+
+  return (
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle>Site Traffic</CardTitle>
+        <CardDescription>Total visits and unique visitors over the last 30 days</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <ChartContainer config={chartConfig} className="h-[200px] w-full">
+          <AreaChart
+            data={chartData}
+            width="100%"
+            onMouseMove={(e) => setXAxis(e.chartX as number)}
+            onMouseLeave={() => setXAxis(null)}
+          >
+            <CartesianGrid vertical={false} strokeDasharray="3 3" />
+            <XAxis
+              dataKey="date"
+              tickLine={false}
+              axisLine={false}
+              tickMargin={8}
+            />
+            <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+            <defs>
+              <linearGradient id="grad-visits" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="var(--color-visits)" stopOpacity={0.4} />
+                <stop offset="95%" stopColor="var(--color-visits)" stopOpacity={0} />
+              </linearGradient>
+              <linearGradient id="grad-unique" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="var(--color-uniqueVisitors)" stopOpacity={0.4} />
+                <stop offset="95%" stopColor="var(--color-uniqueVisitors)" stopOpacity={0} />
+              </linearGradient>
+              {xAxis && (
+                <linearGradient id="mask-grad" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="transparent" />
+                  <stop offset="50%" stopColor="white" />
+                  <stop offset="100%" stopColor="transparent" />
+                </linearGradient>
+              )}
+              {xAxis && (
+                <mask id="highlight-mask">
+                  <rect x={xAxis - 150} y={0} width={300} height="100%" fill="url(#mask-grad)" />
+                </mask>
+              )}
+            </defs>
+            <Area
+              dataKey="uniqueVisitors"
+              type="natural"
+              fill="url(#grad-unique)"
+              stroke="var(--color-uniqueVisitors)"
+              stackId="a"
+              strokeWidth={0.8}
+              mask={xAxis ? 'url(#highlight-mask)' : undefined}
+            />
+            <Area
+              dataKey="visits"
+              type="natural"
+              fill="url(#grad-visits)"
+              stroke="var(--color-visits)"
+              stackId="a"
+              strokeWidth={0.8}
+              mask={xAxis ? 'url(#highlight-mask)' : undefined}
+            />
+          </AreaChart>
+        </ChartContainer>
+      </CardContent>
+    </Card>
   );
 }

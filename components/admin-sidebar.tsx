@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { PlusCircle, LayoutDashboard, Workflow, Settings, MessageSquare, Users, FileText } from 'lucide-react';
+import { LayoutDashboard, Workflow, Settings, MessageSquare, Users, FileText } from 'lucide-react';
 import { APP_NAME } from '@/lib/config';
 import { UserButton } from './user-button';
 

@@ -115,7 +115,7 @@ export default function AdsPage() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
           <h1 className="text-3xl font-bold">Advertisements</h1>
           <p className="text-muted-foreground mt-2">Manage ads across your app</p>
@@ -129,7 +129,7 @@ export default function AdsPage() {
         </button>
       </div>
 
-      <div className="flex gap-2 mb-8 border-b">
+      <div className="flex gap-2 mb-8 border-b overflow-x-auto">
         <button
           onClick={() => {
             setActiveTab('ads');
@@ -361,7 +361,7 @@ export default function AdsPage() {
                         <h4 className="font-medium mb-1">{ad.title}</h4>
                         <p className="text-sm text-muted-foreground">{ad.position}</p>
                       </div>
-                      <div className="flex gap-8 text-sm">
+                      <div className="flex flex-col sm:flex-row gap-4 sm:gap-8 text-sm">
                         <div className="text-center">
                           <div className="text-muted-foreground mb-1">Views</div>
                           <div className="font-bold">{adStats.views}</div>

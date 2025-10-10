@@ -24,7 +24,7 @@ export default async function AdminLayout({
   return (
     <div className="flex min-h-screen">
       <AdminSidebar userName={session.user.name} userEmail={session.user.email} />
-      <main className="ml-64 flex-1 p-8">{children}</main>
+      <main className="lg:ml-64 flex-1 p-4 md:p-8">{children}</main>
     </div>
   );
 }

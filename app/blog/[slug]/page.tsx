@@ -40,8 +40,8 @@ export default async function BlogPostPage({
   return (
     <>
       <AdBanner position="banner" />
-      <div className="container py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="container px-4 py-8 md:py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
           <article className="lg:col-span-2">
         <h1 className="text-4xl font-bold mb-4">{post.title}</h1>
         <time className="text-sm text-fd-muted-foreground mb-8 block">
@@ -54,14 +54,14 @@ export default async function BlogPostPage({
             <MarkdownContent content={post.content} userId={post.authorId} />
           </article>
           
-          <aside className="lg:col-span-1">
-            <div className="sticky top-4">
+          <aside className="lg:col-span-1 order-first lg:order-last">
+            <div className="lg:sticky lg:top-4">
               <AdSidebar position="sidebar" />
             </div>
           </aside>
         </div>
         
-        <div className="mt-12 lg:col-span-2">
+        <div className="mt-8 md:mt-12 lg:col-span-2">
           <CommentsSection postId={post.id} initialComments={postComments} />
         </div>
       </div>

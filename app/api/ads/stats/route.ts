@@ -7,8 +7,8 @@ export async function GET() {
   const stats = await db
     .select({
       adId: advertisements.id,
-      clicks: sql<number>`count(distinct ${adClicks.id})`,
-      views: sql<number>`count(distinct ${adViews.id})`,
+      clicks: sql<number>`COALESCE(COUNT(DISTINCT CASE WHEN ${adClicks.id} IS NOT NULL THEN ${adClicks.id} END), 0)`,
+      views: sql<number>`COALESCE(COUNT(DISTINCT CASE WHEN ${adViews.id} IS NOT NULL THEN ${adViews.id} END), 0)`,
     })
     .from(advertisements)
     .leftJoin(adClicks, eq(adClicks.adId, advertisements.id))
@@ -16,8 +16,10 @@ export async function GET() {
     .groupBy(advertisements.id);
 
   const statsWithCTR = stats.map(stat => ({
-    ...stat,
-    ctr: stat.views > 0 ? (stat.clicks / stat.views) * 100 : 0,
+    adId: stat.adId,
+    clicks: Number(stat.clicks),
+    views: Number(stat.views),
+    ctr: stat.views > 0 ? (Number(stat.clicks) / Number(stat.views)) * 100 : 0,
   }));
 
   return NextResponse.json(statsWithCTR);

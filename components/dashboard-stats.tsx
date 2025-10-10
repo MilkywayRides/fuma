@@ -71,6 +71,13 @@ interface TrafficData {
   uniqueVisitors: number;
 }
 
+interface EmbedStats {
+  flowchartId: string | null;
+  flowchartTitle: string | null;
+  userName: string | null;
+  embedCount: number;
+}
+
 export function DashboardStats({ 
   totalUsers,
   totalPosts,
@@ -87,6 +94,7 @@ export function DashboardStats({
   recentComments,
   growthData,
   trafficData,
+  embedStats,
 }: { 
   totalUsers: number;
   totalPosts: number;
@@ -103,6 +111,7 @@ export function DashboardStats({
   recentComments: RecentComment[];
   growthData: GrowthData[];
   trafficData: TrafficData[];
+  embedStats: EmbedStats[];
 }) {
   const overviewData = [
     { name: 'Users', value: totalUsers, color: '#3b82f6' },
@@ -430,6 +439,34 @@ export function DashboardStats({
         </div>
       </div>
 
+      {embedStats.length > 0 && (
+      <div className="border rounded-lg p-6">
+        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+          <Workflow className="h-5 w-5" />
+          Flowchart Embed Usage
+        </h3>
+        <div className="space-y-3">
+          {embedStats.map((stat, index) => (
+            <div key={stat.flowchartId} className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 font-bold text-sm">
+                {index + 1}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{stat.flowchartTitle}</p>
+                <p className="text-xs text-muted-foreground">by {stat.userName} • {stat.embedCount} embeds</p>
+              </div>
+              <div className="w-16 h-2 bg-muted rounded-full">
+                <div 
+                  className="h-2 bg-purple-600 rounded-full"
+                  style={{ width: `${(stat.embedCount / Math.max(...embedStats.map(s => s.embedCount))) * 100}%` }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      )}
+
       <div className="border rounded-lg p-6">
         <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
           <TrendingUp className="h-5 w-5" />
@@ -447,7 +484,7 @@ export function DashboardStats({
                   style={{ height: `${height}%` }}
                 />
                 <div className="text-xs text-muted-foreground">
-                  {new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  {new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })}
                 </div>
               </div>
             );
@@ -478,7 +515,7 @@ function TrafficChart({ data }: { data: TrafficData[] }) {
   const [xAxis, setXAxis] = React.useState<number | null>(null);
   
   const chartData = data.reverse().map(d => ({
-    date: new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    date: new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }),
     visits: d.visits,
     uniqueVisitors: d.uniqueVisitors,
   }));

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { LayoutDashboard, Workflow, Settings, MessageSquare, Users, FileText } from 'lucide-react';
+import { LayoutDashboard, Workflow, Settings, MessageSquare, Users, FileText, Megaphone } from 'lucide-react';
 import { APP_NAME } from '@/lib/config';
 import { UserButton } from './user-button';
 
@@ -13,6 +13,7 @@ const navItems = [
   { href: '/admin/flow', label: 'Flowcharts', icon: Workflow },
   { href: '/admin/comments', label: 'Comments', icon: MessageSquare },
   { href: '/admin/users', label: 'Users', icon: Users },
+  { href: '/admin/ads', label: 'Advertisements', icon: Megaphone },
   { href: '/admin/settings', label: 'Settings', icon: Settings },
 ];
 

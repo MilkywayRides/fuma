@@ -1,5 +1,5 @@
 import { db } from '@/lib/db';
-import { user, posts, comments, flowcharts, siteVisits } from '@/lib/db/schema';
+import { user, posts, comments, flowcharts, siteVisits, flowchartEmbeds } from '@/lib/db/schema';
 import { sql, count, desc } from 'drizzle-orm';
 import { DashboardStats } from '@/components/dashboard-stats';
 import { Metadata } from 'next';
@@ -114,6 +114,18 @@ export default async function AdminPage() {
     .orderBy(sql`date_trunc('day', ${siteVisits.createdAt}) desc`)
     .limit(30);
 
+  const embedStats = await db.select({
+    flowchartId: flowcharts.id,
+    flowchartTitle: flowcharts.title,
+    userName: user.name,
+    embedCount: sql<number>`count(${flowchartEmbeds.id})`,
+  }).from(flowchartEmbeds)
+    .leftJoin(flowcharts, sql`${flowchartEmbeds.flowchartId} = ${flowcharts.id}`)
+    .leftJoin(user, sql`${flowchartEmbeds.userId} = ${user.id}`)
+    .groupBy(flowcharts.id, flowcharts.title, user.name)
+    .orderBy(sql`count(${flowchartEmbeds.id}) desc`)
+    .limit(10);
+
   return (
     <div className="space-y-6">
       <div>
@@ -136,6 +148,7 @@ export default async function AdminPage() {
         recentComments={recentComments}
         growthData={growthData}
         trafficData={trafficData}
+        embedStats={embedStats}
       />
     </div>
   );

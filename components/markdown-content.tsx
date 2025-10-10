@@ -6,7 +6,7 @@ import remarkMath from 'remark-math';
 import rehypeRaw from 'rehype-raw';
 import { EmbeddedFlowchart } from './embedded-flowchart';
 
-export function MarkdownContent({ content }: { content: string }) {
+export function MarkdownContent({ content, userId }: { content: string; userId?: string }) {
   // Parse flowchart embeds
   const parseContent = (text: string) => {
     const parts: (string | JSX.Element)[] = [];
@@ -18,7 +18,7 @@ export function MarkdownContent({ content }: { content: string }) {
       if (match.index > lastIndex) {
         parts.push(text.substring(lastIndex, match.index));
       }
-      parts.push(<EmbeddedFlowchart key={match[1]} flowchartId={match[1]} />);
+      parts.push(<EmbeddedFlowchart key={match[1]} flowchartId={match[1]} userId={userId} />);
       lastIndex = match.index + match[0].length;
     }
 

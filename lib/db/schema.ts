@@ -113,3 +113,46 @@ export const siteVisits = pgTable('siteVisits', {
   path: text('path'),
   createdAt: timestamp('createdAt').defaultNow().notNull(),
 });
+
+export const flowchartEmbeds = pgTable('flowchartEmbeds', {
+  id: serial('id').primaryKey(),
+  flowchartId: text('flowchartId')
+    .notNull()
+    .references(() => flowcharts.id, { onDelete: 'cascade' }),
+  userId: text('userId')
+    .notNull()
+    .references(() => user.id),
+  referrer: text('referrer'),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+});
+
+export const advertisements = pgTable('advertisements', {
+  id: serial('id').primaryKey(),
+  title: text('title').notNull(),
+  content: text('content').notNull(),
+  link: text('link'),
+  imageUrl: text('imageUrl'),
+  position: text('position').notNull().default('sidebar'),
+  active: boolean('active').default(true).notNull(),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+  updatedAt: timestamp('updatedAt').defaultNow().notNull(),
+});
+
+export const adClicks = pgTable('adClicks', {
+  id: serial('id').primaryKey(),
+  adId: integer('adId')
+    .notNull()
+    .references(() => advertisements.id, { onDelete: 'cascade' }),
+  ipAddress: text('ipAddress'),
+  userAgent: text('userAgent'),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+});
+
+export const adViews = pgTable('adViews', {
+  id: serial('id').primaryKey(),
+  adId: integer('adId')
+    .notNull()
+    .references(() => advertisements.id, { onDelete: 'cascade' }),
+  ipAddress: text('ipAddress'),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+});

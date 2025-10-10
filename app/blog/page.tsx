@@ -4,6 +4,7 @@ import { posts } from '@/lib/db/schema';
 import { desc, eq } from 'drizzle-orm';
 import Link from 'next/link';
 import { MarkdownContent } from '@/components/markdown-content';
+import { AdBanner } from '@/components/ads';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -19,7 +20,8 @@ export default async function BlogPage() {
 
   return (
     <main className="flex min-h-screen flex-col">
-      <div className="container mx-auto px-4 py-12 max-w-4xl">
+      <AdBanner position="banner" />
+      <div className="mx-auto px-4 lg:px-[50px] py-12 max-w-7xl">
         <h1 className="text-4xl font-bold mb-2">Blog</h1>
         <p className="text-muted-foreground mb-8">Latest articles and updates</p>
         <div className="grid gap-6">

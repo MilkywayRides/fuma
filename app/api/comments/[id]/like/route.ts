@@ -14,6 +14,10 @@ export async function POST(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  if (session.user.banned) {
+    return NextResponse.json({ error: 'Your account has been banned' }, { status: 403 });
+  }
+
   const { id } = await params;
   const commentId = parseInt(id);
   const userId = session.user.id;

@@ -5,6 +5,11 @@ import { eq } from 'drizzle-orm';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { AccountSettings } from '@/components/account-settings';
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Settings - Admin',
+};
 
 export default async function SettingsPage() {
   const session = await auth.api.getSession({

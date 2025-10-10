@@ -1,4 +1,9 @@
 import { ShieldX } from 'lucide-react';
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Account Banned',
+};
 
 export default function BannedPage() {
   return (

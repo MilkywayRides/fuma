@@ -3,6 +3,11 @@ import { user } from '@/lib/db/schema';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 import { UsersList } from '@/components/users-list';
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Users - Admin',
+};
 
 export default async function UsersPage() {
   const session = await auth.api.getSession({ headers: await headers() });

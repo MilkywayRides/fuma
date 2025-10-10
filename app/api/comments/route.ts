@@ -11,6 +11,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  if (session.user.banned) {
+    return NextResponse.json({ error: 'Your account has been banned' }, { status: 403 });
+  }
+
   const { postId, content, parentId } = await request.json();
 
   const [comment] = await db

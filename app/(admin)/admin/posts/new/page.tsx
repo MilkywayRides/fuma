@@ -2,10 +2,28 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { CustomMarkdownEditor } from '@/components/custom-markdown-editor';
 
 export default function NewPostPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [title, setTitle] = useState('');
+  const [slug, setSlug] = useState('');
+  const [content, setContent] = useState('');
+  const [excerpt, setExcerpt] = useState('');
+
+  const generateSlug = (text: string) => {
+    return text
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  };
+
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newTitle = e.target.value;
+    setTitle(newTitle);
+    setSlug(generateSlug(newTitle));
+  };
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -13,10 +31,10 @@ export default function NewPostPage() {
 
     const formData = new FormData(e.currentTarget);
     const data = {
-      title: formData.get('title'),
-      slug: formData.get('slug'),
-      excerpt: formData.get('excerpt'),
-      content: formData.get('content'),
+      title,
+      slug,
+      excerpt,
+      content,
       published: formData.get('published') === 'on',
     };
 
@@ -47,6 +65,8 @@ export default function NewPostPage() {
             type="text"
             id="title"
             name="title"
+            value={title}
+            onChange={handleTitleChange}
             required
             className="w-full px-3 py-2 border rounded-md"
           />
@@ -60,6 +80,8 @@ export default function NewPostPage() {
             type="text"
             id="slug"
             name="slug"
+            value={slug}
+            onChange={(e) => setSlug(e.target.value)}
             required
             className="w-full px-3 py-2 border rounded-md"
           />
@@ -67,26 +89,27 @@ export default function NewPostPage() {
 
         <div>
           <label htmlFor="excerpt" className="block text-sm font-medium mb-2">
-            Excerpt
+            Excerpt (Optional)
           </label>
           <textarea
             id="excerpt"
             name="excerpt"
-            rows={3}
+            value={excerpt}
+            onChange={(e) => setExcerpt(e.target.value)}
+            rows={2}
+            placeholder="Brief description of your post..."
             className="w-full px-3 py-2 border rounded-md"
           />
         </div>
 
         <div>
-          <label htmlFor="content" className="block text-sm font-medium mb-2">
-            Content
+          <label className="block text-sm font-medium mb-2">
+            Content *
           </label>
-          <textarea
-            id="content"
-            name="content"
-            required
-            rows={15}
-            className="w-full px-3 py-2 border rounded-md font-mono"
+          <CustomMarkdownEditor
+            value={content}
+            onChange={setContent}
+            placeholder="Write your blog post content here... Supports markdown, code blocks, and math equations!"
           />
         </div>
 

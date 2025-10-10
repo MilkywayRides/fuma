@@ -10,7 +10,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const [post] = await db.select().from(posts).where(eq(posts.id, parseInt(id)));
+  const [post] = await db.select().from(posts).where(eq(posts.slug, id));
 
   if (!post) {
     return NextResponse.json({ error: 'Post not found' }, { status: 404 });
@@ -45,7 +45,7 @@ export async function PUT(
       published,
       updatedAt: new Date(),
     })
-    .where(eq(posts.id, parseInt(id)))
+    .where(eq(posts.slug, id))
     .returning();
 
   return NextResponse.json(post);
@@ -64,7 +64,7 @@ export async function DELETE(
   }
 
   const { id } = await params;
-  await db.delete(posts).where(eq(posts.id, parseInt(id)));
+  await db.delete(posts).where(eq(posts.slug, id));
 
   return NextResponse.json({ success: true });
 }

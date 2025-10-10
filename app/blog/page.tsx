@@ -4,6 +4,11 @@ import { posts } from '@/lib/db/schema';
 import { desc, eq } from 'drizzle-orm';
 import Link from 'next/link';
 import { MarkdownContent } from '@/components/markdown-content';
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Blog',
+};
 
 export default async function BlogPage() {
   const publishedPosts = await db

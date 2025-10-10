@@ -127,6 +127,126 @@
   display: none;
 }
 
+/* Markdown Editor Styles - Light & Dark Mode Optimized */
+.EasyMDEContainer .CodeMirror {
+  @apply border border-input rounded-lg;
+  background: hsl(var(--background)) !important;
+  color: hsl(var(--foreground)) !important;
+  min-height: 400px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.EasyMDEContainer .CodeMirror-scroll {
+  min-height: 400px;
+}
+
+.EasyMDEContainer .CodeMirror-gutters {
+  background: hsl(var(--muted)) !important;
+  border-right: 1px solid hsl(var(--border)) !important;
+}
+
+.EasyMDEContainer .CodeMirror-linenumber {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+.EasyMDEContainer .editor-toolbar {
+  @apply border border-input rounded-t-lg border-b-0;
+  background: hsl(var(--muted) / 0.5) !important;
+  opacity: 1 !important;
+}
+
+.EasyMDEContainer .editor-toolbar button {
+  color: hsl(var(--foreground)) !important;
+  border: none !important;
+  background: transparent !important;
+}
+
+.EasyMDEContainer .editor-toolbar button:hover,
+.EasyMDEContainer .editor-toolbar button.active {
+  background: hsl(var(--accent)) !important;
+  border: none !important;
+}
+
+.EasyMDEContainer .editor-toolbar i.separator {
+  border-left: 1px solid hsl(var(--border)) !important;
+  border-right: 1px solid hsl(var(--border)) !important;
+}
+
+.EasyMDEContainer .editor-toolbar.fullscreen {
+  background: hsl(var(--background)) !important;
+}
+
+.EasyMDEContainer .CodeMirror-fullscreen {
+  background: hsl(var(--background)) !important;
+  z-index: 9999;
+}
+
+.EasyMDEContainer .CodeMirror-cursor {
+  border-left: 1px solid hsl(var(--foreground)) !important;
+}
+
+.EasyMDEContainer .CodeMirror-selected {
+  background: hsl(var(--accent)) !important;
+}
+
+.EasyMDEContainer .CodeMirror-line {
+  color: hsl(var(--foreground)) !important;
+}
+
+.EasyMDEContainer .cm-header {
+  color: hsl(var(--primary)) !important;
+}
+
+.EasyMDEContainer .cm-quote {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+.EasyMDEContainer .cm-link {
+  color: hsl(var(--primary)) !important;
+}
+
+.EasyMDEContainer .cm-url {
+  color: hsl(var(--primary)) !important;
+}
+
+.EasyMDEContainer .cm-string {
+  color: hsl(var(--foreground)) !important;
+}
+
+.EasyMDEContainer .editor-preview,
+.EasyMDEContainer .editor-preview-side {
+  background: hsl(var(--background)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+.EasyMDEContainer .editor-preview h1,
+.EasyMDEContainer .editor-preview h2,
+.EasyMDEContainer .editor-preview h3,
+.EasyMDEContainer .editor-preview h4,
+.EasyMDEContainer .editor-preview h5,
+.EasyMDEContainer .editor-preview h6 {
+  color: hsl(var(--foreground)) !important;
+}
+
+.EasyMDEContainer .editor-preview code {
+  background: hsl(var(--muted)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+.EasyMDEContainer .editor-preview pre {
+  background: hsl(var(--muted)) !important;
+}
+
+.EasyMDEContainer .editor-statusbar {
+  color: hsl(var(--muted-foreground)) !important;
+  border-top: 1px solid hsl(var(--border)) !important;
+  background: hsl(var(--background)) !important;
+}
+
+.EasyMDEContainer .editor-statusbar span {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

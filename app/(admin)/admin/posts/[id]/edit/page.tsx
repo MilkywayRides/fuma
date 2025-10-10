@@ -2,30 +2,42 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { CustomMarkdownEditor } from '@/components/custom-markdown-editor';
 
 export default function EditPostPage() {
   const router = useRouter();
   const params = useParams();
   const [loading, setLoading] = useState(false);
   const [post, setPost] = useState<any>(null);
+  const [title, setTitle] = useState('');
+  const [slug, setSlug] = useState('');
+  const [excerpt, setExcerpt] = useState('');
+  const [content, setContent] = useState('');
+  const [published, setPublished] = useState(false);
 
   useEffect(() => {
     fetch(`/api/posts/${params.id}`)
       .then((res) => res.json())
-      .then((data) => setPost(data));
+      .then((data) => {
+        setPost(data);
+        setTitle(data.title);
+        setSlug(data.slug);
+        setExcerpt(data.excerpt || '');
+        setContent(data.content);
+        setPublished(data.published);
+      });
   }, [params.id]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
 
-    const formData = new FormData(e.currentTarget);
     const data = {
-      title: formData.get('title'),
-      slug: formData.get('slug'),
-      excerpt: formData.get('excerpt'),
-      content: formData.get('content'),
-      published: formData.get('published') === 'on',
+      title,
+      slug,
+      excerpt,
+      content,
+      published,
     };
 
     const res = await fetch(`/api/posts/${params.id}`, {
@@ -73,7 +85,8 @@ export default function EditPostPage() {
             id="title"
             name="title"
             required
-            defaultValue={post.title}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
             className="w-full px-3 py-2 border rounded-md"
           />
         </div>
@@ -87,35 +100,35 @@ export default function EditPostPage() {
             id="slug"
             name="slug"
             required
-            defaultValue={post.slug}
+            value={slug}
+            onChange={(e) => setSlug(e.target.value)}
             className="w-full px-3 py-2 border rounded-md"
           />
         </div>
 
         <div>
           <label htmlFor="excerpt" className="block text-sm font-medium mb-2">
-            Excerpt
+            Excerpt (Optional)
           </label>
           <textarea
             id="excerpt"
             name="excerpt"
-            rows={3}
-            defaultValue={post.excerpt || ''}
+            value={excerpt}
+            onChange={(e) => setExcerpt(e.target.value)}
+            rows={2}
+            placeholder="Brief description of your post..."
             className="w-full px-3 py-2 border rounded-md"
           />
         </div>
 
         <div>
-          <label htmlFor="content" className="block text-sm font-medium mb-2">
-            Content
+          <label className="block text-sm font-medium mb-2">
+            Content *
           </label>
-          <textarea
-            id="content"
-            name="content"
-            required
-            rows={15}
-            defaultValue={post.content}
-            className="w-full px-3 py-2 border rounded-md font-mono"
+          <CustomMarkdownEditor
+            value={content}
+            onChange={setContent}
+            placeholder="Write your blog post content here..."
           />
         </div>
 
@@ -124,7 +137,8 @@ export default function EditPostPage() {
             type="checkbox"
             id="published"
             name="published"
-            defaultChecked={post.published}
+            checked={published}
+            onChange={(e) => setPublished(e.target.checked)}
           />
           <label htmlFor="published" className="text-sm font-medium">
             Published

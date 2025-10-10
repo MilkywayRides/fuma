@@ -2,6 +2,11 @@ import { db } from '@/lib/db';
 import { user, posts, comments, flowcharts, siteVisits } from '@/lib/db/schema';
 import { sql, count, desc } from 'drizzle-orm';
 import { DashboardStats } from '@/components/dashboard-stats';
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Dashboard - Admin',
+};
 
 export default async function AdminPage() {
   const [[totalUsers], [totalPosts], [totalComments], [totalFlowcharts]] = await Promise.all([

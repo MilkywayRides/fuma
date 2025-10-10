@@ -2,6 +2,11 @@ import { db } from '@/lib/db';
 import { flowcharts } from '@/lib/db/schema';
 import { desc } from 'drizzle-orm';
 import Link from 'next/link';
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Flowcharts - Admin',
+};
 
 export default async function FlowPage() {
   const allFlowcharts = await db.select().from(flowcharts).orderBy(desc(flowcharts.createdAt));

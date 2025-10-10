@@ -483,6 +483,22 @@ function TrafficChart({ data }: { data: TrafficData[] }) {
     uniqueVisitors: d.uniqueVisitors,
   }));
 
+  if (data.length === 0) {
+    return (
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle>Site Traffic</CardTitle>
+          <CardDescription>Total visits and unique visitors over the last 30 days</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[200px] flex items-center justify-center text-muted-foreground">
+            No traffic data yet. Visit some pages to start tracking.
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="w-full">
       <CardHeader>

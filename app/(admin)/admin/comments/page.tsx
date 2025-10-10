@@ -2,6 +2,11 @@ import { db } from '@/lib/db';
 import { comments, user, posts } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { AdminCommentsList } from '@/components/admin-comments-list';
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Comments - Admin',
+};
 
 export default async function CommentsPage() {
   const allComments = await db

@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MessageCircle, X, ThumbsUp, ThumbsDown, Reply } from 'lucide-react';
 import { useSession } from '@/lib/auth-client';
+import { useSearchParams } from 'next/navigation';
 
 interface Comment {
   id: number;
@@ -15,12 +16,19 @@ interface Comment {
 }
 
 export function CommentsSection({ postId, initialComments }: { postId: number; initialComments: Comment[] }) {
-  const [open, setOpen] = useState(false);
+  const searchParams = useSearchParams();
+  const [open, setOpen] = useState(searchParams.get('comment') === 'true');
   const [comments, setComments] = useState(initialComments);
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
   const [replyTo, setReplyTo] = useState<number | null>(null);
   const { data: session } = useSession();
+
+  useEffect(() => {
+    if (searchParams.get('comment') === 'true') {
+      setOpen(true);
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,6 +46,10 @@ export function CommentsSection({ postId, initialComments }: { postId: number; i
       setComments([newComment, ...comments]);
       setContent('');
       setReplyTo(null);
+    } else if (res.status === 403) {
+      const { error } = await res.json();
+      const { toast } = await import('sonner');
+      toast.error(error || 'You are banned from commenting');
     }
     setLoading(false);
   };
@@ -54,6 +66,10 @@ export function CommentsSection({ postId, initialComments }: { postId: number; i
         }
         return c;
       }));
+    } else if (res.status === 403) {
+      const { error } = await res.json();
+      const { toast } = await import('sonner');
+      toast.error(error || 'You are banned');
     }
   };
 
@@ -69,6 +85,10 @@ export function CommentsSection({ postId, initialComments }: { postId: number; i
         }
         return c;
       }));
+    } else if (res.status === 403) {
+      const { error } = await res.json();
+      const { toast } = await import('sonner');
+      toast.error(error || 'You are banned');
     }
   };
 

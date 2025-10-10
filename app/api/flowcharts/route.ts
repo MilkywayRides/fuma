@@ -3,9 +3,15 @@ import { db } from '@/lib/db';
 import { flowcharts } from '@/lib/db/schema';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { desc } from 'drizzle-orm';
 
 function generateId() {
   return Math.random().toString(36).substring(2, 7);
+}
+
+export async function GET() {
+  const allFlowcharts = await db.select().from(flowcharts).orderBy(desc(flowcharts.createdAt));
+  return NextResponse.json(allFlowcharts);
 }
 
 export async function POST(request: Request) {

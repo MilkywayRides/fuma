@@ -2,10 +2,11 @@
 
 import { useState } from 'react';
 import { MarkdownContent } from './markdown-content';
+import { FlowchartSelector } from './flowchart-selector';
 import { 
   Bold, Italic, Code, Link, Image, List, ListOrdered, 
   Quote, Heading1, Heading2, Eye, Edit3, Maximize2, 
-  Type, Calculator 
+  Type, Calculator, Workflow 
 } from 'lucide-react';
 
 interface CustomMarkdownEditorProps {
@@ -17,6 +18,7 @@ interface CustomMarkdownEditorProps {
 export function CustomMarkdownEditor({ value, onChange, placeholder }: CustomMarkdownEditorProps) {
   const [showPreview, setShowPreview] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showFlowchartSelector, setShowFlowchartSelector] = useState(false);
 
   const insertText = (before: string, after: string = '') => {
     const textarea = document.getElementById('markdown-textarea') as HTMLTextAreaElement;
@@ -48,9 +50,15 @@ export function CustomMarkdownEditor({ value, onChange, placeholder }: CustomMar
     { icon: Image, label: 'Image', action: () => insertText('![alt](', ')') },
     { icon: Type, label: 'Code Block', action: () => insertText('\n```js\n', '\n```\n') },
     { icon: Calculator, label: 'Math', action: () => insertText('$', '$') },
+    { icon: Workflow, label: 'Flowchart', action: () => setShowFlowchartSelector(true) },
   ];
 
+  const handleFlowchartSelect = (id: string) => {
+    insertText(`\n[flowchart:${id}]\n`, '');
+  };
+
   return (
+    <>
     <div className={`${isFullscreen ? 'fixed inset-0 z-50 bg-background' : ''}`}>
       <div className={`flex flex-col ${isFullscreen ? 'h-screen' : 'h-full'}`}>
         {/* Toolbar */}
@@ -159,10 +167,21 @@ export function CustomMarkdownEditor({ value, onChange, placeholder }: CustomMar
               <code className="bg-muted px-1.5 py-0.5 rounded">```js</code>
               <span className="text-muted-foreground">Code Block</span>
             </div>
+            <div className="flex items-center gap-1">
+              <code className="bg-muted px-1.5 py-0.5 rounded">[flowchart:id]</code>
+              <span className="text-muted-foreground">Flowchart</span>
+            </div>
           </div>
         </div>
         )}
       </div>
     </div>
+    {showFlowchartSelector && (
+      <FlowchartSelector
+        onSelect={handleFlowchartSelect}
+        onClose={() => setShowFlowchartSelector(false)}
+      />
+    )}
+    </>
   );
 }

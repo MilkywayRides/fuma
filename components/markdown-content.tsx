@@ -4,11 +4,39 @@ import ReactMarkdown from 'react-markdown';
 import rehypeKatex from 'rehype-katex';
 import remarkMath from 'remark-math';
 import rehypeRaw from 'rehype-raw';
+import { EmbeddedFlowchart } from './embedded-flowchart';
 
 export function MarkdownContent({ content }: { content: string }) {
+  // Parse flowchart embeds
+  const parseContent = (text: string) => {
+    const parts: (string | JSX.Element)[] = [];
+    const flowchartRegex = /\[flowchart:([a-zA-Z0-9-_]+)\]/g;
+    let lastIndex = 0;
+    let match;
+
+    while ((match = flowchartRegex.exec(text)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push(text.substring(lastIndex, match.index));
+      }
+      parts.push(<EmbeddedFlowchart key={match[1]} flowchartId={match[1]} />);
+      lastIndex = match.index + match[0].length;
+    }
+
+    if (lastIndex < text.length) {
+      parts.push(text.substring(lastIndex));
+    }
+
+    return parts.length > 0 ? parts : [text];
+  };
+
+  const contentParts = parseContent(content);
+
   return (
     <div className="prose prose-fd max-w-none">
-      <ReactMarkdown
+      {contentParts.map((part, idx) => 
+        typeof part === 'string' ? (
+          <ReactMarkdown
+            key={idx}
         remarkPlugins={[remarkMath]}
         rehypePlugins={[rehypeKatex, rehypeRaw]}
         components={{
@@ -31,9 +59,13 @@ export function MarkdownContent({ content }: { content: string }) {
             <blockquote className="border-l-4 border-fd-primary pl-4 italic my-4">{children}</blockquote>
           ),
         }}
-      >
-        {content}
-      </ReactMarkdown>
+          >
+            {part}
+          </ReactMarkdown>
+        ) : (
+          <div key={idx} className="my-6">{part}</div>
+        )
+      )}
     </div>
   );
 }

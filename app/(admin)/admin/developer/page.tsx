@@ -2,10 +2,10 @@
 
 import { useState } from 'react';
 import { Copy, Check, Code, Key, Database, Smartphone } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function DeveloperPage() {
   const [copied, setCopied] = useState('');
-  const [activeTab, setActiveTab] = useState<'react-native' | 'java' | 'ios'>('react-native');
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
 
   const copyToClipboard = (text: string, id: string) => {
@@ -244,37 +244,17 @@ export default function DeveloperPage() {
           <h2 className="text-xl font-semibold">Code Examples</h2>
         </div>
         
-        <div className="flex gap-2 p-4 border-b bg-muted/50">
-          <button
-            onClick={() => setActiveTab('react-native')}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              activeTab === 'react-native' ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'
-            }`}
-          >
-            React Native
-          </button>
-          <button
-            onClick={() => setActiveTab('java')}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              activeTab === 'java' ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'
-            }`}
-          >
-            Java/Android
-          </button>
-          <button
-            onClick={() => setActiveTab('ios')}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              activeTab === 'ios' ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'
-            }`}
-          >
-            iOS/Swift
-          </button>
-        </div>
-
-        <div className="p-4">
-          {activeTab === 'react-native' && (
-            <pre className="p-4 bg-muted rounded-md text-xs overflow-x-auto">
-              <code>{`// Install: npm install @react-native-async-storage/async-storage
+        <Tabs defaultValue="react-native" className="p-4">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="react-native">React Native</TabsTrigger>
+            <TabsTrigger value="java">Java/Android</TabsTrigger>
+            <TabsTrigger value="ios">iOS/Swift</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="react-native" className="mt-4">
+            <div className="relative">
+              <pre className="p-4 bg-muted rounded-md text-xs overflow-x-auto">
+                <code>{`// Install: npm install @react-native-async-storage/async-storage
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Sign In
@@ -308,12 +288,53 @@ const createComment = async (postId, content) => {
   });
   return await response.json();
 };`}</code>
-            </pre>
-          )}
+              </pre>
+              <button
+                onClick={() => copyToClipboard(`// Install: npm install @react-native-async-storage/async-storage
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-          {activeTab === 'java' && (
-            <pre className="p-4 bg-muted rounded-md text-xs overflow-x-auto">
-              <code>{`// Add OkHttp dependency to build.gradle
+// Sign In
+const signIn = async (email, password) => {
+  const response = await fetch('${baseUrl}/api/auth/sign-in', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password })
+  });
+  const data = await response.json();
+  await AsyncStorage.setItem('token', data.session.token);
+  return data.user;
+};
+
+// Fetch Posts
+const getPosts = async () => {
+  const response = await fetch('${baseUrl}/api/posts');
+  return await response.json();
+};
+
+// Create Comment (Authenticated)
+const createComment = async (postId, content) => {
+  const token = await AsyncStorage.getItem('token');
+  const response = await fetch('${baseUrl}/api/comments', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': \`Bearer \${token}\`
+    },
+    body: JSON.stringify({ postId, content })
+  });
+  return await response.json();
+};`, 'code-react-native')}
+                className="absolute top-2 right-2 p-2 hover:bg-accent rounded-md transition-colors"
+              >
+                {copied === 'code-react-native' ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+              </button>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="java" className="mt-4">
+            <div className="relative">
+              <pre className="p-4 bg-muted rounded-md text-xs overflow-x-auto">
+                <code>{`// Add OkHttp dependency to build.gradle
 import okhttp3.*;
 import org.json.JSONObject;
 
@@ -360,12 +381,66 @@ public class ApiClient {
         return new JSONArray(response.body().string());
     }
 }`}</code>
-            </pre>
-          )}
+              </pre>
+              <button
+                onClick={() => copyToClipboard(`// Add OkHttp dependency to build.gradle
+import okhttp3.*;
+import org.json.JSONObject;
 
-          {activeTab === 'ios' && (
-            <pre className="p-4 bg-muted rounded-md text-xs overflow-x-auto">
-              <code>{`import Foundation
+public class ApiClient {
+    private static final String BASE_URL = "${baseUrl}";
+    private OkHttpClient client = new OkHttpClient();
+    
+    // Sign In
+    public JSONObject signIn(String email, String password) throws Exception {
+        JSONObject json = new JSONObject();
+        json.put("email", email);
+        json.put("password", password);
+        
+        RequestBody body = RequestBody.create(
+            json.toString(),
+            MediaType.parse("application/json")
+        );
+        
+        Request request = new Request.Builder()
+            .url(BASE_URL + "/api/auth/sign-in")
+            .post(body)
+            .build();
+            
+        Response response = client.newCall(request).execute();
+        String responseData = response.body().string();
+        JSONObject data = new JSONObject(responseData);
+        
+        // Store token in SharedPreferences
+        String token = data.getJSONObject("session").getString("token");
+        SharedPreferences prefs = context.getSharedPreferences("app", MODE_PRIVATE);
+        prefs.edit().putString("token", token).apply();
+        
+        return data.getJSONObject("user");
+    }
+    
+    // Fetch Posts
+    public JSONArray getPosts() throws Exception {
+        Request request = new Request.Builder()
+            .url(BASE_URL + "/api/posts")
+            .get()
+            .build();
+            
+        Response response = client.newCall(request).execute();
+        return new JSONArray(response.body().string());
+    }
+}`, 'code-java')}
+                className="absolute top-2 right-2 p-2 hover:bg-accent rounded-md transition-colors"
+              >
+                {copied === 'code-java' ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+              </button>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="ios" className="mt-4">
+            <div className="relative">
+              <pre className="p-4 bg-muted rounded-md text-xs overflow-x-auto">
+                <code>{`import Foundation
 
 class ApiClient {
     let baseURL = "${baseUrl}"
@@ -433,9 +508,83 @@ class ApiClient {
         }.resume()
     }
 }`}</code>
-            </pre>
-          )}
-        </div>
+              </pre>
+              <button
+                onClick={() => copyToClipboard(`import Foundation
+
+class ApiClient {
+    let baseURL = "${baseUrl}"
+    
+    // Sign In
+    func signIn(email: String, password: String, completion: @escaping (Result<User, Error>) -> Void) {
+        let url = URL(string: "\(baseURL)/api/auth/sign-in")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let body = ["email": email, "password": password]
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+        
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            guard let data = data else { return }
+            
+            if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let session = json["session"] as? [String: Any],
+               let token = session["token"] as? String {
+                // Store token in UserDefaults
+                UserDefaults.standard.set(token, forKey: "token")
+                
+                if let userData = json["user"] as? [String: Any] {
+                    // Parse user data
+                    completion(.success(User(from: userData)))
+                }
+            }
+        }.resume()
+    }
+    
+    // Fetch Posts
+    func getPosts(completion: @escaping (Result<[Post], Error>) -> Void) {
+        let url = URL(string: "\(baseURL)/api/posts")!
+        
+        URLSession.shared.dataTask(with: url) { data, response, error in
+            guard let data = data else { return }
+            
+            if let posts = try? JSONDecoder().decode([Post].self, from: data) {
+                completion(.success(posts))
+            }
+        }.resume()
+    }
+    
+    // Create Comment (Authenticated)
+    func createComment(postId: Int, content: String, completion: @escaping (Result<Comment, Error>) -> Void) {
+        let url = URL(string: "\(baseURL)/api/comments")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        if let token = UserDefaults.standard.string(forKey: "token") {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        
+        let body = ["postId": postId, "content": content] as [String : Any]
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+        
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            guard let data = data else { return }
+            
+            if let comment = try? JSONDecoder().decode(Comment.self, from: data) {
+                completion(.success(comment))
+            }
+        }.resume()
+    }
+}`, 'code-ios')}
+                className="absolute top-2 right-2 p-2 hover:bg-accent rounded-md transition-colors"
+              >
+                {copied === 'code-ios' ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+              </button>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
 
       <div className="mt-8 border rounded-lg p-6 bg-gradient-to-r from-primary/10 to-primary/5">

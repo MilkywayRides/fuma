@@ -14,7 +14,6 @@ export default function EmbedFlowchartPage() {
   const userId = searchParams.get('userId');
   const [flowData, setFlowData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [watermarkVisible, setWatermarkVisible] = useState(true);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -31,42 +30,11 @@ export default function EmbedFlowchartPage() {
         }
       })
       .finally(() => setLoading(false));
-
-    // Watermark protection - start after component mounts
-    const startProtection = setTimeout(() => {
-      const checkWatermark = () => {
-        const watermark = document.querySelector('.watermark-link');
-        if (watermark) {
-          const styles = getComputedStyle(watermark);
-          if (styles.display === 'none' || 
-              styles.visibility === 'hidden' ||
-              parseFloat(styles.opacity) < 0.5) {
-            setWatermarkVisible(false);
-          }
-        }
-      };
-
-      const observer = new MutationObserver(checkWatermark);
-      observer.observe(document.body, { 
-        attributes: true, 
-        subtree: true,
-        attributeFilter: ['style', 'class']
-      });
-
-      const interval = setInterval(checkWatermark, 2000);
-
-      return () => {
-        observer.disconnect();
-        clearInterval(interval);
-      };
-    }, 2000);
-
-    return () => {
-      clearTimeout(startProtection);
-    };
   }, [params.id, userId]);
 
   useEffect(() => {
+    if (!flowData) return;
+    
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -79,27 +47,25 @@ export default function EmbedFlowchartPage() {
       
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
-      // Draw watermark
-      ctx.font = 'bold 12px system-ui';
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-      ctx.shadowBlur = 4;
-      
+      // Draw watermark background
       const text = WATERMARK_TEXT;
+      ctx.font = 'bold 12px system-ui';
       const metrics = ctx.measureText(text);
       const x = canvas.width - metrics.width - 20;
       const y = canvas.height - 20;
       
-      // Background
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-      ctx.fillRect(x - 8, y - 16, metrics.width + 16, 24);
+      // Background box
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+      ctx.fillRect(x - 8, y - 18, metrics.width + 16, 26);
       
       // Text
       ctx.fillStyle = 'white';
       ctx.fillText(text, x, y);
     };
 
-    drawWatermark();
+    // Initial draw
+    setTimeout(drawWatermark, 100);
+    
     window.addEventListener('resize', drawWatermark);
     const interval = setInterval(drawWatermark, 100);
 
@@ -107,7 +73,7 @@ export default function EmbedFlowchartPage() {
       window.removeEventListener('resize', drawWatermark);
       clearInterval(interval);
     };
-  }, []);
+  }, [flowData]);
 
   if (!userId) {
     return (
@@ -133,16 +99,7 @@ export default function EmbedFlowchartPage() {
     );
   }
 
-  if (!watermarkVisible) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-background">
-        <div className="text-center">
-          <p className="text-xl font-bold mb-2">Watermark Removed</p>
-          <p className="text-muted-foreground">This embed requires the BlazeNeuro watermark to be visible.</p>
-        </div>
-      </div>
-    );
-  }
+
 
   return (
     <div className="relative w-full h-screen" style={{ userSelect: 'none' }}>

@@ -473,18 +473,18 @@ export function DashboardStats({
           User Growth (Last 7 Days)
         </h3>
         <div className="flex items-end justify-between gap-2 h-48">
-          {growthData.reverse().map((day) => {
+          {growthData.reverse().map((day, idx) => {
             const maxCount = Math.max(...growthData.map(d => d.userCount));
             const height = maxCount > 0 ? (day.userCount / maxCount) * 100 : 0;
             return (
-              <div key={day.date} className="flex-1 flex flex-col items-center gap-2">
+              <div key={`${day.date}-${idx}`} className="flex-1 flex flex-col items-center gap-2">
                 <div className="text-xs font-bold">{day.userCount}</div>
                 <div 
                   className="w-full bg-blue-600 rounded-t transition-all hover:bg-blue-700"
                   style={{ height: `${height}%` }}
                 />
-                <div className="text-xs text-muted-foreground">
-                  {new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })}
+                <div className="text-xs text-muted-foreground" suppressHydrationWarning>
+                  {new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                 </div>
               </div>
             );
@@ -514,8 +514,8 @@ const chartConfig = {
 function TrafficChart({ data }: { data: TrafficData[] }) {
   const [xAxis, setXAxis] = React.useState<number | null>(null);
   
-  const chartData = data.reverse().map(d => ({
-    date: new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }),
+  const chartData = data.reverse().map((d, idx) => ({
+    date: new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
     visits: d.visits,
     uniqueVisitors: d.uniqueVisitors,
   }));

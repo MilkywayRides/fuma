@@ -1,8 +1,7 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
 import ReactFlow, {
   Background,
   Controls,
@@ -14,12 +13,21 @@ import ReactFlow, {
   Node,
   Edge,
   ConnectionMode,
+  ReactFlowProvider,
+  useReactFlow,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { ArrowLeft, Save, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { DefaultNode, InputNode, OutputNode } from '@/components/flow-nodes';
+import { AnimatedEdge } from '@/components/animated-edge';
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from '@/components/ui/context-menu';
 
 const customNodeTypes = {
   default: DefaultNode,
@@ -27,15 +35,90 @@ const customNodeTypes = {
   output: OutputNode,
 };
 
+const edgeTypes = {
+  animated: AnimatedEdge,
+};
+
+function FlowEditor({ initialNodes, initialEdges, onSave }: { initialNodes: Node[], initialEdges: Edge[], onSave: (nodes: Node[], edges: Edge[]) => void }) {
+  const reactFlowInstance = useReactFlow();
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null);
+
+  useEffect(() => {
+    onSave(nodes, edges);
+  }, [nodes, edges]);
+
+  const onConnect = useCallback(
+    (connection: Connection) => {
+      const newEdge = { ...connection, type: 'animated', id: `e${connection.source}-${connection.target}` };
+      setEdges((eds) => addEdge(newEdge, eds));
+      toast.success('Connected!');
+    },
+    [setEdges]
+  );
+
+  const onPaneContextMenu = useCallback((event: React.MouseEvent) => {
+    event.preventDefault();
+    const position = reactFlowInstance.screenToFlowPosition({ x: event.clientX, y: event.clientY });
+    setContextMenuPos(position);
+  }, [reactFlowInstance]);
+
+  const addNode = (type: string) => {
+    if (!contextMenuPos) return;
+    const newNode: Node = {
+      id: `${Date.now()}`,
+      type,
+      position: contextMenuPos,
+      data: { 
+        title: type === 'input' ? 'Input' : type === 'output' ? 'Output' : 'Title',
+        content: type === 'input' ? 'Start node' : type === 'output' ? 'End node' : 'Content'
+      },
+    };
+    setNodes((nds) => [...nds, newNode]);
+    setContextMenuPos(null);
+  };
+
+  return (
+    <ContextMenu>
+      <ContextMenuTrigger asChild>
+        <div className="w-full h-full" onContextMenu={onPaneContextMenu}>
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            nodeTypes={customNodeTypes}
+            edgeTypes={edgeTypes}
+            connectionMode={ConnectionMode.Loose}
+            deleteKeyCode="Delete"
+            defaultEdgeOptions={{ type: 'animated' }}
+            fitView
+          >
+            <Background />
+            <Controls />
+            <MiniMap />
+          </ReactFlow>
+        </div>
+      </ContextMenuTrigger>
+      <ContextMenuContent>
+        <ContextMenuItem onClick={() => addNode('input')}>Add Input Node</ContextMenuItem>
+        <ContextMenuItem onClick={() => addNode('default')}>Add Default Node</ContextMenuItem>
+        <ContextMenuItem onClick={() => addNode('output')}>Add Output Node</ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
+  );
+}
+
 export default function FlowchartEditor() {
   const params = useParams();
   const router = useRouter();
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [nodes, setNodes] = useState<Node[]>([]);
+  const [edges, setEdges] = useState<Edge[]>([]);
   const [title, setTitle] = useState('');
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -48,17 +131,7 @@ export default function FlowchartEditor() {
         setEdges(flowData.edges || []);
       })
       .finally(() => setLoading(false));
-  }, [params.id, setNodes, setEdges]);
-
-  const onConnect = useCallback(
-    (connection: Connection) => {
-      console.log('Connection attempt:', connection);
-      const newEdge = { ...connection, animated: true, id: `e${connection.source}-${connection.target}` };
-      setEdges((eds) => addEdge(newEdge, eds));
-      toast.success('Connected!');
-    },
-    [setEdges]
-  );
+  }, [params.id]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -78,32 +151,14 @@ export default function FlowchartEditor() {
     }
   };
 
-  const addNode = (type: string, position: { x: number; y: number }) => {
-    const newNode: Node = {
-      id: `${Date.now()}`,
-      type,
-      position,
-      data: { 
-        title: type === 'input' ? 'Input' : type === 'output' ? 'Output' : 'Title',
-        content: type === 'input' ? 'Start node' : type === 'output' ? 'End node' : 'Content'
-      },
-    };
-    setNodes((nds) => [...nds, newNode]);
-  };
+  const onFlowChange = useCallback((newNodes: Node[], newEdges: Edge[]) => {
+    setNodes(newNodes);
+    setEdges(newEdges);
+  }, []);
 
-  const onNodesDelete = useCallback(
-    (deleted: Node[]) => {
-      setNodes((nds) => nds.filter((node) => !deleted.find((d) => d.id === node.id)));
-    },
-    [setNodes]
-  );
 
-  const onEdgesDelete = useCallback(
-    (deleted: Edge[]) => {
-      setEdges((eds) => eds.filter((edge) => !deleted.find((d) => d.id === edge.id)));
-    },
-    [setEdges]
-  );
+
+
 
   if (loading) {
     return (
@@ -129,29 +184,9 @@ export default function FlowchartEditor() {
       </div>
 
       <div className="w-full h-full">
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onNodesDelete={onNodesDelete}
-          onEdgesDelete={onEdgesDelete}
-          onConnect={onConnect}
-          onInit={(instance) => {
-            console.log('ReactFlow initialized');
-            setReactFlowInstance(instance);
-          }}
-          nodeTypes={customNodeTypes}
-          connectionMode={ConnectionMode.Loose}
-          deleteKeyCode="Delete"
-          defaultEdgeOptions={{ animated: true }}
-          fitView
-        >
-
-          <Background />
-          <Controls />
-          <MiniMap />
-        </ReactFlow>
+        <ReactFlowProvider>
+          <FlowEditor initialNodes={nodes} initialEdges={edges} onSave={onFlowChange} />
+        </ReactFlowProvider>
       </div>
       
       <style jsx global>{`

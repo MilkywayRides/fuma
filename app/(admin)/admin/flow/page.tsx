@@ -1,39 +1,16 @@
-'use client';
+import { db } from '@/lib/db';
+import { flowcharts } from '@/lib/db/schema';
+import { desc } from 'drizzle-orm';
+import Link from 'next/link';
+import { Metadata } from 'next';
+import { CreateFlowButton } from '@/components/create-flow-button';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+export const metadata: Metadata = {
+  title: 'Flowcharts - Admin',
+};
 
-export default function FlowPage() {
-  const [open, setOpen] = useState(false);
-  const [title, setTitle] = useState('');
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
-
-  const handleCreate = async () => {
-    if (!title.trim()) return;
-    
-    setLoading(true);
-    try {
-      const res = await fetch('/api/flowcharts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, data: JSON.stringify({ nodes: [], edges: [] }) }),
-      });
-      
-      const data = await res.json();
-      if (data.id) {
-        router.push(`/admin/flow/${data.id}`);
-      }
-    } catch (error) {
-      console.error('Failed to create flowchart:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+export default async function FlowPage() {
+  const allFlowcharts = await db.select().from(flowcharts).orderBy(desc(flowcharts.createdAt));
 
   return (
     <div>
@@ -42,31 +19,37 @@ export default function FlowPage() {
           <h1 className="text-3xl font-bold">Flowcharts</h1>
           <p className="text-muted-foreground mt-2">Create and manage flowcharts</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button>Create Flowchart</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create New Flowchart</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">Flowchart Name</Label>
-                <Input
-                  id="title"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Enter flowchart name"
-                  onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
-                />
+        <CreateFlowButton />
+      </div>
+
+      <div className="space-y-4">
+        {allFlowcharts.length === 0 ? (
+          <p className="text-muted-foreground">No flowcharts yet. Create your first one!</p>
+        ) : (
+          allFlowcharts.map((flow) => (
+            <div key={flow.id} className="border rounded-lg p-4">
+              <div className="flex justify-between items-start">
+                <div className="flex-1">
+                  <h2 className="text-xl font-semibold mb-2">{flow.title}</h2>
+                  <div className="flex gap-2 items-center text-sm">
+                    <span className={flow.published ? 'text-green-600' : 'text-yellow-600'}>
+                      {flow.published ? 'Published' : 'Draft'}
+                    </span>
+                    <span className="text-muted-foreground">
+                      {new Date(flow.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                </div>
+                <Link
+                  href={`/admin/flow/${flow.id}`}
+                  className="px-3 py-1 text-sm border rounded hover:bg-accent"
+                >
+                  Edit
+                </Link>
               </div>
-              <Button onClick={handleCreate} disabled={!title.trim() || loading} className="w-full">
-                {loading ? 'Creating...' : 'Create'}
-              </Button>
             </div>
-          </DialogContent>
-        </Dialog>
+          ))
+        )}
       </div>
     </div>
   );

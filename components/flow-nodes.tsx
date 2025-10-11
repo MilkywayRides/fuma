@@ -14,37 +14,35 @@ export const DefaultNode = memo(({ data, selected }: NodeProps) => {
   };
 
   return (
-    <div className={`px-4 py-3 rounded-lg border bg-card shadow-md min-w-[200px] ${selected ? 'ring-2 ring-primary' : ''}`} onDoubleClick={handleDoubleClick}>
-      {isEditing ? (
-        <div className="space-y-2">
-          <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            onBlur={handleBlur}
-            autoFocus
-            className="w-full bg-transparent border-b font-semibold text-sm text-foreground focus:outline-none"
-          />
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            onBlur={handleBlur}
-            className="w-full bg-transparent text-xs text-muted-foreground focus:outline-none resize-none"
-            rows={2}
-          />
-        </div>
-      ) : (
-        <div>
-          <div className="font-semibold text-sm text-foreground mb-1">{title}</div>
-          <div className="text-xs text-muted-foreground">{content}</div>
-        </div>
-      )}
-      <Handle type="target" position={Position.Left} className="w-3 h-3" style={{ top: '25%', left: '-6px' }} />
-      <Handle type="target" position={Position.Left} className="w-3 h-3" style={{ top: '50%', left: '-6px' }} />
-      <Handle type="target" position={Position.Left} className="w-3 h-3" style={{ top: '75%', left: '-6px' }} />
-      <Handle type="source" position={Position.Right} className="w-3 h-3" style={{ top: '25%', right: '-6px' }} />
-      <Handle type="source" position={Position.Right} className="w-3 h-3" style={{ top: '50%', right: '-6px' }} />
-      <Handle type="source" position={Position.Right} className="w-3 h-3" style={{ top: '75%', right: '-6px' }} />
-    </div>
+    <>
+      <Handle type="target" position={Position.Left} isConnectable={true} />
+      <div className={`px-4 py-3 rounded-lg border bg-card shadow-md min-w-[200px] ${selected ? 'ring-2 ring-primary' : ''}`} onDoubleClick={handleDoubleClick}>
+        {isEditing ? (
+          <div className="space-y-2">
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              onBlur={handleBlur}
+              autoFocus
+              className="w-full bg-transparent border-b font-semibold text-sm text-foreground focus:outline-none"
+            />
+            <textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              onBlur={handleBlur}
+              className="w-full bg-transparent text-xs text-muted-foreground focus:outline-none resize-none"
+              rows={2}
+            />
+          </div>
+        ) : (
+          <div>
+            <div className="font-semibold text-sm text-foreground mb-1">{title}</div>
+            <div className="text-xs text-muted-foreground">{content}</div>
+          </div>
+        )}
+      </div>
+      <Handle type="source" position={Position.Right} isConnectable={true} />
+    </>
   );
 });
 
@@ -63,37 +61,35 @@ export const InputNode = memo(({ data, selected }: NodeProps) => {
   };
 
   return (
-    <div className={`px-4 py-3 rounded-lg border bg-card shadow-md min-w-[200px] ${selected ? 'ring-2 ring-primary' : ''}`} onDoubleClick={handleDoubleClick}>
-      {isEditing ? (
-        <div className="space-y-2">
-          <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            onBlur={handleBlur}
-            autoFocus
-            className="w-full bg-transparent border-b font-semibold text-sm text-foreground focus:outline-none"
-          />
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            onBlur={handleBlur}
-            className="w-full bg-transparent text-xs text-muted-foreground focus:outline-none resize-none"
-            rows={2}
-          />
-        </div>
-      ) : (
-        <div>
-          <div className="font-semibold text-sm text-foreground mb-1">{title}</div>
-          <div className="text-xs text-muted-foreground">{content}</div>
-        </div>
-      )}
-      <Handle type="target" position={Position.Left} className="w-3 h-3" style={{ top: '25%', left: '-6px' }} />
-      <Handle type="target" position={Position.Left} className="w-3 h-3" style={{ top: '50%', left: '-6px' }} />
-      <Handle type="target" position={Position.Left} className="w-3 h-3" style={{ top: '75%', left: '-6px' }} />
-      <Handle type="source" position={Position.Right} className="w-3 h-3" style={{ top: '25%', right: '-6px' }} />
-      <Handle type="source" position={Position.Right} className="w-3 h-3" style={{ top: '50%', right: '-6px' }} />
-      <Handle type="source" position={Position.Right} className="w-3 h-3" style={{ top: '75%', right: '-6px' }} />
-    </div>
+    <>
+      <Handle type="target" position={Position.Left} isConnectable={true} />
+      <div className={`px-4 py-3 rounded-lg border bg-card shadow-md min-w-[200px] ${selected ? 'ring-2 ring-primary' : ''}`} onDoubleClick={handleDoubleClick}>
+        {isEditing ? (
+          <div className="space-y-2">
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              onBlur={handleBlur}
+              autoFocus
+              className="w-full bg-transparent border-b font-semibold text-sm text-foreground focus:outline-none"
+            />
+            <textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              onBlur={handleBlur}
+              className="w-full bg-transparent text-xs text-muted-foreground focus:outline-none resize-none"
+              rows={2}
+            />
+          </div>
+        ) : (
+          <div>
+            <div className="font-semibold text-sm text-foreground mb-1">{title}</div>
+            <div className="text-xs text-muted-foreground">{content}</div>
+          </div>
+        )}
+      </div>
+      <Handle type="source" position={Position.Right} isConnectable={true} />
+    </>
   );
 });
 
@@ -112,37 +108,35 @@ export const OutputNode = memo(({ data, selected }: NodeProps) => {
   };
 
   return (
-    <div className={`px-4 py-3 rounded-lg border bg-card shadow-md min-w-[200px] ${selected ? 'ring-2 ring-primary' : ''}`} onDoubleClick={handleDoubleClick}>
-      {isEditing ? (
-        <div className="space-y-2">
-          <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            onBlur={handleBlur}
-            autoFocus
-            className="w-full bg-transparent border-b font-semibold text-sm text-foreground focus:outline-none"
-          />
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            onBlur={handleBlur}
-            className="w-full bg-transparent text-xs text-muted-foreground focus:outline-none resize-none"
-            rows={2}
-          />
-        </div>
-      ) : (
-        <div>
-          <div className="font-semibold text-sm text-foreground mb-1">{title}</div>
-          <div className="text-xs text-muted-foreground">{content}</div>
-        </div>
-      )}
-      <Handle type="target" position={Position.Left} className="w-3 h-3" style={{ top: '25%', left: '-6px' }} />
-      <Handle type="target" position={Position.Left} className="w-3 h-3" style={{ top: '50%', left: '-6px' }} />
-      <Handle type="target" position={Position.Left} className="w-3 h-3" style={{ top: '75%', left: '-6px' }} />
-      <Handle type="source" position={Position.Right} className="w-3 h-3" style={{ top: '25%', right: '-6px' }} />
-      <Handle type="source" position={Position.Right} className="w-3 h-3" style={{ top: '50%', right: '-6px' }} />
-      <Handle type="source" position={Position.Right} className="w-3 h-3" style={{ top: '75%', right: '-6px' }} />
-    </div>
+    <>
+      <Handle type="target" position={Position.Left} isConnectable={true} />
+      <div className={`px-4 py-3 rounded-lg border bg-card shadow-md min-w-[200px] ${selected ? 'ring-2 ring-primary' : ''}`} onDoubleClick={handleDoubleClick}>
+        {isEditing ? (
+          <div className="space-y-2">
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              onBlur={handleBlur}
+              autoFocus
+              className="w-full bg-transparent border-b font-semibold text-sm text-foreground focus:outline-none"
+            />
+            <textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              onBlur={handleBlur}
+              className="w-full bg-transparent text-xs text-muted-foreground focus:outline-none resize-none"
+              rows={2}
+            />
+          </div>
+        ) : (
+          <div>
+            <div className="font-semibold text-sm text-foreground mb-1">{title}</div>
+            <div className="text-xs text-muted-foreground">{content}</div>
+          </div>
+        )}
+      </div>
+      <Handle type="source" position={Position.Right} isConnectable={true} />
+    </>
   );
 });
 

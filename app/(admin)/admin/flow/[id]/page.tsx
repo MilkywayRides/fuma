@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 import ReactFlow, {
   Background,
   Controls,
@@ -12,24 +13,13 @@ import ReactFlow, {
   Connection,
   Node,
   Edge,
+  ConnectionMode,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { ArrowLeft, Save, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuTrigger,
-} from '@/components/ui/context-menu';
 import { toast } from 'sonner';
 import { DefaultNode, InputNode, OutputNode } from '@/components/flow-nodes';
-
-const nodeTypes = [
-  { type: 'default', label: 'Default Node' },
-  { type: 'input', label: 'Input Node' },
-  { type: 'output', label: 'Output Node' },
-];
 
 const customNodeTypes = {
   default: DefaultNode,
@@ -45,22 +35,7 @@ export default function FlowchartEditor() {
   const [title, setTitle] = useState('');
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
-  const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
-
-  const onNodesDelete = useCallback(
-    (deleted: Node[]) => {
-      setNodes((nds) => nds.filter((node) => !deleted.find((d) => d.id === node.id)));
-    },
-    [setNodes]
-  );
-
-  const onEdgesDelete = useCallback(
-    (deleted: Edge[]) => {
-      setEdges((eds) => eds.filter((edge) => !deleted.find((d) => d.id === edge.id)));
-    },
-    [setEdges]
-  );
 
   useEffect(() => {
     setLoading(true);
@@ -76,7 +51,12 @@ export default function FlowchartEditor() {
   }, [params.id, setNodes, setEdges]);
 
   const onConnect = useCallback(
-    (connection: Connection) => setEdges((eds) => addEdge(connection, eds)),
+    (connection: Connection) => {
+      console.log('Connection attempt:', connection);
+      const newEdge = { ...connection, animated: true, id: `e${connection.source}-${connection.target}` };
+      setEdges((eds) => addEdge(newEdge, eds));
+      toast.success('Connected!');
+    },
     [setEdges]
   );
 
@@ -111,6 +91,20 @@ export default function FlowchartEditor() {
     setNodes((nds) => [...nds, newNode]);
   };
 
+  const onNodesDelete = useCallback(
+    (deleted: Node[]) => {
+      setNodes((nds) => nds.filter((node) => !deleted.find((d) => d.id === node.id)));
+    },
+    [setNodes]
+  );
+
+  const onEdgesDelete = useCallback(
+    (deleted: Edge[]) => {
+      setEdges((eds) => eds.filter((edge) => !deleted.find((d) => d.id === edge.id)));
+    },
+    [setEdges]
+  );
+
   if (loading) {
     return (
       <div className="fixed inset-0 bg-background z-50 flex items-center justify-center">
@@ -134,45 +128,31 @@ export default function FlowchartEditor() {
         </div>
       </div>
 
-      <ContextMenu>
-        <ContextMenuTrigger className="w-full h-full">
-          <div ref={reactFlowWrapper} className="w-full h-full">
-            <ReactFlow
-              nodes={nodes}
-              edges={edges}
-              onNodesChange={onNodesChange}
-              onEdgesChange={onEdgesChange}
-              onNodesDelete={onNodesDelete}
-              onEdgesDelete={onEdgesDelete}
-              onConnect={onConnect}
-              onInit={setReactFlowInstance}
-              nodeTypes={customNodeTypes}
-              deleteKeyCode="Delete"
-              fitView
-            >
-              <Background />
-              <Controls />
-              <MiniMap />
-            </ReactFlow>
-          </div>
-        </ContextMenuTrigger>
-        <ContextMenuContent>
-          {nodeTypes.map((nodeType) => (
-            <ContextMenuItem
-              key={nodeType.type}
-              onClick={() => {
-                const position = reactFlowInstance?.screenToFlowPosition({
-                  x: window.innerWidth / 2,
-                  y: window.innerHeight / 2,
-                });
-                addNode(nodeType.type, position || { x: 250, y: 250 });
-              }}
-            >
-              Add {nodeType.label}
-            </ContextMenuItem>
-          ))}
-        </ContextMenuContent>
-      </ContextMenu>
+      <div className="w-full h-full">
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onNodesDelete={onNodesDelete}
+          onEdgesDelete={onEdgesDelete}
+          onConnect={onConnect}
+          onInit={(instance) => {
+            console.log('ReactFlow initialized');
+            setReactFlowInstance(instance);
+          }}
+          nodeTypes={customNodeTypes}
+          connectionMode={ConnectionMode.Loose}
+          deleteKeyCode="Delete"
+          defaultEdgeOptions={{ animated: true }}
+          fitView
+        >
+
+          <Background />
+          <Controls />
+          <MiniMap />
+        </ReactFlow>
+      </div>
       
       <style jsx global>{`
         .react-flow__node {
@@ -181,22 +161,49 @@ export default function FlowchartEditor() {
           padding: 0 !important;
           width: auto !important;
         }
-        .react-flow__node > div {
-          position: relative;
-        }
         .react-flow__handle {
-          width: 6px !important;
-          height: 6px !important;
-          position: absolute !important;
+          width: 20px !important;
+          height: 20px !important;
+          border: none !important;
+          background: transparent !important;
+          border-radius: 50% !important;
+          cursor: pointer !important;
+          z-index: 1000 !important;
+          opacity: 0 !important;
         }
         .react-flow__handle-left {
-          left: 0 !important;
-          transform: translateX(-50%) !important;
+          left: -10px !important;
         }
         .react-flow__handle-right {
-          right: 0 !important;
-          left: auto !important;
-          transform: translateX(50%) !important;
+          right: -10px !important;
+        }
+        .react-flow__handle:hover {
+          width: 24px !important;
+          height: 24px !important;
+          background: #2563eb !important;
+        }
+        .react-flow__handle.connecting {
+          background: #10b981 !important;
+        }
+        .react-flow__handle.valid {
+          background: #10b981 !important;
+        }
+        .react-flow__edge-path {
+          stroke: #94a3b8 !important;
+          stroke-width: 2px !important;
+          stroke-linecap: round !important;
+          stroke-dasharray: 0 !important;
+        }
+        .react-flow__edge.animated path:nth-child(2) {
+          stroke: url(#beam-gradient) !important;
+          stroke-width: 2px !important;
+          stroke-opacity: 1 !important;
+          stroke-linecap: round !important;
+          stroke-dasharray: 0 !important;
+        }
+        .react-flow__edge.selected .react-flow__edge-path {
+          stroke: #3b82f6 !important;
+          stroke-width: 3px !important;
         }
       `}</style>
     </div>

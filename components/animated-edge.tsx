@@ -2,7 +2,7 @@
 
 import { useId } from 'react';
 import { motion } from 'framer-motion';
-import { EdgeProps, getSmoothStepPath } from 'reactflow';
+import { EdgeProps, getBezierPath } from 'reactflow';
 
 export function AnimatedEdge({
   id,
@@ -14,7 +14,7 @@ export function AnimatedEdge({
   targetPosition,
 }: EdgeProps) {
   const gradientId = useId();
-  const [edgePath] = getSmoothStepPath({
+  const [edgePath] = getBezierPath({
     sourceX,
     sourceY,
     sourcePosition,

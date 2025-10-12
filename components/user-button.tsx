@@ -1,7 +1,7 @@
 'use client';
 
 import { User, LogOut, Home, Settings } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { signOut } from '@/lib/auth-client';
 import {
   DropdownMenu,
@@ -21,12 +21,23 @@ interface UserButtonProps {
 
 export function UserButton({ name, email, image, variant = 'compact' }: UserButtonProps) {
   const [showSettings, setShowSettings] = useState(false);
-  const initials = name
+  const initials = (name || '')
     .split(' ')
     .map((n) => n[0])
     .join('')
     .toUpperCase()
     .slice(0, 2);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.altKey && e.key === 's') {
+        e.preventDefault();
+        setShowSettings(true);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   if (variant === 'wide') {
     return (
@@ -66,9 +77,14 @@ export function UserButton({ name, email, image, variant = 'compact' }: UserButt
               View Blog
             </a>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setShowSettings(true)} className="flex items-center gap-2">
-            <Settings className="h-4 w-4" />
-            Settings
+          <DropdownMenuItem onClick={() => setShowSettings(true)} className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              Settings
+            </div>
+            <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+              <span className="text-xs">Alt</span>S
+            </kbd>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={async () => {
@@ -115,9 +131,14 @@ export function UserButton({ name, email, image, variant = 'compact' }: UserButt
             View Blog
           </a>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setShowSettings(true)} className="flex items-center gap-2">
-          <Settings className="h-4 w-4" />
-          Settings
+        <DropdownMenuItem onClick={() => setShowSettings(true)} className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Settings className="h-4 w-4" />
+            Settings
+          </div>
+          <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+            <span className="text-xs">Alt</span>S
+          </kbd>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={async () => {

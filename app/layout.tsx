@@ -2,6 +2,7 @@ import '@/app/global.css';
 import 'katex/dist/katex.css';
 import { Inter } from 'next/font/google';
 import { Providers } from '@/components/providers';
+import { Toaster } from '@/components/ui/toaster';
 import { Metadata } from 'next';
 
 const inter = Inter({
@@ -20,6 +21,7 @@ export default function Layout({ children }: LayoutProps<'/'>) {
     <html lang="en" className={inter.className} suppressHydrationWarning>
       <body className="flex flex-col min-h-screen" suppressHydrationWarning>
         <Providers>{children}</Providers>
+        <Toaster />
       </body>
     </html>
   );

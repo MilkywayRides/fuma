@@ -8,6 +8,7 @@ export const user = pgTable('user', {
   image: text('image'),
   role: text('role').default('User').notNull(),
   banned: boolean('banned').default(false).notNull(),
+  developerMode: boolean('developerMode').default(false).notNull(),
   createdAt: timestamp('createdAt').notNull(),
   updatedAt: timestamp('updatedAt').notNull(),
 });

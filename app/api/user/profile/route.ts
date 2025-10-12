@@ -37,9 +37,13 @@ export async function PATCH(req: Request) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { name } = await req.json();
+  const body = await req.json();
+  const updates: any = { updatedAt: new Date() };
+  
+  if (body.name !== undefined) updates.name = body.name;
+  if (body.developerMode !== undefined) updates.developerMode = body.developerMode;
 
-  await db.update(user).set({ name, updatedAt: new Date() }).where(eq(user.id, sessionData.user.id));
+  await db.update(user).set(updates).where(eq(user.id, sessionData.user.id));
 
   return Response.json({ success: true });
 }

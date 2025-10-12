@@ -8,18 +8,17 @@ import { LayoutDashboard, Workflow, Settings, MessageSquare, Users, FileText, Me
 import { APP_NAME } from '@/lib/config';
 import { UserButton } from './user-button';
 
-const navItems = [
-  { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/admin/blogs', label: 'Blogs', icon: FileText },
-  { href: '/admin/flow', label: 'Flowcharts', icon: Workflow },
-  { href: '/admin/comments', label: 'Comments', icon: MessageSquare },
-  { href: '/admin/users', label: 'Users', icon: Users },
-  { href: '/admin/ads', label: 'Advertisements', icon: Megaphone },
-  { href: '/admin/developer', label: 'Developer API', icon: Code },
-  { href: '/admin/settings', label: 'Settings', icon: Settings },
-];
-
-export function AdminSidebar({ userName, userEmail }: { userName: string; userEmail: string }) {
+export function AdminSidebar({ userName, userEmail, developerMode }: { userName: string; userEmail: string; developerMode?: boolean }) {
+  const navItems = [
+    { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/admin/blogs', label: 'Blogs', icon: FileText },
+    { href: '/admin/flow', label: 'Flowcharts', icon: Workflow },
+    { href: '/admin/comments', label: 'Comments', icon: MessageSquare },
+    { href: '/admin/users', label: 'Users', icon: Users },
+    { href: '/admin/ads', label: 'Advertisements', icon: Megaphone },
+    ...(developerMode ? [{ href: '/admin/developer', label: 'Developer API', icon: Code }] : []),
+    { href: '/admin/settings', label: 'Settings', icon: Settings },
+  ];
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
 

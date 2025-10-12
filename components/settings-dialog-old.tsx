@@ -14,31 +14,18 @@ import { useToast } from '@/hooks/use-toast';
 interface SettingsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  name?: string;
-  email?: string;
+  name: string;
+  email: string;
   image?: string | null;
 }
 
-export function SettingsDialog(props: SettingsDialogProps) {
-  // Destructure with fallbacks
-  const { 
-    open = false, 
-    onOpenChange = () => {}, 
-    name = '', 
-    email = '', 
-    image = null 
-  } = props || {};
-  
-  // Safely handle potentially undefined props
-  const safeName = typeof name === 'string' ? name : '';
-  const safeEmail = typeof email === 'string' ? email : '';
-  
+export function SettingsDialog({ open, onOpenChange, name = '', email = '', image }: SettingsDialogProps) {
   const [activeTab, setActiveTab] = React.useState<'profile' | 'security' | 'developer'>('profile');
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
   const [provider, setProvider] = React.useState<string>('email');
   const [sessionsCount, setSessionsCount] = React.useState(1);
-  const [profileName, setProfileName] = React.useState(safeName);
+  const [profileName, setProfileName] = React.useState(name);
   const [currentPassword, setCurrentPassword] = React.useState('');
   const [newPassword, setNewPassword] = React.useState('');
   const [confirmPassword, setConfirmPassword] = React.useState('');
@@ -46,17 +33,8 @@ export function SettingsDialog(props: SettingsDialogProps) {
   const [apiKeys, setApiKeys] = React.useState<any[]>([]);
   const [newKeyName, setNewKeyName] = React.useState('');
   const [generatedKey, setGeneratedKey] = React.useState('');
-  
   const { toast } = useToast();
-  
-  const initials = React.useMemo(() => {
-    if (!safeName || typeof safeName !== 'string') return '';
-    try {
-      return safeName.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
-    } catch {
-      return '';
-    }
-  }, [safeName]);
+  const initials = name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
 
   React.useEffect(() => {
     if (open) {
@@ -69,17 +47,15 @@ export function SettingsDialog(props: SettingsDialogProps) {
     try {
       const res = await fetch('/api/user/profile');
       const data = await res.json();
-      setProvider(data?.provider || 'email');
-      setSessionsCount(data?.sessionsCount || 1);
-      setProfileName(data?.user?.name || safeName);
-      setDeveloperMode(data?.user?.developerMode || false);
-      if (data?.user?.developerMode) {
+      setProvider(data.provider);
+      setSessionsCount(data.sessionsCount);
+      setProfileName(data.user.name);
+      setDeveloperMode(data.user.developerMode || false);
+      if (data.user.developerMode) {
         fetchApiKeys();
       }
     } catch (error) {
-      if (toast) {
-        toast({ title: 'Error', description: 'Failed to load user data', variant: 'destructive' });
-      }
+      toast({ title: 'Error', description: 'Failed to load user data', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -134,19 +110,10 @@ export function SettingsDialog(props: SettingsDialogProps) {
   const fetchApiKeys = async () => {
     try {
       const res = await fetch('/api/api-keys');
-      if (!res.ok) {
-        throw new Error('Failed to fetch API keys');
-      }
       const data = await res.json();
-      setApiKeys(Array.isArray(data?.keys) ? data.keys : []);
+      setApiKeys(data.keys || []);
     } catch (error) {
-      console.error('Failed to fetch API keys:', error);
-      setApiKeys([]);
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch API keys',
-        variant: 'destructive'
-      });
+      console.error('Failed to fetch API keys');
     }
   };
 

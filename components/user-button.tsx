@@ -49,7 +49,10 @@ export function UserButton({ name, email }: UserButtonProps) {
           </a>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => signOut()} className="flex items-center gap-2 text-destructive">
+        <DropdownMenuItem onClick={async () => {
+          await signOut();
+          window.location.href = '/sign-in';
+        }} className="flex items-center gap-2 text-destructive">
           <LogOut className="h-4 w-4" />
           Sign Out
         </DropdownMenuItem>

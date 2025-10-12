@@ -1,12 +1,71 @@
 'use client';
 
-import { useState } from 'react';
-import { Copy, Check, Code, Key, Database, Smartphone } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Copy, Check, Code, Key, Database, Smartphone, Plus, Trash2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import type { BundledLanguage } from '@/components/kibo-ui/code-block';
+import {
+  CodeBlock,
+  CodeBlockBody,
+  CodeBlockContent,
+  CodeBlockCopyButton,
+  CodeBlockFilename,
+  CodeBlockFiles,
+  CodeBlockHeader,
+  CodeBlockItem,
+  CodeBlockSelect,
+  CodeBlockSelectContent,
+  CodeBlockSelectItem,
+  CodeBlockSelectTrigger,
+  CodeBlockSelectValue,
+} from '@/components/kibo-ui/code-block';
 
 export default function DeveloperPage() {
   const [copied, setCopied] = useState('');
+  const [apiKeys, setApiKeys] = useState<any[]>([]);
+  const [newKeyName, setNewKeyName] = useState('');
+  const [newKey, setNewKey] = useState('');
+  const [showKey, setShowKey] = useState<Record<number, boolean>>({});
+  const [loading, setLoading] = useState(false);
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
+
+  useEffect(() => {
+    fetchApiKeys();
+  }, []);
+
+  const fetchApiKeys = async () => {
+    const res = await fetch('/api/api-keys');
+    if (res.ok) setApiKeys(await res.json());
+  };
+
+  const generateKey = async () => {
+    if (!newKeyName.trim()) return;
+    setLoading(true);
+    const res = await fetch('/api/api-keys', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: newKeyName }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setNewKey(data.key);
+      setNewKeyName('');
+      fetchApiKeys();
+    }
+    setLoading(false);
+  };
+
+  const deleteKey = async (id: number) => {
+    await fetch('/api/api-keys', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    });
+    fetchApiKeys();
+  };
 
   const copyToClipboard = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
@@ -68,7 +127,7 @@ export default function DeveloperPage() {
           method: 'POST',
           path: '/api/comments',
           description: 'Create comment',
-          headers: { Authorization: 'Bearer {token}' },
+          headers: { 'x-api-key': 'YOUR_API_KEY' },
           body: { postId: 'number', content: 'string', parentId: 'number | null' },
           response: { id: 'number', content: 'string', authorName: 'string' },
         },
@@ -76,7 +135,7 @@ export default function DeveloperPage() {
           method: 'POST',
           path: '/api/comments/{id}/like',
           description: 'Like/unlike comment',
-          headers: { Authorization: 'Bearer {token}' },
+          headers: { 'x-api-key': 'YOUR_API_KEY' },
           response: { success: true },
         },
       ],
@@ -105,7 +164,74 @@ export default function DeveloperPage() {
     <div className="max-w-6xl">
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Developer API</h1>
-        <p className="text-muted-foreground">API documentation for mobile and external integrations</p>
+        <p className="text-muted-foreground">API documentation and key management</p>
+      </div>
+
+      <div className="border rounded-lg p-6 bg-card mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Key className="w-5 h-5" />
+            <h2 className="text-xl font-semibold">API Keys</h2>
+          </div>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button size="sm"><Plus className="w-4 h-4 mr-2" />Generate Key</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Generate API Key</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium">Key Name</label>
+                  <Input
+                    placeholder="My Mobile App"
+                    value={newKeyName}
+                    onChange={(e) => setNewKeyName(e.target.value)}
+                  />
+                </div>
+                <Button onClick={generateKey} disabled={loading} className="w-full">
+                  {loading ? 'Generating...' : 'Generate'}
+                </Button>
+                {newKey && (
+                  <div className="p-4 bg-muted rounded-lg">
+                    <p className="text-sm font-medium mb-2">Your API Key (save it now!):</p>
+                    <div className="flex items-center gap-2">
+                      <code className="flex-1 text-xs break-all">{newKey}</code>
+                      <Button size="sm" variant="ghost" onClick={() => copyToClipboard(newKey, 'new-key')}>
+                        {copied === 'new-key' ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+        {apiKeys.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No API keys yet. Generate one to get started.</p>
+        ) : (
+          <div className="space-y-3">
+            {apiKeys.map((key) => (
+              <div key={key.id} className="flex items-center justify-between p-3 border rounded-lg">
+                <div className="flex-1">
+                  <p className="font-medium text-sm">{key.name}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <code className="text-xs text-muted-foreground">
+                      {showKey[key.id] ? key.key : key.key}
+                    </code>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {key.lastUsed ? `Last used: ${new Date(key.lastUsed).toLocaleDateString()}` : 'Never used'}
+                  </p>
+                </div>
+                <Button size="sm" variant="ghost" onClick={() => deleteKey(key.id)}>
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="grid gap-6 mb-8">
@@ -128,7 +254,11 @@ export default function DeveloperPage() {
         <div className="border rounded-lg p-6 bg-card">
           <div className="flex items-center gap-2 mb-4">
             <Key className="w-5 h-5" />
-            <h2 className="text-xl font-semibold">Authentication Flow</h2>
+            <h2 className="text-xl font-semibold">Authentication Methods</h2>
+          </div>
+          <div className="mb-4 p-3 bg-primary/10 rounded-md">
+            <p className="text-sm font-medium mb-1">Using API Keys (Recommended)</p>
+            <p className="text-xs text-muted-foreground">Add header: <code className="bg-background px-1 py-0.5 rounded">x-api-key: YOUR_API_KEY</code></p>
           </div>
           <ol className="space-y-3 text-sm">
             <li className="flex gap-3">
@@ -185,50 +315,20 @@ export default function DeveloperPage() {
                     {endpoint.headers && (
                       <div className="mb-4">
                         <p className="text-sm font-medium mb-2">Headers:</p>
-                        <div className="relative">
-                          <pre className="p-3 bg-muted rounded-md text-xs overflow-x-auto">
-                            <code>{JSON.stringify(endpoint.headers, null, 2)}</code>
-                          </pre>
-                          <button
-                            onClick={() => copyToClipboard(JSON.stringify(endpoint.headers, null, 2), `headers-${idx}-${endpointIdx}`)}
-                            className="absolute top-2 right-2 p-1.5 hover:bg-accent rounded"
-                          >
-                            {copied === `headers-${idx}-${endpointIdx}` ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                          </button>
-                        </div>
+                        <JsonCodeBlock data={endpoint.headers} id={`headers-${idx}-${endpointIdx}`} />
                       </div>
                     )}
 
                     {endpoint.body && (
                       <div className="mb-4">
                         <p className="text-sm font-medium mb-2">Request Body:</p>
-                        <div className="relative">
-                          <pre className="p-3 bg-muted rounded-md text-xs overflow-x-auto">
-                            <code>{JSON.stringify(endpoint.body, null, 2)}</code>
-                          </pre>
-                          <button
-                            onClick={() => copyToClipboard(JSON.stringify(endpoint.body, null, 2), `body-${idx}-${endpointIdx}`)}
-                            className="absolute top-2 right-2 p-1.5 hover:bg-accent rounded"
-                          >
-                            {copied === `body-${idx}-${endpointIdx}` ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                          </button>
-                        </div>
+                        <JsonCodeBlock data={endpoint.body} id={`body-${idx}-${endpointIdx}`} />
                       </div>
                     )}
 
                     <div>
                       <p className="text-sm font-medium mb-2">Response:</p>
-                      <div className="relative">
-                        <pre className="p-3 bg-muted rounded-md text-xs overflow-x-auto">
-                          <code>{JSON.stringify(endpoint.response, null, 2)}</code>
-                        </pre>
-                        <button
-                          onClick={() => copyToClipboard(JSON.stringify(endpoint.response, null, 2), `response-${idx}-${endpointIdx}`)}
-                          className="absolute top-2 right-2 p-1.5 hover:bg-accent rounded"
-                        >
-                          {copied === `response-${idx}-${endpointIdx}` ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                        </button>
-                      </div>
+                      <JsonCodeBlock data={endpoint.response} id={`response-${idx}-${endpointIdx}`} />
                     </div>
                   </div>
                 ))}
@@ -244,348 +344,11 @@ export default function DeveloperPage() {
           <h2 className="text-xl font-semibold">Code Examples</h2>
         </div>
         
-        <Tabs defaultValue="react-native" className="p-4">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="react-native">React Native</TabsTrigger>
-            <TabsTrigger value="java">Java/Android</TabsTrigger>
-            <TabsTrigger value="ios">iOS/Swift</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="react-native" className="mt-4">
-            <div className="relative">
-              <pre className="p-4 bg-muted rounded-md text-xs overflow-x-auto">
-                <code>{`// Install: npm install @react-native-async-storage/async-storage
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-// Sign In
-const signIn = async (email, password) => {
-  const response = await fetch('${baseUrl}/api/auth/sign-in', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password })
-  });
-  const data = await response.json();
-  await AsyncStorage.setItem('token', data.session.token);
-  return data.user;
-};
-
-// Fetch Posts
-const getPosts = async () => {
-  const response = await fetch('${baseUrl}/api/posts');
-  return await response.json();
-};
-
-// Create Comment (Authenticated)
-const createComment = async (postId, content) => {
-  const token = await AsyncStorage.getItem('token');
-  const response = await fetch('${baseUrl}/api/comments', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': \`Bearer \${token}\`
-    },
-    body: JSON.stringify({ postId, content })
-  });
-  return await response.json();
-};`}</code>
-              </pre>
-              <button
-                onClick={() => copyToClipboard(`// Install: npm install @react-native-async-storage/async-storage
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-// Sign In
-const signIn = async (email, password) => {
-  const response = await fetch('${baseUrl}/api/auth/sign-in', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password })
-  });
-  const data = await response.json();
-  await AsyncStorage.setItem('token', data.session.token);
-  return data.user;
-};
-
-// Fetch Posts
-const getPosts = async () => {
-  const response = await fetch('${baseUrl}/api/posts');
-  return await response.json();
-};
-
-// Create Comment (Authenticated)
-const createComment = async (postId, content) => {
-  const token = await AsyncStorage.getItem('token');
-  const response = await fetch('${baseUrl}/api/comments', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': \`Bearer \${token}\`
-    },
-    body: JSON.stringify({ postId, content })
-  });
-  return await response.json();
-};`, 'code-react-native')}
-                className="absolute top-2 right-2 p-2 hover:bg-accent rounded-md transition-colors"
-              >
-                {copied === 'code-react-native' ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-              </button>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="java" className="mt-4">
-            <div className="relative">
-              <pre className="p-4 bg-muted rounded-md text-xs overflow-x-auto">
-                <code>{`// Add OkHttp dependency to build.gradle
-import okhttp3.*;
-import org.json.JSONObject;
-
-public class ApiClient {
-    private static final String BASE_URL = "${baseUrl}";
-    private OkHttpClient client = new OkHttpClient();
-    
-    // Sign In
-    public JSONObject signIn(String email, String password) throws Exception {
-        JSONObject json = new JSONObject();
-        json.put("email", email);
-        json.put("password", password);
-        
-        RequestBody body = RequestBody.create(
-            json.toString(),
-            MediaType.parse("application/json")
-        );
-        
-        Request request = new Request.Builder()
-            .url(BASE_URL + "/api/auth/sign-in")
-            .post(body)
-            .build();
-            
-        Response response = client.newCall(request).execute();
-        String responseData = response.body().string();
-        JSONObject data = new JSONObject(responseData);
-        
-        // Store token in SharedPreferences
-        String token = data.getJSONObject("session").getString("token");
-        SharedPreferences prefs = context.getSharedPreferences("app", MODE_PRIVATE);
-        prefs.edit().putString("token", token).apply();
-        
-        return data.getJSONObject("user");
-    }
-    
-    // Fetch Posts
-    public JSONArray getPosts() throws Exception {
-        Request request = new Request.Builder()
-            .url(BASE_URL + "/api/posts")
-            .get()
-            .build();
-            
-        Response response = client.newCall(request).execute();
-        return new JSONArray(response.body().string());
-    }
-}`}</code>
-              </pre>
-              <button
-                onClick={() => copyToClipboard(`// Add OkHttp dependency to build.gradle
-import okhttp3.*;
-import org.json.JSONObject;
-
-public class ApiClient {
-    private static final String BASE_URL = "${baseUrl}";
-    private OkHttpClient client = new OkHttpClient();
-    
-    // Sign In
-    public JSONObject signIn(String email, String password) throws Exception {
-        JSONObject json = new JSONObject();
-        json.put("email", email);
-        json.put("password", password);
-        
-        RequestBody body = RequestBody.create(
-            json.toString(),
-            MediaType.parse("application/json")
-        );
-        
-        Request request = new Request.Builder()
-            .url(BASE_URL + "/api/auth/sign-in")
-            .post(body)
-            .build();
-            
-        Response response = client.newCall(request).execute();
-        String responseData = response.body().string();
-        JSONObject data = new JSONObject(responseData);
-        
-        // Store token in SharedPreferences
-        String token = data.getJSONObject("session").getString("token");
-        SharedPreferences prefs = context.getSharedPreferences("app", MODE_PRIVATE);
-        prefs.edit().putString("token", token).apply();
-        
-        return data.getJSONObject("user");
-    }
-    
-    // Fetch Posts
-    public JSONArray getPosts() throws Exception {
-        Request request = new Request.Builder()
-            .url(BASE_URL + "/api/posts")
-            .get()
-            .build();
-            
-        Response response = client.newCall(request).execute();
-        return new JSONArray(response.body().string());
-    }
-}`, 'code-java')}
-                className="absolute top-2 right-2 p-2 hover:bg-accent rounded-md transition-colors"
-              >
-                {copied === 'code-java' ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-              </button>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="ios" className="mt-4">
-            <div className="relative">
-              <pre className="p-4 bg-muted rounded-md text-xs overflow-x-auto">
-                <code>{`import Foundation
-
-class ApiClient {
-    let baseURL = "${baseUrl}"
-    
-    // Sign In
-    func signIn(email: String, password: String, completion: @escaping (Result<User, Error>) -> Void) {
-        let url = URL(string: "\(baseURL)/api/auth/sign-in")!
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        
-        let body = ["email": email, "password": password]
-        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
-        
-        URLSession.shared.dataTask(with: request) { data, response, error in
-            guard let data = data else { return }
-            
-            if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-               let session = json["session"] as? [String: Any],
-               let token = session["token"] as? String {
-                // Store token in UserDefaults
-                UserDefaults.standard.set(token, forKey: "token")
-                
-                if let userData = json["user"] as? [String: Any] {
-                    // Parse user data
-                    completion(.success(User(from: userData)))
-                }
-            }
-        }.resume()
-    }
-    
-    // Fetch Posts
-    func getPosts(completion: @escaping (Result<[Post], Error>) -> Void) {
-        let url = URL(string: "\(baseURL)/api/posts")!
-        
-        URLSession.shared.dataTask(with: url) { data, response, error in
-            guard let data = data else { return }
-            
-            if let posts = try? JSONDecoder().decode([Post].self, from: data) {
-                completion(.success(posts))
-            }
-        }.resume()
-    }
-    
-    // Create Comment (Authenticated)
-    func createComment(postId: Int, content: String, completion: @escaping (Result<Comment, Error>) -> Void) {
-        let url = URL(string: "\(baseURL)/api/comments")!
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        
-        if let token = UserDefaults.standard.string(forKey: "token") {
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        }
-        
-        let body = ["postId": postId, "content": content] as [String : Any]
-        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
-        
-        URLSession.shared.dataTask(with: request) { data, response, error in
-            guard let data = data else { return }
-            
-            if let comment = try? JSONDecoder().decode(Comment.self, from: data) {
-                completion(.success(comment))
-            }
-        }.resume()
-    }
-}`}</code>
-              </pre>
-              <button
-                onClick={() => copyToClipboard(`import Foundation
-
-class ApiClient {
-    let baseURL = "${baseUrl}"
-    
-    // Sign In
-    func signIn(email: String, password: String, completion: @escaping (Result<User, Error>) -> Void) {
-        let url = URL(string: "\(baseURL)/api/auth/sign-in")!
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        
-        let body = ["email": email, "password": password]
-        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
-        
-        URLSession.shared.dataTask(with: request) { data, response, error in
-            guard let data = data else { return }
-            
-            if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-               let session = json["session"] as? [String: Any],
-               let token = session["token"] as? String {
-                // Store token in UserDefaults
-                UserDefaults.standard.set(token, forKey: "token")
-                
-                if let userData = json["user"] as? [String: Any] {
-                    // Parse user data
-                    completion(.success(User(from: userData)))
-                }
-            }
-        }.resume()
-    }
-    
-    // Fetch Posts
-    func getPosts(completion: @escaping (Result<[Post], Error>) -> Void) {
-        let url = URL(string: "\(baseURL)/api/posts")!
-        
-        URLSession.shared.dataTask(with: url) { data, response, error in
-            guard let data = data else { return }
-            
-            if let posts = try? JSONDecoder().decode([Post].self, from: data) {
-                completion(.success(posts))
-            }
-        }.resume()
-    }
-    
-    // Create Comment (Authenticated)
-    func createComment(postId: Int, content: String, completion: @escaping (Result<Comment, Error>) -> Void) {
-        let url = URL(string: "\(baseURL)/api/comments")!
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        
-        if let token = UserDefaults.standard.string(forKey: "token") {
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        }
-        
-        let body = ["postId": postId, "content": content] as [String : Any]
-        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
-        
-        URLSession.shared.dataTask(with: request) { data, response, error in
-            guard let data = data else { return }
-            
-            if let comment = try? JSONDecoder().decode(Comment.self, from: data) {
-                completion(.success(comment))
-            }
-        }.resume()
-    }
-}`, 'code-ios')}
-                className="absolute top-2 right-2 p-2 hover:bg-accent rounded-md transition-colors"
-              >
-                {copied === 'code-ios' ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-              </button>
-            </div>
-          </TabsContent>
-        </Tabs>
+        <div className="p-4">
+          <CodeExamples baseUrl={baseUrl} />
+        </div>
       </div>
+
 
       <div className="mt-8 border rounded-lg p-6 bg-gradient-to-r from-primary/10 to-primary/5">
         <div className="flex items-center gap-2 mb-4">
@@ -623,3 +386,260 @@ class ApiClient {
     </div>
   );
 }
+
+const JsonCodeBlock = ({ data, id }: { data: any; id: string }) => {
+  const jsonString = JSON.stringify(data, null, 2);
+  const codeData = [
+    {
+      language: 'json',
+      filename: 'response.json',
+      code: jsonString,
+    },
+  ];
+
+  return (
+    <CodeBlock data={codeData} defaultValue="json">
+      <CodeBlockHeader>
+        <CodeBlockFiles>
+          {(item) => (
+            <CodeBlockFilename key={item.language} value={item.language}>
+              {item.filename}
+            </CodeBlockFilename>
+          )}
+        </CodeBlockFiles>
+        <CodeBlockCopyButton />
+      </CodeBlockHeader>
+      <CodeBlockBody>
+        {(item) => (
+          <CodeBlockItem key={item.language} value={item.language} lineNumbers={false}>
+            <CodeBlockContent language={item.language as BundledLanguage}>
+              {item.code}
+            </CodeBlockContent>
+          </CodeBlockItem>
+        )}
+      </CodeBlockBody>
+    </CodeBlock>
+  );
+};
+
+const CodeExamples = ({ baseUrl }: { baseUrl: string }) => {
+  const codeData = [
+    {
+      language: 'javascript',
+      filename: 'react-native.js',
+      code: `// Install: npm install @react-native-async-storage/async-storage
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const API_KEY = 'bn_your_api_key_here';
+
+// Fetch Posts
+const getPosts = async () => {
+  const response = await fetch('${baseUrl}/api/posts');
+  return await response.json();
+};
+
+// Create Comment (with API Key)
+const createComment = async (postId, content) => {
+  const response = await fetch('${baseUrl}/api/comments', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': API_KEY
+    },
+    body: JSON.stringify({ postId, content })
+  });
+  return await response.json();
+};
+
+// Like Comment
+const likeComment = async (commentId) => {
+  const response = await fetch(\`${baseUrl}/api/comments/\${commentId}/like\`, {
+    method: 'POST',
+    headers: { 'x-api-key': API_KEY }
+  });
+  return await response.json();
+};`,
+    },
+    {
+      language: 'java',
+      filename: 'ApiClient.java',
+      code: `// Add OkHttp dependency to build.gradle
+import okhttp3.*;
+import org.json.JSONObject;
+
+public class ApiClient {
+    private static final String BASE_URL = "${baseUrl}";
+    private static final String API_KEY = "bn_your_api_key_here";
+    private OkHttpClient client = new OkHttpClient();
+    
+    // Fetch Posts
+    public JSONArray getPosts() throws Exception {
+        Request request = new Request.Builder()
+            .url(BASE_URL + "/api/posts")
+            .get()
+            .build();
+            
+        Response response = client.newCall(request).execute();
+        return new JSONArray(response.body().string());
+    }
+    
+    // Create Comment
+    public JSONObject createComment(int postId, String content) throws Exception {
+        JSONObject json = new JSONObject();
+        json.put("postId", postId);
+        json.put("content", content);
+        
+        RequestBody body = RequestBody.create(
+            json.toString(),
+            MediaType.parse("application/json")
+        );
+        
+        Request request = new Request.Builder()
+            .url(BASE_URL + "/api/comments")
+            .addHeader("x-api-key", API_KEY)
+            .post(body)
+            .build();
+            
+        Response response = client.newCall(request).execute();
+        return new JSONObject(response.body().string());
+    }
+}`,
+    },
+    {
+      language: 'swift',
+      filename: 'ApiClient.swift',
+      code: `import Foundation
+
+class ApiClient {
+    let baseURL = "${baseUrl}"
+    let apiKey = "bn_your_api_key_here"
+    
+    // Fetch Posts
+    func getPosts(completion: @escaping (Result<[Post], Error>) -> Void) {
+        let url = URL(string: "\\(baseURL)/api/posts")!
+        
+        URLSession.shared.dataTask(with: url) { data, response, error in
+            guard let data = data else { return }
+            
+            if let posts = try? JSONDecoder().decode([Post].self, from: data) {
+                completion(.success(posts))
+            }
+        }.resume()
+    }
+    
+    // Create Comment
+    func createComment(postId: Int, content: String, completion: @escaping (Result<Comment, Error>) -> Void) {
+        let url = URL(string: "\\(baseURL)/api/comments")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
+        
+        let body = ["postId": postId, "content": content] as [String : Any]
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+        
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            guard let data = data else { return }
+            
+            if let comment = try? JSONDecoder().decode(Comment.self, from: data) {
+                completion(.success(comment))
+            }
+        }.resume()
+    }
+}`,
+    },
+    {
+      language: 'dart',
+      filename: 'api_client.dart',
+      code: `// Add http package: flutter pub add http
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+
+class ApiClient {
+  static const String baseURL = '${baseUrl}';
+  static const String apiKey = 'bn_your_api_key_here';
+  
+  // Fetch Posts
+  Future<List<dynamic>> getPosts() async {
+    final response = await http.get(
+      Uri.parse('\$baseURL/api/posts'),
+    );
+    
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    }
+    throw Exception('Failed to load posts');
+  }
+  
+  // Create Comment
+  Future<Map<String, dynamic>> createComment(int postId, String content) async {
+    final response = await http.post(
+      Uri.parse('\$baseURL/api/comments'),
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+      },
+      body: json.encode({
+        'postId': postId,
+        'content': content,
+      }),
+    );
+    
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    }
+    throw Exception('Failed to create comment');
+  }
+  
+  // Like Comment
+  Future<Map<String, dynamic>> likeComment(int commentId) async {
+    final response = await http.post(
+      Uri.parse('\$baseURL/api/comments/\$commentId/like'),
+      headers: {'x-api-key': apiKey},
+    );
+    
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    }
+    throw Exception('Failed to like comment');
+  }
+}`,
+    },
+  ];
+
+  return (
+    <CodeBlock data={codeData} defaultValue={codeData[0].language}>
+      <CodeBlockHeader>
+        <CodeBlockFiles>
+          {(item) => (
+            <CodeBlockFilename key={item.language} value={item.language}>
+              {item.filename}
+            </CodeBlockFilename>
+          )}
+        </CodeBlockFiles>
+        <CodeBlockSelect>
+          <CodeBlockSelectTrigger>
+            <CodeBlockSelectValue />
+          </CodeBlockSelectTrigger>
+          <CodeBlockSelectContent>
+            {(item) => (
+              <CodeBlockSelectItem key={item.language} value={item.language}>
+                {item.language}
+              </CodeBlockSelectItem>
+            )}
+          </CodeBlockSelectContent>
+        </CodeBlockSelect>
+        <CodeBlockCopyButton />
+      </CodeBlockHeader>
+      <CodeBlockBody>
+        {(item) => (
+          <CodeBlockItem key={item.language} value={item.language}>
+            <CodeBlockContent language={item.language as BundledLanguage}>
+              {item.code}
+            </CodeBlockContent>
+          </CodeBlockItem>
+        )}
+      </CodeBlockBody>
+    </CodeBlock>
+  );
+};

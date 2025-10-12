@@ -43,7 +43,7 @@ function FlowEditor({ initialNodes, initialEdges, onSave }: { initialNodes: Node
   const reactFlowInstance = useReactFlow();
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-  const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; flowX: number; flowY: number } | null>(null);
 
   useEffect(() => {
     onSave(nodes, edges);
@@ -60,54 +60,72 @@ function FlowEditor({ initialNodes, initialEdges, onSave }: { initialNodes: Node
 
   const onPaneContextMenu = useCallback((event: React.MouseEvent) => {
     event.preventDefault();
-    const position = reactFlowInstance.screenToFlowPosition({ x: event.clientX, y: event.clientY });
-    setContextMenuPos(position);
+    const flowPosition = reactFlowInstance.screenToFlowPosition({ x: event.clientX, y: event.clientY });
+    setContextMenu({ x: event.clientX, y: event.clientY, flowX: flowPosition.x, flowY: flowPosition.y });
   }, [reactFlowInstance]);
 
   const addNode = (type: string) => {
-    if (!contextMenuPos) return;
+    if (!contextMenu) return;
     const newNode: Node = {
       id: `${Date.now()}`,
       type,
-      position: contextMenuPos,
+      position: { x: contextMenu.flowX, y: contextMenu.flowY },
       data: { 
         title: type === 'input' ? 'Input' : type === 'output' ? 'Output' : 'Title',
         content: type === 'input' ? 'Start node' : type === 'output' ? 'End node' : 'Content'
       },
     };
     setNodes((nds) => [...nds, newNode]);
-    setContextMenuPos(null);
+    setContextMenu(null);
   };
 
   return (
-    <ContextMenu>
-      <ContextMenuTrigger asChild>
-        <div className="w-full h-full" onContextMenu={onPaneContextMenu}>
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            nodeTypes={customNodeTypes}
-            edgeTypes={edgeTypes}
-            connectionMode={ConnectionMode.Loose}
-            deleteKeyCode="Delete"
-            defaultEdgeOptions={{ type: 'animated' }}
-            fitView
+    <>
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
+        onPaneContextMenu={onPaneContextMenu}
+        nodeTypes={customNodeTypes}
+        edgeTypes={edgeTypes}
+        connectionMode={ConnectionMode.Loose}
+        deleteKeyCode="Delete"
+        defaultEdgeOptions={{ type: 'animated' }}
+        fitView
+      >
+        <Background />
+        <Controls />
+        <MiniMap />
+      </ReactFlow>
+      {contextMenu && (
+        <div
+          className="fixed bg-popover border rounded-md shadow-md p-1 z-50"
+          style={{ left: `${contextMenu.x}px`, top: `${contextMenu.y}px` }}
+          onMouseLeave={() => setContextMenu(null)}
+        >
+          <button
+            className="w-full text-left px-2 py-1.5 text-sm hover:bg-accent rounded-sm"
+            onClick={() => addNode('input')}
           >
-            <Background />
-            <Controls />
-            <MiniMap />
-          </ReactFlow>
+            Add Input Node
+          </button>
+          <button
+            className="w-full text-left px-2 py-1.5 text-sm hover:bg-accent rounded-sm"
+            onClick={() => addNode('default')}
+          >
+            Add Default Node
+          </button>
+          <button
+            className="w-full text-left px-2 py-1.5 text-sm hover:bg-accent rounded-sm"
+            onClick={() => addNode('output')}
+          >
+            Add Output Node
+          </button>
         </div>
-      </ContextMenuTrigger>
-      <ContextMenuContent>
-        <ContextMenuItem onClick={() => addNode('input')}>Add Input Node</ContextMenuItem>
-        <ContextMenuItem onClick={() => addNode('default')}>Add Default Node</ContextMenuItem>
-        <ContextMenuItem onClick={() => addNode('output')}>Add Output Node</ContextMenuItem>
-      </ContextMenuContent>
-    </ContextMenu>
+      )}
+    </>
   );
 }
 

@@ -1,26 +1,36 @@
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { comments, commentReactions } from '@/lib/db/schema';
+import { comments, commentReactions, user } from '@/lib/db/schema';
 import { eq, and, sql } from 'drizzle-orm';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { validateApiKey } from '@/lib/api-auth';
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const headersList = await headers();
+  const apiKey = headersList.get('x-api-key');
+  
+  let userId: string;
+  if (apiKey) {
+    const validUserId = await validateApiKey(apiKey);
+    if (!validUserId) return NextResponse.json({ error: 'Invalid API key' }, { status: 401 });
+    userId = validUserId;
+  } else {
+    const session = await auth.api.getSession({ headers: headersList });
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    userId = session.user.id;
   }
 
-  if (session.user.banned) {
-    return NextResponse.json({ error: 'Your account has been banned' }, { status: 403 });
+  const [userRecord] = await db.select().from(user).where(eq(user.id, userId));
+  if (!userRecord || userRecord.banned) {
+    return NextResponse.json({ error: 'Account banned' }, { status: 403 });
   }
 
   const { id } = await params;
   const commentId = parseInt(id);
-  const userId = session.user.id;
 
   const [existing] = await db
     .select()

@@ -156,3 +156,14 @@ export const adViews = pgTable('adViews', {
   ipAddress: text('ipAddress'),
   createdAt: timestamp('createdAt').defaultNow().notNull(),
 });
+
+export const apiKeys = pgTable('apiKeys', {
+  id: serial('id').primaryKey(),
+  key: text('key').notNull().unique(),
+  name: text('name').notNull(),
+  userId: text('userId')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  lastUsed: timestamp('lastUsed'),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+});

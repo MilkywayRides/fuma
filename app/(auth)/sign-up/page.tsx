@@ -2,6 +2,9 @@
 
 import { SignUpForm } from '@daveyplate/better-auth-ui';
 import Link from 'next/link';
+import { authClient } from '@/lib/auth-client';
+import { Button } from '@/components/ui/button';
+import { FaGoogle, FaGithub } from 'react-icons/fa';
 
 export default function SignUpPage() {
   return (
@@ -15,6 +18,30 @@ export default function SignUpPage() {
             </p>
           </div>
           <SignUpForm />
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <Button
+              variant="outline"
+              onClick={() => authClient.signIn.social({ provider: 'google', callbackURL: '/' })}
+            >
+              <FaGoogle className="mr-2 h-4 w-4" />
+              Google
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => authClient.signIn.social({ provider: 'github', callbackURL: '/' })}
+            >
+              <FaGithub className="mr-2 h-4 w-4" />
+              GitHub
+            </Button>
+          </div>
           <p className="text-center text-sm text-muted-foreground">
             Already have an account?{' '}
             <Link href="/sign-in" className="font-medium underline underline-offset-4 hover:text-primary">

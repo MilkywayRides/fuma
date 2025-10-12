@@ -1,5 +1,6 @@
 import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
 import { APP_NAME } from './config';
+import { NavbarUser } from '@/components/navbar-user';
 
 /**
  * Shared layout configurations
@@ -26,6 +27,11 @@ export function baseOptions(): BaseLayoutProps {
       ),
     },
     // see https://fumadocs.dev/docs/ui/navigation/links
-    links: [],
+    links: [
+      {
+        type: 'custom',
+        children: <NavbarUser variant="compact" />,
+      },
+    ],
   };
 }

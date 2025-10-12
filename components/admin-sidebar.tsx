@@ -69,7 +69,7 @@ export function AdminSidebar({ userName, userEmail }: { userName: string; userEm
         </nav>
 
         <div className="border-t p-4">
-          <UserButton name={userName} email={userEmail} />
+          <UserButton name={userName} email={userEmail} variant="wide" />
         </div>
       </div>
     </aside>

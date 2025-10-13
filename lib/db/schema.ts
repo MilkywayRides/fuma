@@ -9,6 +9,10 @@ export const user = pgTable('user', {
   role: text('role').default('User').notNull(),
   banned: boolean('banned').default(false).notNull(),
   developerMode: boolean('developerMode').default(false).notNull(),
+  onboardingCompleted: boolean('onboardingCompleted').default(false).notNull(),
+  userType: text('userType'),
+  phoneNumber: text('phoneNumber'),
+  phoneVerified: boolean('phoneVerified').default(false).notNull(),
   createdAt: timestamp('createdAt').notNull(),
   updatedAt: timestamp('updatedAt').notNull(),
 });
@@ -104,6 +108,12 @@ export const commentReactions = pgTable('commentReactions', {
     .references(() => user.id),
   type: text('type').notNull(),
   createdAt: timestamp('createdAt').defaultNow().notNull(),
+});
+
+export const settings = pgTable('settings', {
+  id: serial('id').primaryKey(),
+  onboardingEnabled: boolean('onboardingEnabled').default(true).notNull(),
+  updatedAt: timestamp('updatedAt').defaultNow().notNull(),
 });
 
 export const siteVisits = pgTable('siteVisits', {

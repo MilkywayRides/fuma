@@ -8,7 +8,8 @@ import { validateApiKey } from '@/lib/api-auth';
 
 export async function POST(request: Request) {
   const headersList = await headers();
-  const apiKey = headersList.get('x-api-key');
+  const headerEntries = Object.fromEntries(headersList.entries());
+  const apiKey = headerEntries['x-api-key'];
   
   let userId: string;
   if (apiKey) {
@@ -16,7 +17,7 @@ export async function POST(request: Request) {
     if (!validUserId) return NextResponse.json({ error: 'Invalid API key' }, { status: 401 });
     userId = validUserId;
   } else {
-    const session = await auth.api.getSession({ headers: headersList });
+    const session = await auth.api.getSession({ headers: headerEntries });
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     userId = session.user.id;
   }

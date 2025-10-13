@@ -17,7 +17,13 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  return NextResponse.next();
+  // Clone headers for better-auth
+  const requestHeaders = new Headers(request.headers);
+  return NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
 }
 
 export const config = {

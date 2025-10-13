@@ -1,5 +1,5 @@
 import { defineConfig } from 'drizzle-kit';
-
+// hello
 export default defineConfig({
   schema: './lib/db/schema.ts',
   out: './drizzle',
@@ -8,3 +8,5 @@ export default defineConfig({
     url: process.env.DATABASE_URL!,
   },
 });
+
+

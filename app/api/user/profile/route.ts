@@ -1,49 +1,60 @@
-import { auth } from '@/lib/auth';
+import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { user, account, session } from '@/lib/db/schema';
-import { headers } from 'next/headers';
+import { user } from '@/lib/db/schema';
+import { auth } from '@/lib/auth';
 import { eq } from 'drizzle-orm';
+import { headers } from 'next/headers';
 
-export async function GET() {
-  const sessionData = await auth.api.getSession({ headers: await headers() });
-  if (!sessionData) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 });
+export async function PATCH(request: Request) {
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { interests, phoneNumber, onboardingCompleted } = body;
+
+    // Log before update
+    console.log('Updating user profile:', { interests, phoneNumber, onboardingCompleted });
+
+    // Create an update object with only defined values
+    const updateData: any = {
+      updatedAt: new Date(), // Always update the timestamp
+    };
+
+    // Only include fields that are defined
+    if (interests) {
+      updateData.userType = interests.join(',');
+    }
+    if (phoneNumber !== undefined) {
+      updateData.phoneNumber = phoneNumber;
+    }
+    if (onboardingCompleted !== undefined) {
+      updateData.onboardingCompleted = onboardingCompleted;
+    }
+
+    await db
+      .update(user)
+      .set(updateData)
+      .where(eq(user.id, session.user.id));
+
+    // Log after update
+    const [updatedUser] = await db.select().from(user).where(eq(user.id, session.user.id)).limit(1);
+    console.log('Updated user:', updatedUser);
+
+    // Return success response with cache control headers
+    const response = NextResponse.json({ success: true });
+    response.headers.set('Cache-Control', 'no-store, must-revalidate');
+    return response;
+  } catch (error) {
+    console.error('Failed to update user profile:', error);
+    return NextResponse.json(
+      { error: 'Failed to update user profile' },
+      { status: 500 }
+    );
   }
-
-  const userRecord = await db.query.user.findFirst({
-    where: eq(user.id, sessionData.user.id),
-  });
-
-  const accounts = await db.query.account.findMany({
-    where: eq(account.userId, sessionData.user.id),
-  });
-
-  const sessions = await db.query.session.findMany({
-    where: eq(session.userId, sessionData.user.id),
-  });
-
-  const provider = accounts.find(acc => acc.providerId === 'google' || acc.providerId === 'github')?.providerId || 'email';
-
-  return Response.json({
-    user: userRecord,
-    provider,
-    sessionsCount: sessions.length,
-  });
-}
-
-export async function PATCH(req: Request) {
-  const sessionData = await auth.api.getSession({ headers: await headers() });
-  if (!sessionData) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const body = await req.json();
-  const updates: any = { updatedAt: new Date() };
-  
-  if (body.name !== undefined) updates.name = body.name;
-  if (body.developerMode !== undefined) updates.developerMode = body.developerMode;
-
-  await db.update(user).set(updates).where(eq(user.id, sessionData.user.id));
-
-  return Response.json({ success: true });
 }

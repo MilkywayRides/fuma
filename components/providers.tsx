@@ -5,6 +5,7 @@ import { AuthUIProvider } from '@daveyplate/better-auth-ui';
 import { authClient } from '@/lib/auth-client';
 import { VisitTracker } from '@/components/visit-tracker';
 import { Toaster } from 'sonner';
+import { FlowExecutionProvider } from '@/components/providers/flow-execution-provider';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -12,7 +13,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <RootProvider>
         <VisitTracker />
         <Toaster position="top-right" />
-        {children}
+        <FlowExecutionProvider>
+          {children}
+        </FlowExecutionProvider>
       </RootProvider>
     </AuthUIProvider>
   );

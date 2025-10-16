@@ -7,6 +7,8 @@ A modern blog application built with Next.js, Better Auth, and Neon Database.
 - 🔐 Authentication with Better Auth (email/password)
 - 👥 Role-based access control (User, Admin, SuperAdmin)
 - 📝 Admin dashboard for creating and managing blog posts
+- 🔄 Visual flow scripting system (n8n-style automation)
+- 🐍 Python backend for flow execution (Modal)
 - 🔍 Integrated search for docs and blog posts
 - 🎨 Beautiful UI with Tailwind CSS and Fumadocs
 - 💾 PostgreSQL database with Neon
@@ -66,6 +68,8 @@ npm run set-admin <email> <role>
 - `/admin` - View all posts
 - `/admin/posts/new` - Create new post
 - `/admin/posts/[id]/edit` - Edit existing post
+- `/admin/scripts` - Flow scripts dashboard
+- `/admin/scripts/[uuid]` - Visual flow editor
 
 ### Public Pages
 
@@ -82,6 +86,10 @@ npm run set-admin <email> <role>
 - `npm run db:migrate` - Run migrations
 - `npm run db:studio` - Open Drizzle Studio
 
+## Flow Scripts
+
+Visual workflow automation system for creating backend flows. See [FLOW_SCRIPTS_SETUP.md](FLOW_SCRIPTS_SETUP.md) for detailed setup instructions.
+
 ## Tech Stack
 
 - **Framework**: Next.js 15
@@ -89,3 +97,5 @@ npm run set-admin <email> <role>
 - **Database**: Neon (PostgreSQL)
 - **ORM**: Drizzle ORM
 - **Styling**: Tailwind CSS
+- **Flow Editor**: ReactFlow
+- **Backend Execution**: Python + Modal

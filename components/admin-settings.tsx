@@ -10,29 +10,25 @@ import { useOnboarding } from '@/hooks/use-onboarding';
 export function AdminSettings() {
   const [onboardingEnabled, setOnboardingEnabled] = React.useState(false);
   const [loading, setLoading] = React.useState(true);
+  const [updating, setUpdating] = React.useState(false);
   const { toast } = useToast();
   const isOnboardingRequested = useOnboarding();
 
   React.useEffect(() => {
-    fetchSettings();
+    void fetchSettings();
   }, []);
-
-  // Show onboarding if enabled in settings or requested via URL
-  const showOnboarding = onboardingEnabled || isOnboardingRequested;
 
   const fetchSettings = async () => {
     try {
       const res = await fetch('/api/admin/settings/onboarding');
+      if (!res.ok) throw new Error('Failed to fetch settings');
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      // Update based on the API response format
-      setOnboardingEnabled(data.onboardingEnabled ?? false);
-      setLoading(false);
+      setOnboardingEnabled(data.enabled ?? false);
     } catch (error) {
       console.error('Failed to fetch settings:', error);
       toast({
         title: 'Error',
-        description: 'Failed to load settings.',
+        description: 'Failed to load settings. Please try again.',
         variant: 'destructive',
       });
     } finally {
@@ -41,45 +37,70 @@ export function AdminSettings() {
   };
 
   const handleToggleOnboarding = async (checked: boolean) => {
+    setUpdating(true);
     try {
       const res = await fetch('/api/admin/settings/onboarding', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ enabled: checked }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to update settings');
+      }
+      
       setOnboardingEnabled(checked);
       toast({
-        title: 'Settings Updated',
-        description: `User onboarding is now ${checked ? 'enabled' : 'disabled'}.`,
+        title: 'Success',
+        description: `Onboarding ${checked ? 'enabled' : 'disabled'} successfully.`,
       });
     } catch (error) {
       console.error('Failed to update settings:', error);
       toast({
         title: 'Error',
-        description: 'Failed to update settings.',
+        description: 'Failed to update settings. Please try again.',
         variant: 'destructive',
       });
+      // Revert the switch state
+      setOnboardingEnabled(!checked);
+    } finally {
+      setUpdating(false);
     }
   };
 
+  if (loading) {
+    return (
+      <Card className="p-6">
+        <div className="animate-pulse space-y-4">
+          <div className="h-4 w-1/4 bg-gray-200 rounded"></div>
+          <div className="h-8 w-1/2 bg-gray-200 rounded"></div>
+        </div>
+      </Card>
+    );
+  }
+
   return (
-    <Card className="p-6 space-y-4">
-      <h2 className="text-xl font-semibold">Site Settings</h2>
+    <Card className="p-6 space-y-6">
+      <div className="space-y-1">
+        <h2 className="text-2xl font-semibold tracking-tight">Site Settings</h2>
+        <p className="text-sm text-muted-foreground">
+          Manage your site-wide settings and configurations.
+        </p>
+      </div>
+
       <div className="space-y-4">
         <div className="flex items-center justify-between space-x-2">
           <div className="space-y-0.5">
             <Label htmlFor="onboarding">User Onboarding</Label>
             <p className="text-sm text-muted-foreground">
-              When enabled, new users will go through an onboarding process to set up their profile.
+              Enable onboarding flow for new and existing users who haven&apos;t completed it.
             </p>
           </div>
           <Switch
             id="onboarding"
-            disabled={loading}
+            disabled={updating}
             checked={onboardingEnabled}
-            onCheckedChange={handleToggleOnboarding}
             onCheckedChange={handleToggleOnboarding}
           />
         </div>

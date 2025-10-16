@@ -41,7 +41,7 @@ export function OnboardingCheck({ children }: OnboardingCheckProps): ReactElemen
 
         // Only update state if component is still mounted
         if (mounted) {
-          if (data.onboardingEnabled || forceOnboarding) {
+          if (data.enabled || forceOnboarding) {
             setDialogOpen(true);
           }
           setLoading(false);

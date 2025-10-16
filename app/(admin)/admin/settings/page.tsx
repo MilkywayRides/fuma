@@ -7,6 +7,7 @@ import { redirect } from 'next/navigation';
 import { AccountSettings } from '@/components/account-settings';
 import { AdminSettings } from '@/components/admin-settings';
 import { Metadata } from 'next';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export const metadata: Metadata = {
   title: 'Settings - Admin',
@@ -21,6 +22,8 @@ export default async function SettingsPage() {
     redirect('/sign-in');
   }
 
+  console.log('User role:', session.user.role);
+
   const sessions = await db
     .select()
     .from(sessionTable)
@@ -28,13 +31,22 @@ export default async function SettingsPage() {
 
   return (
     <div className="max-w-4xl space-y-8">
-      {session.user.role === 'Admin' && <AdminSettings />}
       <h1 className="text-3xl font-bold mb-2">Settings</h1>
       <p className="text-muted-foreground mb-8">Manage your account settings and preferences</p>
-      <div className="space-y-6">
-        {session.user.role === 'Admin' && <AdminSettings />}
-        <AccountSettings user={session.user} sessions={sessions} currentSessionId={session.session.id} />
-      </div>
+      <Tabs defaultValue="general" className="w-full">
+        <TabsList>
+          <TabsTrigger value="general">General</TabsTrigger>
+          {session.user.role === 'Admin' || session.user.role === 'SuperAdmin' && <TabsTrigger value="site">Site Settings</TabsTrigger>}
+        </TabsList>
+        <TabsContent value="general">
+          <AccountSettings user={session.user} sessions={sessions} currentSessionId={session.session.id} />
+        </TabsContent>
+        {(session.user.role === 'Admin' || session.user.role === 'SuperAdmin') && (
+          <TabsContent value="site">
+            <AdminSettings />
+          </TabsContent>
+        )}
+      </Tabs>
     </div>
   );
 }

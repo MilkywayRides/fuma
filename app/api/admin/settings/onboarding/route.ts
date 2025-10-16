@@ -1,94 +1,83 @@
-import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { settings } from '@/lib/db/schema';
-import { headers } from 'next/headers';
-import { auth } from '@/lib/auth';
-import { eq } from 'drizzle-orm';
-import { cookies } from 'next/headers';
-
-// Helper function to convert headers to a regular object
-async function getHeadersObject() {
-  const headersList = headers();
-  const headerEntries: Record<string, string> = {};
-  headersList.forEach((value, key) => {
-    headerEntries[key] = value;
-  });
-  return headerEntries;
-}
-
-// Helper function to get session from request headers
-async function getAdminSession() {
-  const headerEntries = await getHeadersObject();
-  const session = await auth.api.getSession({ headers: headerEntries });
-  if (session?.user?.role !== 'Admin') {
-    return null;
-  }
-  return session;
-}
+import { NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { systemSettings } from "@/lib/db/schema";
+import { auth } from "@/lib/auth";
+import { eq } from "drizzle-orm";
+import { cookies } from "next/headers";
 
 export async function GET() {
   try {
-    const session = await getAdminSession();
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const cookieList = await cookies();
+    const cookieHeader = cookieList.getAll()
+      .map(c => `${c.name}=${c.value}`)
+      .join("; ");
+
+    const session = await auth.api.getSession({
+      headers: { cookie: cookieHeader }
+    });
+
+    if (!session?.user?.role || !["Admin", "SuperAdmin"].includes(session.user.role)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const [setting] = await db
-      .select({
-        onboardingEnabled: settings.onboardingEnabled
-      })
-      .from(settings)
-      .limit(1);
+      .select({ onboardingEnabled: systemSettings.onboardingEnabled })
+      .from(systemSettings);
 
-    return NextResponse.json({ enabled: setting?.onboardingEnabled ?? true });
+    return NextResponse.json({
+      enabled: setting?.onboardingEnabled ?? false
+    });
   } catch (error) {
-    console.error('Failed to get onboarding settings:', error);
-    return NextResponse.json(
-      { error: 'Failed to get onboarding settings' },
-      { status: 500 }
-    );
+    console.error(error);
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }
 
 export async function PATCH(request: Request) {
   try {
-    const session = await getAdminSession();
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const cookieList = await cookies();
+    const cookieHeader = cookieList.getAll()
+      .map(c => `${c.name}=${c.value}`)
+      .join("; ");
+
+    const session = await auth.api.getSession({
+      headers: { cookie: cookieHeader }
+    });
+
+    if (!session?.user?.role || !["Admin", "SuperAdmin"].includes(session.user.role)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { enabled } = body;
-
-    if (typeof enabled !== 'boolean') {
-      return NextResponse.json(
-        { error: 'Enabled must be a boolean' },
-        { status: 400 }
-      );
+    const { enabled } = await request.json();
+    if (typeof enabled !== "boolean") {
+      return NextResponse.json({ error: "Invalid value" }, { status: 400 });
     }
 
-    const [existingSetting] = await db
+    const [existing] = await db
       .select()
-      .from(settings)
+      .from(systemSettings)
       .limit(1);
-
-    if (existingSetting) {
+    
+    if (existing) {
       await db
-        .update(settings)
-        .set({ onboardingEnabled: enabled })
-        .where(eq(settings.id, existingSetting.id));
+        .update(systemSettings)
+        .set({
+          onboardingEnabled: enabled,
+          updatedAt: new Date()
+        })
+        .where(eq(systemSettings.id, existing.id));
     } else {
       await db
-        .insert(settings)
-        .values({ onboardingEnabled: enabled });
+        .insert(systemSettings)
+        .values({
+          onboardingEnabled: enabled,
+          updatedAt: new Date()
+        });
     }
 
     return NextResponse.json({ enabled });
   } catch (error) {
-    console.error('Failed to update onboarding settings:', error);
-    return NextResponse.json(
-      { error: 'Failed to update onboarding settings' },
-      { status: 500 }
-    );
+    console.error(error);
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }

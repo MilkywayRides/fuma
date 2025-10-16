@@ -48,6 +48,39 @@ export const account = pgTable('account', {
   updatedAt: timestamp('updatedAt').notNull(),
 });
 
+// Flow scripts table
+export const flowScript = pgTable('flowScript', {
+  id: text('id').primaryKey(), // 8-character UUID
+  title: text('title').notNull(),
+  description: text('description'),
+  published: boolean('published').default(false).notNull(),
+  nodes: text('nodes').notNull(), // JSON string of nodes
+  edges: text('edges').notNull(), // JSON string of edges
+  createdById: text('createdById')
+    .notNull()
+    .references(() => user.id),
+  createdAt: timestamp('createdAt').notNull(),
+  updatedAt: timestamp('updatedAt').notNull(),
+  lastExecutedAt: timestamp('lastExecutedAt'),
+  executionCount: integer('executionCount').default(0).notNull(),
+});
+
+// Flow execution history
+export const flowExecution = pgTable('flowExecution', {
+  id: serial('id').primaryKey(),
+  flowId: text('flowId')
+    .notNull()
+    .references(() => flowScript.id),
+  status: text('status').notNull(), // 'success', 'error', 'running'
+  startedAt: timestamp('startedAt').notNull(),
+  completedAt: timestamp('completedAt'),
+  error: text('error'),
+  logs: text('logs'), // JSON string of execution logs
+  triggeredById: text('triggeredById')
+    .notNull()
+    .references(() => user.id),
+});
+
 export const verification = pgTable('verification', {
   id: text('id').primaryKey(),
   identifier: text('identifier').notNull(),
@@ -110,7 +143,7 @@ export const commentReactions = pgTable('commentReactions', {
   createdAt: timestamp('createdAt').defaultNow().notNull(),
 });
 
-export const settings = pgTable('settings', {
+export const systemSettings = pgTable('system_settings', {
   id: serial('id').primaryKey(),
   onboardingEnabled: boolean('onboardingEnabled').default(true).notNull(),
   updatedAt: timestamp('updatedAt').defaultNow().notNull(),

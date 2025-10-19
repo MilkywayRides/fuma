@@ -36,7 +36,7 @@ export default async function SettingsPage() {
       <Tabs defaultValue="general" className="w-full">
         <TabsList>
           <TabsTrigger value="general">General</TabsTrigger>
-          {session.user.role === 'Admin' || session.user.role === 'SuperAdmin' && <TabsTrigger value="site">Site Settings</TabsTrigger>}
+          {(session.user.role === 'Admin' || session.user.role === 'SuperAdmin') && <TabsTrigger value="site">Site Settings</TabsTrigger>}
         </TabsList>
         <TabsContent value="general">
           <AccountSettings user={session.user} sessions={sessions} currentSessionId={session.session.id} />

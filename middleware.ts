@@ -5,6 +5,8 @@ import { user, session, systemSettings } from './lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { auth } from './lib/auth';
 
+export const runtime = 'nodejs';
+
 export async function middleware(request: NextRequest) {
   try {
     console.log('🔍 Middleware triggered for path:', request.nextUrl.pathname);

@@ -312,14 +312,14 @@ export default function DeveloperPage() {
                     </div>
                     <p className="text-sm text-muted-foreground mb-4">{endpoint.description}</p>
 
-                    {endpoint.headers && (
+                    {'headers' in endpoint && endpoint.headers && (
                       <div className="mb-4">
                         <p className="text-sm font-medium mb-2">Headers:</p>
                         <JsonCodeBlock data={endpoint.headers} id={`headers-${idx}-${endpointIdx}`} />
                       </div>
                     )}
 
-                    {endpoint.body && (
+                    {'body' in endpoint && endpoint.body && (
                       <div className="mb-4">
                         <p className="text-sm font-medium mb-2">Request Body:</p>
                         <JsonCodeBlock data={endpoint.body} id={`body-${idx}-${endpointIdx}`} />

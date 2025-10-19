@@ -546,7 +546,6 @@ function TrafficChart({ data }: { data: TrafficData[] }) {
         <ChartContainer config={chartConfig} className="h-[200px] w-full">
           <AreaChart
             data={chartData}
-            width="100%"
             onMouseMove={(e) => setXAxis(e.chartX as number)}
             onMouseLeave={() => setXAxis(null)}
           >

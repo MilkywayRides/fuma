@@ -1,7 +1,8 @@
 import { source } from '@/lib/source';
 import { createFromSource } from 'fumadocs-core/search/server';
 import { getAllBlogPosts } from '@/lib/blog-source';
-import type { SearchIndex } from 'fumadocs-core/search/shared';
+
+type SearchIndex = any[];
 
 const searchAPI = createFromSource(source, {
   language: 'english',
@@ -117,7 +118,7 @@ export async function GET(request: Request) {
     .filter(({ score }) => score > 0)
     .sort((a, b) => b.score - a.score);
 
-  const blogResults: SearchIndex = scoredBlogPosts.map(({ post }) => {
+  const blogResults = scoredBlogPosts.map(({ post }) => {
     const snippet = post.excerpt 
       ? extractRelevantSnippet(post.excerpt, trimmedQuery, 150)
       : extractRelevantSnippet(post.content, trimmedQuery, 150);

@@ -6,7 +6,7 @@ import { OnboardingDialog } from '@/components/onboarding-dialog';
 export default function Layout({ children }: LayoutProps<'/'>) {
   return (
     <HomeLayout {...baseOptions()}>
-      <OnboardingCheck />
+      <OnboardingCheck><></></OnboardingCheck>
       <OnboardingDialog />
       {children}
     </HomeLayout>

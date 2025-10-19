@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypeKatex from 'rehype-katex';
 import remarkMath from 'remark-math';
@@ -9,7 +10,7 @@ import { EmbeddedFlowchart } from './embedded-flowchart';
 export function MarkdownContent({ content, userId }: { content: string; userId?: string }) {
   // Parse flowchart embeds
   const parseContent = (text: string) => {
-    const parts: (string | JSX.Element)[] = [];
+    const parts: (string | React.ReactElement)[] = [];
     const flowchartRegex = /\[flowchart:([a-zA-Z0-9-_]+)\]/g;
     let lastIndex = 0;
     let match;

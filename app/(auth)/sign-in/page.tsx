@@ -27,15 +27,7 @@ export default function SignInPage() {
               {error}
             </div>
           )}
-          <SignInForm 
-            onError={(err) => {
-              if (err.message === 'BANNED') {
-                router.push('/banned');
-              } else {
-                setError(err.message);
-              }
-            }}
-          />
+          <SignInForm localization={{}} />
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t" />

@@ -1,6 +1,6 @@
 'use client';
 
-import { type ReactElement, useEffect, useState } from 'react';
+import { type ReactElement, useEffect, useState, Suspense } from 'react';
 import { auth } from '@/lib/auth';
 import { OnboardingDialog } from './onboarding-dialog';
 import { useOnboarding } from '@/hooks/use-onboarding';
@@ -9,7 +9,7 @@ interface OnboardingCheckProps {
   children: React.ReactNode;
 }
 
-export function OnboardingCheck({ children }: OnboardingCheckProps): ReactElement | null {
+function OnboardingCheckContent({ children }: OnboardingCheckProps): ReactElement | null {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const forceOnboarding = useOnboarding();
@@ -67,11 +67,16 @@ export function OnboardingCheck({ children }: OnboardingCheckProps): ReactElemen
 
   return (
     <>
-      <OnboardingDialog 
-        open={dialogOpen} 
-        onOpenChange={setDialogOpen}
-      />
+      <OnboardingDialog />
       {children}
     </>
+  );
+}
+
+export function OnboardingCheck({ children }: OnboardingCheckProps): ReactElement {
+  return (
+    <Suspense fallback={children}>
+      <OnboardingCheckContent>{children}</OnboardingCheckContent>
+    </Suspense>
   );
 }

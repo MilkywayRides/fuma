@@ -34,7 +34,7 @@ export function MarkdownEditor({ value, onChange, placeholder }: MarkdownEditorP
         },
         className: 'fa fa-superscript',
         title: 'Inline Math',
-      },
+      } as any,
       {
         name: 'mathBlock',
         action: (editor: any) => {
@@ -44,9 +44,9 @@ export function MarkdownEditor({ value, onChange, placeholder }: MarkdownEditorP
         },
         className: 'fa fa-calculator',
         title: 'Math Block',
-      },
-    ],
-    status: ['lines', 'words', 'cursor'],
+      } as any,
+    ] as any,
+    status: ['lines', 'words', 'cursor'] as any,
     minHeight: '400px',
   }), [placeholder]);
 

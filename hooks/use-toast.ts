@@ -17,6 +17,8 @@ type ToasterToast = ToastProps & {
   title?: string
   description?: string
   action?: ToastActionElement
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
 const actionTypes = {
@@ -108,7 +110,7 @@ export const reducer = (state: State, action: Action): State => {
           t.id === toastId || toastId === undefined
             ? {
                 ...t,
-                open: false,
+                open: false as boolean | undefined,
               }
             : t
         ),

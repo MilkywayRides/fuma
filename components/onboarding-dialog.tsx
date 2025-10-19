@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { Suspense } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useOnboarding } from '@/hooks/use-onboarding';
@@ -11,7 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
 import confetti from 'canvas-confetti';
 
-export function OnboardingDialog() {
+function OnboardingDialogContent() {
   const isOnboarding = useOnboarding();
   const [step, setStep] = React.useState(1);
   const [interests, setInterests] = React.useState<string[]>([]);
@@ -159,5 +160,13 @@ export function OnboardingDialog() {
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+export function OnboardingDialog() {
+  return (
+    <Suspense fallback={null}>
+      <OnboardingDialogContent />
+    </Suspense>
   );
 }

@@ -58,6 +58,11 @@ function FlowEditor({ initialNodes, initialEdges, onSave }: { initialNodes: Node
     [setEdges]
   );
 
+  const onPaneClick = useCallback(() => {
+    setNodes((nds) => nds.map((node) => ({ ...node, selected: false })));
+    setEdges((eds) => eds.map((edge) => ({ ...edge, selected: false })));
+  }, [setNodes, setEdges]);
+
   const onPaneContextMenu = useCallback((event: React.MouseEvent) => {
     event.preventDefault();
     const flowPosition = reactFlowInstance.screenToFlowPosition({ x: event.clientX, y: event.clientY });
@@ -87,6 +92,7 @@ function FlowEditor({ initialNodes, initialEdges, onSave }: { initialNodes: Node
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onPaneClick={onPaneClick}
         onPaneContextMenu={onPaneContextMenu}
         nodeTypes={customNodeTypes}
         edgeTypes={edgeTypes}

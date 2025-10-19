@@ -22,8 +22,13 @@ export async function getBlogTree() {
 
 export async function getAllBlogPosts() {
   return await db
-    .select()
+    .select({
+      id: posts.id,
+      title: posts.title,
+      slug: posts.slug,
+      content: posts.content,
+      excerpt: posts.excerpt,
+    })
     .from(posts)
-    .where(eq(posts.published, true))
-    .orderBy(posts.createdAt);
+    .where(eq(posts.published, true));
 }

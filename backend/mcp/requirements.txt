@@ -2,3 +2,6 @@ modal
 fastapi
 pydantic
 httpx
+google-generativeai
+openai
+psycopg2-binary

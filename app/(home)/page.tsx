@@ -1,31 +1,45 @@
-import Link from 'next/link';
-import { Metadata } from 'next';
+'use client';
 
-export const metadata: Metadata = {
-  title: 'Home - BlazeNeuro',
-};
+import { Metadata } from 'next';
+import { BackgroundGradientAnimation } from '@/components/ui/background-gradient-animation';
+import { BlogPostsSection } from '@/components/blog-posts-section';
+import { Footer } from '@/components/footer';
+import { useTheme } from 'next-themes';
+import { useEffect, useState } from 'react';
 
 export default function HomePage() {
+  const { theme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
+  const isDark = theme === 'dark';
+
   return (
-    <main className="flex flex-1 flex-col justify-center text-center">
-      <h1 className="mb-4 text-4xl font-bold">Welcome to My Blog</h1>
-      <p className="text-fd-muted-foreground mb-8">
-        Read the latest articles and insights
-      </p>
-      <div className="flex gap-4 justify-center">
-        <Link
-          href="/blog"
-          className="px-6 py-3 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 font-semibold"
-        >
-          View Blog
-        </Link>
-        <Link
-          href="/admin"
-          className="px-6 py-3 border rounded-md hover:bg-accent font-semibold"
-        >
-          Admin Dashboard
-        </Link>
+    <>
+    <BackgroundGradientAnimation 
+      interactive={false} 
+      gradientBackgroundStart={isDark ? "#0A0A0A" : "#FFFFFF"}
+      gradientBackgroundEnd={isDark ? "#0A0A0A" : "#F5F5F5"}
+      firstColor="59, 130, 246"
+      secondColor="147, 51, 234"
+      thirdColor="236, 72, 153"
+      fourthColor="249, 115, 22"
+      fifthColor="34, 197, 94"
+      containerClassName="h-[75vh] mt-[30px] mx-[30px] w-auto rounded-3xl"
+    >
+      <div className="absolute inset-0 flex items-center justify-center font-bold px-4 pointer-events-none text-3xl text-center md:text-4xl lg:text-7xl">
+        <p className="bg-clip-text text-transparent drop-shadow-2xl bg-gradient-to-b from-foreground/80 to-foreground/20">
+          The Future of Development
+        </p>
       </div>
-    </main>
+    </BackgroundGradientAnimation>
+    <BlogPostsSection />
+    <Footer />
+    </>
   );
 }

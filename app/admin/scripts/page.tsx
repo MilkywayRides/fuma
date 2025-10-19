@@ -3,15 +3,8 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { 
-  PlusIcon, 
-  PlayIcon, 
-  ClockIcon, 
-  CheckCircledIcon, 
-  CrossCircledIcon 
-} from '@radix-ui/react-icons';
+import { Plus, Play, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { generateUUID } from '@/lib/utils';
-import { formatDistanceToNow } from 'date-fns';
 
 interface FlowScript {
   id: string;
@@ -52,11 +45,11 @@ export default function ScriptsPage() {
   const getStatusIcon = (status?: string) => {
     switch (status) {
       case 'success':
-        return <CheckCircledIcon className="text-green-500" />;
+        return <CheckCircle className="text-green-500" />;
       case 'error':
-        return <CrossCircledIcon className="text-red-500" />;
+        return <XCircle className="text-red-500" />;
       case 'running':
-        return <ClockIcon className="text-blue-500 animate-spin" />;
+        return <Clock className="text-blue-500 animate-spin" />;
       default:
         return null;
     }
@@ -68,7 +61,7 @@ export default function ScriptsPage() {
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Flow Scripts</h1>
           <Button disabled>
-            <PlusIcon className="mr-2 h-4 w-4" />
+            <Plus className="mr-2 h-4 w-4" />
             Create New Flow
           </Button>
         </div>
@@ -94,7 +87,7 @@ export default function ScriptsPage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Flow Scripts</h1>
         <Button onClick={createNewFlow}>
-          <PlusIcon className="mr-2 h-4 w-4" />
+          <Plus className="mr-2 h-4 w-4" />
           Create New Flow
         </Button>
       </div>
@@ -116,13 +109,13 @@ export default function ScriptsPage() {
             <CardContent>
               <div className="space-y-2 text-sm text-muted-foreground">
                 <p className="flex items-center">
-                  <ClockIcon className="mr-2 h-4 w-4" />
-                  Created {formatDistanceToNow(new Date(script.createdAt))} ago
+                  <Clock className="mr-2 h-4 w-4" />
+                  Created {new Date(script.createdAt).toLocaleDateString()}
                 </p>
                 {script.lastExecutedAt && (
                   <p className="flex items-center">
-                    <PlayIcon className="mr-2 h-4 w-4" />
-                    Last run {formatDistanceToNow(new Date(script.lastExecutedAt))} ago
+                    <Play className="mr-2 h-4 w-4" />
+                    Last run {new Date(script.lastExecutedAt).toLocaleDateString()}
                   </p>
                 )}
                 <p className="flex items-center">
@@ -146,7 +139,7 @@ export default function ScriptsPage() {
                   className="shrink-0"
                   disabled={!script.published}
                 >
-                  <PlayIcon className="h-4 w-4" />
+                  <Play className="h-4 w-4" />
                 </Button>
               </div>
             </CardContent>

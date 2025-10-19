@@ -4,6 +4,18 @@ import { useEffect, useState, useRef } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import ReactFlow, { Background, Controls } from 'reactflow';
 import 'reactflow/dist/style.css';
+import { DefaultNode, InputNode, OutputNode } from '@/components/flow-nodes';
+import { AnimatedEdge } from '@/components/animated-edge';
+
+const customNodeTypes = {
+  default: DefaultNode,
+  input: InputNode,
+  output: OutputNode,
+};
+
+const edgeTypes = {
+  animated: AnimatedEdge,
+};
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 const WATERMARK_TEXT = '⚡ Powered by BlazeNeuro';
@@ -106,6 +118,8 @@ export default function EmbedFlowchartPage() {
       <ReactFlow
         nodes={flowData.nodes || []}
         edges={flowData.edges || []}
+        nodeTypes={customNodeTypes}
+        edgeTypes={edgeTypes}
         fitView
       >
         <Background />
@@ -153,6 +167,23 @@ export default function EmbedFlowchartPage() {
         }
         .watermark-link {
           opacity: 0 !important;
+        }
+        .react-flow__node {
+          background: transparent !important;
+          border: none !important;
+          padding: 0 !important;
+          width: auto !important;
+        }
+        .react-flow__edge-path {
+          stroke: #94a3b8 !important;
+          stroke-width: 2px !important;
+          stroke-linecap: round !important;
+        }
+        .react-flow__edge.animated path:nth-child(2) {
+          stroke: url(#beam-gradient) !important;
+          stroke-width: 2px !important;
+          stroke-opacity: 1 !important;
+          stroke-linecap: round !important;
         }
       `}</style>
     </div>

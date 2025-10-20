@@ -1,11 +1,15 @@
 'use client';
 
-import { Metadata } from 'next';
-import { BackgroundGradientAnimation } from '@/components/ui/background-gradient-animation';
-import { BlogPostsSection } from '@/components/blog-posts-section';
-import { Footer } from '@/components/footer';
+import dynamic from 'next/dynamic';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
+
+const BackgroundGradientAnimation = dynamic(
+  () => import('@/components/ui/background-gradient-animation').then(mod => ({ default: mod.BackgroundGradientAnimation })),
+  { ssr: false }
+);
+const BlogPostsSection = dynamic(() => import('@/components/blog-posts-section').then(mod => ({ default: mod.BlogPostsSection })));
+const Footer = dynamic(() => import('@/components/footer').then(mod => ({ default: mod.Footer })));
 
 export default function HomePage() {
   const { theme } = useTheme();
@@ -15,7 +19,7 @@ export default function HomePage() {
     setMounted(true);
   }, []);
 
-  if (!mounted) return null;
+  if (!mounted) return <div className="min-h-screen" />;
 
   const isDark = theme === 'dark';
 

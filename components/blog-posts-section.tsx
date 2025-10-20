@@ -20,13 +20,17 @@ export function BlogPostsSection() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/blog/posts?limit=6')
+    const controller = new AbortController();
+    fetch('/api/blog/posts?limit=6', { signal: controller.signal })
       .then(res => res.json())
       .then(data => {
         setPosts(data);
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch((err) => {
+        if (err.name !== 'AbortError') setLoading(false);
+      });
+    return () => controller.abort();
   }, []);
 
   return (
@@ -55,8 +59,8 @@ export function BlogPostsSection() {
               <Card className="h-full overflow-hidden border-2 hover:border-primary transition-all duration-300 hover:shadow-xl">
                 <CardHeader className="space-y-2">
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Calendar className="h-3 w-3" />
-                    <span>{new Date(post.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                    <Calendar className="h-3 w-3" aria-hidden="true" />
+                    <time dateTime={post.createdAt}>{new Date(post.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</time>
                   </div>
                   <CardTitle className="line-clamp-2 group-hover:text-primary transition-colors">{post.title}</CardTitle>
                 </CardHeader>

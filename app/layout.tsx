@@ -8,6 +8,8 @@ import { Metadata } from 'next';
 
 const inter = Inter({
   subsets: ['latin'],
+  display: 'swap',
+  preload: true,
 });
 
 export const metadata: Metadata = {
@@ -15,6 +17,11 @@ export const metadata: Metadata = {
     default: 'BlazeNeuro',
     template: '%s | BlazeNeuro',
   },
+  description: 'Modern blog application with Next.js',
+};
+
+export const viewport = {
+  themeColor: '#000000',
 };
 
 export default function Layout({ children }: LayoutProps<'/'>) {

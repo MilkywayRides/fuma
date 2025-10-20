@@ -64,19 +64,19 @@ export const BackgroundGradientAnimation = ({
   }, []);
 
   useEffect(() => {
+    if (!interactive) return;
+    let rafId: number;
     function move() {
-      if (!interactiveRef.current) {
-        return;
-      }
+      if (!interactiveRef.current) return;
       setCurX(curX + (tgX - curX) / 20);
       setCurY(curY + (tgY - curY) / 20);
       interactiveRef.current.style.transform = `translate(${Math.round(
         curX
       )}px, ${Math.round(curY)}px)`;
     }
-
-    move();
-  }, [tgX, tgY, curX, curY]);
+    rafId = requestAnimationFrame(move);
+    return () => cancelAnimationFrame(rafId);
+  }, [tgX, tgY, curX, curY, interactive]);
 
   const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
     if (interactiveRef.current) {
@@ -201,8 +201,9 @@ export const BackgroundGradientAnimation = ({
         size="icon"
         variant="secondary"
         className="absolute bottom-4 right-4 z-[100] pointer-events-auto"
+        aria-label={isPaused ? 'Play animation' : 'Pause animation'}
       >
-        {isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
+        {isPaused ? <Play className="h-4 w-4" aria-hidden="true" /> : <Pause className="h-4 w-4" aria-hidden="true" />}
       </Button>
     </div>
   );

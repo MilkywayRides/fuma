@@ -16,9 +16,15 @@ const config = {
         hostname: 'avatars.githubusercontent.com',
       },
     ],
+    formats: ['image/avif', 'image/webp'],
   },
   env: {
     DATABASE_URL: process.env.DATABASE_URL,
+  },
+  compress: true,
+  poweredByHeader: false,
+  experimental: {
+    optimizePackageImports: ['lucide-react', 'react-icons'],
   },
 };
 

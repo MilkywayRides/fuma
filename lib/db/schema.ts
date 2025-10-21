@@ -211,3 +211,13 @@ export const apiKeys = pgTable('apiKeys', {
   lastUsed: timestamp('lastUsed'),
   createdAt: timestamp('createdAt').defaultNow().notNull(),
 });
+
+export const chatMessages = pgTable('chat_messages', {
+  id: serial('id').primaryKey(),
+  content: text('content').notNull(),
+  userId: text('user_id').notNull(),
+  userName: text('user_name').notNull(),
+  userImage: text('user_image'),
+  hypes: integer('hypes').default(0).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});

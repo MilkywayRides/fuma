@@ -36,6 +36,8 @@ export function FlowExecutionProvider({ children }: { children: React.ReactNode 
 
   // Initialize WebSocket connection
   useEffect(() => {
+    // Skip WebSocket connection for now
+    return;
     const ws = new WebSocket(process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001');
 
     ws.onopen = () => {
@@ -77,9 +79,9 @@ export function FlowExecutionProvider({ children }: { children: React.ReactNode 
 
     setSocket(ws);
 
-    return () => {
-      ws.close();
-    };
+    // return () => {
+    //   ws.close();
+    // };
   }, [toast]);
 
   const executeFlow = async (flowId: string, nodes: any[], edges: any[]) => {

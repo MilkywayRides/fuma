@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Hash, Users, Settings, UserPlus, Zap, ArrowDown, Trash2, MessageSquare, ExternalLink } from 'lucide-react';
+import { Hash, Users, Settings, UserPlus, Zap, ArrowDown, Trash2, MessageSquare, ExternalLink, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ChatEditor } from '@/components/chat-editor';
 import ReactMarkdown from 'react-markdown';
@@ -301,7 +301,11 @@ export default function CommunityPage() {
   };
 
   if (isPending) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
   if (error) {
@@ -311,6 +315,14 @@ export default function CommunityPage() {
           <p className="text-destructive">{error}</p>
           <Button onClick={() => window.location.reload()}>Retry</Button>
         </div>
+      </div>
+    );
+  }
+
+  if (dmLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }

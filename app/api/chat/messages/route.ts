@@ -30,7 +30,8 @@ export async function GET(request: Request) {
 
   return Response.json(messages.reverse(), {
     headers: {
-      'Cache-Control': 'private, max-age=0, must-revalidate',
+      'Cache-Control': 'private, no-cache, no-store, must-revalidate',
+      'CDN-Cache-Control': 'no-store',
     },
   });
 }

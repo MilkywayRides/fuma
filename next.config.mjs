@@ -17,6 +17,7 @@ const config = {
       },
     ],
     formats: ['image/avif', 'image/webp'],
+    minimumCacheTTL: 60,
   },
   env: {
     DATABASE_URL: process.env.DATABASE_URL,
@@ -26,6 +27,11 @@ const config = {
   experimental: {
     optimizePackageImports: ['lucide-react', 'react-icons'],
   },
+  swcMinify: true,
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production',
+  },
+  output: 'standalone',
 };
 
 export default withMDX(config);

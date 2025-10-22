@@ -3,6 +3,8 @@ import { posts } from '@/lib/db/schema';
 import { eq, desc } from 'drizzle-orm';
 import { NextRequest } from 'next/server';
 
+export const revalidate = 60;
+
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const limit = parseInt(searchParams.get('limit') || '10');
@@ -20,5 +22,9 @@ export async function GET(request: NextRequest) {
     .orderBy(desc(posts.createdAt))
     .limit(limit);
 
-  return Response.json(blogPosts);
+  return Response.json(blogPosts, {
+    headers: {
+      'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120',
+    },
+  });
 }

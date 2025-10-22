@@ -1,5 +1,6 @@
 import { drizzle } from 'drizzle-orm/neon-http';
-import { neon } from '@neondatabase/serverless';
+import { unstable_cache } from 'next/cache';
+import { neon, neonConfig } from '@neondatabase/serverless';
 import * as schema from './schema';
 
 const databaseUrl = process.env.DATABASE_URL;
@@ -10,5 +11,12 @@ if (!databaseUrl) {
   );
 }
 
-const sql = neon(databaseUrl);
+neonConfig.fetchConnectionCache = true;
+
+const sql = neon(databaseUrl, {
+  fetchOptions: {
+    cache: 'no-store',
+  },
+});
+
 export const db = drizzle(sql, { schema });

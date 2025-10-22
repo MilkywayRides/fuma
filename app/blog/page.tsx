@@ -13,12 +13,21 @@ export const metadata: Metadata = {
   title: 'Blog',
 };
 
+export const revalidate = 60;
+
 export default async function BlogPage() {
   const publishedPosts = await db
-    .select()
+    .select({
+      id: posts.id,
+      title: posts.title,
+      slug: posts.slug,
+      excerpt: posts.excerpt,
+      createdAt: posts.createdAt,
+    })
     .from(posts)
     .where(eq(posts.published, true))
-    .orderBy(desc(posts.createdAt));
+    .orderBy(desc(posts.createdAt))
+    .limit(50);
 
   return (
     <HomeLayout {...baseOptions()}>

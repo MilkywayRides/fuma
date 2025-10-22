@@ -535,6 +535,22 @@ export default function CommunityPage() {
                         </div>
                         <span className="text-sm">{session?.user?.name}</span>
                       </div>
+                      {uniqueUsers.filter(u => u !== session?.user?.name).map((user) => {
+                        const userMessages = messages.filter(m => m.userName === user);
+                        const latestMessage = userMessages[userMessages.length - 1];
+                        return (
+                          <div key={user} className="px-2 py-1.5 rounded flex items-center gap-2 hover:bg-muted cursor-pointer">
+                            <div className="relative">
+                              <Avatar className="w-8 h-8">
+                                <AvatarImage src={latestMessage?.userImage || undefined} />
+                                <AvatarFallback className="text-xs">{user[0]}</AvatarFallback>
+                              </Avatar>
+                              <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-background" />
+                            </div>
+                            <span className="text-sm">{user}</span>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 </ScrollArea>
@@ -835,6 +851,22 @@ export default function CommunityPage() {
                 </div>
                 <span className="text-sm">{session?.user?.name}</span>
               </div>
+              {uniqueUsers.filter(u => u !== session?.user?.name).map((user) => {
+                const userMessages = messages.filter(m => m.userName === user);
+                const latestMessage = userMessages[userMessages.length - 1];
+                return (
+                  <div key={user} className="px-2 py-1.5 rounded flex items-center gap-2 hover:bg-muted cursor-pointer">
+                    <div className="relative">
+                      <Avatar className="w-8 h-8">
+                        <AvatarImage src={latestMessage?.userImage || undefined} />
+                        <AvatarFallback className="text-xs">{user[0]}</AvatarFallback>
+                      </Avatar>
+                      <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-background" />
+                    </div>
+                    <span className="text-sm">{user}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </ScrollArea>

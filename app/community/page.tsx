@@ -455,6 +455,7 @@ export default function CommunityPage() {
               userName: dm.senderName,
               userImage: dm.senderImage,
               createdAt: dm.createdAt,
+              hypes: 0,
             })) : messages).map((message, idx) => {
               const displayMessages = selectedDM ? dmMessages.map(dm => ({
                 id: dm.id,
@@ -463,6 +464,7 @@ export default function CommunityPage() {
                 userName: dm.senderName,
                 userImage: dm.senderImage,
                 createdAt: dm.createdAt,
+                hypes: 0,
               })) : messages;
               const prevMessage = displayMessages[idx - 1];
               const showAvatar = !prevMessage || prevMessage.userId !== message.userId;

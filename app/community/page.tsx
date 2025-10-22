@@ -7,7 +7,11 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Hash, Users, Settings, UserPlus, Zap, ArrowDown, Trash2, MessageSquare, ExternalLink, Loader2 } from 'lucide-react';
+import { Hash, Users, Settings, UserPlus, Zap, ArrowDown, Trash2, MessageSquare, ExternalLink, Loader2, Mail, Menu, X } from 'lucide-react';
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
+import { UserButton } from '@/components/user-button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ChatEditor } from '@/components/chat-editor';
 import ReactMarkdown from 'react-markdown';
@@ -15,8 +19,22 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import { useSession } from '@/lib/auth-client';
-import { redirect } from 'next/navigation';
+import { redirect, useRouter, useSearchParams } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
+const GENERAL_CHANNEL_ID = 'ch_general_001';
+
+function createDMId(userId1: string, userId2: string): string {
+  const sorted = [userId1, userId2].sort();
+  return `dm_${sorted[0]}_${sorted[1]}`.replace(/[^a-zA-Z0-9_]/g, '_');
+}
+
+function parseDMId(dmId: string): { userId1: string; userId2: string } | null {
+  if (!dmId.startsWith('dm_')) return null;
+  const parts = dmId.slice(3).split('_');
+  if (parts.length < 2) return null;
+  return { userId1: parts[0], userId2: parts[1] };
+}
 
 interface Message {
   id: number;
@@ -39,6 +57,10 @@ interface DMMessage {
 }
 
 export default function CommunityPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const dmId = searchParams.get('dm');
+  const channelId = searchParams.get('channel') || GENERAL_CHANNEL_ID;
   const { data: session, isPending } = useSession();
   const { socket, isConnected } = useSocket();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -55,6 +77,8 @@ export default function CommunityPage() {
   const [selectedDM, setSelectedDM] = useState<{ userId: string; userName: string; userImage?: string | null } | null>(null);
   const [dmMessages, setDmMessages] = useState<DMMessage[]>([]);
   const [dmLoading, setDmLoading] = useState(false);
+  const [showChannels, setShowChannels] = useState(false);
+  const [showMembers, setShowMembers] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const oldestMessageId = useRef<number | null>(null);
@@ -65,6 +89,26 @@ export default function CommunityPage() {
       redirect('/sign-in');
     }
   }, [session, isPending]);
+
+  useEffect(() => {
+    if (dmId && session?.user) {
+      const parsed = parseDMId(dmId);
+      if (parsed) {
+        const otherUserId = parsed.userId1 === session.user.id ? parsed.userId2 : parsed.userId1;
+        const userMessages = messages.filter(m => m.userId === otherUserId);
+        if (userMessages.length > 0) {
+          const latestMessage = userMessages[userMessages.length - 1];
+          setSelectedDM({
+            userId: otherUserId,
+            userName: latestMessage.userName,
+            userImage: latestMessage.userImage
+          });
+        }
+      }
+    } else {
+      setSelectedDM(null);
+    }
+  }, [dmId, messages, session]);
 
   useEffect(() => {
     if (!selectedDM || !session?.user) return;
@@ -192,25 +236,45 @@ export default function CommunityPage() {
   const sendMessage = async () => {
     if (!input.trim() || !session?.user) return;
 
-    const messageData = {
-      content: input.trim(),
-      userId: session.user.id,
-      userName: session.user.name || 'Anonymous',
-      userImage: session.user.image || null,
-    };
-    
     setInput('');
     
     try {
-      const res = await fetch('/api/chat/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(messageData),
-      });
-      
-      if (res.ok) {
-        const newMessage = await res.json();
-        setMessages(prev => [...prev, newMessage]);
+      if (selectedDM) {
+        const res = await fetch('/api/chat/dm/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            senderId: session.user.id,
+            receiverId: selectedDM.userId,
+            senderName: session.user.name || 'Anonymous',
+            senderImage: session.user.image || null,
+            content: input.trim(),
+          }),
+        });
+        
+        if (res.ok) {
+          const newMessage = await res.json();
+          setDmMessages(prev => [...prev, newMessage]);
+        }
+      } else {
+        const res = await fetch('/api/chat/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            content: input.trim(),
+            userId: session.user.id,
+            userName: session.user.name || 'Anonymous',
+            userImage: session.user.image || null,
+          }),
+        });
+        
+        if (res.ok) {
+          const newMessage = await res.json();
+          setMessages(prev => {
+            if (prev.some(m => m.id === newMessage.id)) return prev;
+            return [...prev, newMessage];
+          });
+        }
       }
     } catch (error) {
       console.error('Failed to send message:', error);
@@ -251,24 +315,53 @@ export default function CommunityPage() {
   }
 
   useEffect(() => {
-    if (!isConnected) return;
+    if (!isConnected || !session?.user) return;
     
     const pollMessages = setInterval(() => {
-      const lastId = messages[messages.length - 1]?.id;
-      if (lastId) {
-        fetch(`/api/chat/messages?limit=10&after=${lastId}`)
+      if (selectedDM) {
+        fetch(`/api/chat/dm?userId=${session.user.id}&otherUserId=${selectedDM.userId}`)
           .then(res => res.json())
           .then(data => {
-            if (data.length > 0) {
-              setMessages(prev => [...prev, ...data]);
+            if (Array.isArray(data) && data.length > dmMessages.length) {
+              setDmMessages(data);
             }
           })
           .catch(() => {});
+      } else {
+        const lastId = messages[messages.length - 1]?.id;
+        if (lastId) {
+          fetch(`/api/chat/messages?limit=10&after=${lastId}`)
+            .then(res => res.json())
+            .then(data => {
+              if (data.length > 0) {
+                setMessages(prev => {
+                  const existingIds = new Set(prev.map(m => m.id));
+                  const newMessages = data.filter((m: Message) => !existingIds.has(m.id));
+                  return [...prev, ...newMessages];
+                });
+              }
+            })
+            .catch(() => {});
+        }
       }
     }, 3000);
     
-    return () => clearInterval(pollMessages);
-  }, [messages, isConnected]);
+    const heartbeat = setInterval(() => {
+      fetch('/api/chat/online', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: session.user.id }),
+      })
+        .then(res => res.json())
+        .then(data => setOnlineUsers(data.count))
+        .catch(() => {});
+    }, 5000);
+    
+    return () => {
+      clearInterval(pollMessages);
+      clearInterval(heartbeat);
+    };
+  }, [messages, dmMessages, selectedDM, isConnected, session]);
 
   if (error) {
     return (
@@ -311,11 +404,10 @@ export default function CommunityPage() {
                   }`}
                   title={user}
                   onClick={() => {
-                    setSelectedDM({ 
-                      userId: latestMessage.userId, 
-                      userName: user, 
-                      userImage: latestMessage.userImage 
-                    });
+                    if (session?.user) {
+                      const dmId = createDMId(session.user.id, latestMessage.userId);
+                      router.push(`/community?dm=${dmId}`);
+                    }
                   }}
                 >
                   <Avatar className="w-10 h-10">
@@ -341,30 +433,22 @@ export default function CommunityPage() {
             </div>
             <div 
               className={`px-2 py-1.5 rounded flex items-center gap-1.5 cursor-pointer ${
-                !selectedDM ? 'bg-muted' : 'hover:bg-muted/50'
+                !selectedDM && channelId === GENERAL_CHANNEL_ID ? 'bg-muted' : 'hover:bg-muted/50'
               }`}
-              onClick={() => setSelectedDM(null)}
+              onClick={() => router.push(`/community?channel=${GENERAL_CHANNEL_ID}`)}
             >
               <Hash className="w-5 h-5" />
               <span className="text-sm font-medium">general</span>
             </div>
           </div>
         </ScrollArea>
-        <div className="h-[52px] bg-muted/50 px-2 flex items-center gap-2 border-t">
-          <Avatar className="w-8 h-8">
-            <AvatarImage src={session?.user?.image || undefined} />
-            <AvatarFallback className="text-xs">
-              {session?.user?.name?.[0] || 'U'}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1 min-w-0">
-            <div className="text-sm font-semibold truncate">{session?.user?.name}</div>
-            <div className="text-xs text-muted-foreground flex items-center gap-1">
-              <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
-              {isConnected ? 'Online' : 'Offline'}
-            </div>
-          </div>
-          <Settings className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-pointer" />
+        <div className="h-[52px] bg-muted/50 p-[5px] flex items-center gap-2 border-t">
+          <UserButton
+            name={session?.user?.name || 'User'}
+            email={session?.user?.email || ''}
+            image={session?.user?.image}
+            variant="wide"
+          />
         </div>
       </div>
 
@@ -373,6 +457,40 @@ export default function CommunityPage() {
         {/* Chat Header */}
         <div className="h-12 px-2 sm:px-4 flex items-center justify-between shadow-sm border-b">
           <div className="flex items-center gap-2">
+            <Sheet open={showChannels} onOpenChange={setShowChannels}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="lg:hidden h-8 w-8">
+                  <Menu className="w-5 h-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-60 p-0">
+                <VisuallyHidden>
+                  <SheetTitle>Channels</SheetTitle>
+                </VisuallyHidden>
+                <div className="h-12 px-4 flex items-center shadow-sm border-b font-semibold">
+                  BN Community
+                </div>
+                <ScrollArea className="flex-1 h-[calc(100vh-3rem)]">
+                  <div className="p-2">
+                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase">
+                      Text Channels
+                    </div>
+                    <div 
+                      className={`px-2 py-1.5 rounded flex items-center gap-1.5 cursor-pointer ${
+                        !selectedDM && channelId === GENERAL_CHANNEL_ID ? 'bg-muted' : 'hover:bg-muted/50'
+                      }`}
+                      onClick={() => {
+                        router.push(`/community?channel=${GENERAL_CHANNEL_ID}`);
+                        setShowChannels(false);
+                      }}
+                    >
+                      <Hash className="w-5 h-5" />
+                      <span className="text-sm font-medium">general</span>
+                    </div>
+                  </div>
+                </ScrollArea>
+              </SheetContent>
+            </Sheet>
             {selectedDM ? (
               <>
                 <Avatar className="w-6 h-6 sm:w-8 sm:h-8">
@@ -389,9 +507,39 @@ export default function CommunityPage() {
             )}
           </div>
           <div className="flex items-center gap-1 sm:gap-2">
-            <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-10 sm:w-10">
-              <UserPlus className="w-4 h-4 sm:w-5 sm:h-5" />
-            </Button>
+            <Sheet open={showMembers} onOpenChange={setShowMembers}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="xl:hidden h-8 w-8">
+                  <Users className="w-4 h-4 sm:w-5 sm:h-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-60 p-0">
+                <VisuallyHidden>
+                  <SheetTitle>Members</SheetTitle>
+                </VisuallyHidden>
+                <ScrollArea className="h-full">
+                  <div className="p-2">
+                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase">
+                      Online — {onlineUsers}
+                    </div>
+                    <div className="space-y-1">
+                      <div className="px-2 py-1.5 rounded flex items-center gap-2 hover:bg-muted cursor-pointer">
+                        <div className="relative">
+                          <Avatar className="w-8 h-8">
+                            <AvatarImage src={session?.user?.image || undefined} />
+                            <AvatarFallback className="text-xs">
+                              {session?.user?.name?.[0] || 'U'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-background" />
+                        </div>
+                        <span className="text-sm">{session?.user?.name}</span>
+                      </div>
+                    </div>
+                  </div>
+                </ScrollArea>
+              </SheetContent>
+            </Sheet>
             <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">
               <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
               <span>{isConnected ? 'Connected' : 'Connecting...'}</span>
@@ -422,8 +570,8 @@ export default function CommunityPage() {
               </div>
             ) : (
               <div className="py-4 space-y-0.5">
-            {(selectedDM ? dmMessages.map(dm => ({
-              id: dm.id,
+            {(selectedDM ? dmMessages.map((dm, i) => ({
+              id: `dm-${dm.id}-${i}`,
               content: dm.content,
               userId: dm.senderId,
               userName: dm.senderName,
@@ -431,8 +579,8 @@ export default function CommunityPage() {
               createdAt: dm.createdAt,
               hypes: 0,
             })) : messages).map((message, idx) => {
-              const displayMessages = selectedDM ? dmMessages.map(dm => ({
-                id: dm.id,
+              const displayMessages = selectedDM ? dmMessages.map((dm, i) => ({
+                id: `dm-${dm.id}-${i}`,
                 content: dm.content,
                 userId: dm.senderId,
                 userName: dm.senderName,
@@ -446,7 +594,7 @@ export default function CommunityPage() {
               const isGrouped = !showAvatar && timeDiff < 300000;
 
               return (
-                <div key={message.id} className={`group flex gap-2 sm:gap-4 hover:bg-muted/50 px-2 sm:px-4 -mx-2 sm:-mx-4 py-0.5 ${!isGrouped ? 'mt-4' : ''}`}>
+                <div key={`msg-${message.id}-${idx}`} className={`group flex gap-2 sm:gap-4 hover:bg-muted/50 px-2 sm:px-4 -mx-2 sm:-mx-4 py-0.5 ${!isGrouped ? 'mt-4' : ''}`}>
                   {showAvatar ? (
                     <Avatar className="w-8 h-8 sm:w-10 sm:h-10 mt-0.5">
                       <AvatarImage src={message.userImage || undefined} />
@@ -462,7 +610,35 @@ export default function CommunityPage() {
                   <div className="flex-1 min-w-0">
                     {showAvatar && (
                       <div className="flex items-baseline gap-1 sm:gap-2 mb-0.5">
-                        <span className="font-semibold text-sm sm:text-base hover:underline cursor-pointer truncate">{message.userName}</span>
+                        <HoverCard>
+                          <HoverCardTrigger asChild>
+                            <span className="font-semibold text-sm sm:text-base hover:underline cursor-pointer truncate">{message.userName}</span>
+                          </HoverCardTrigger>
+                          <HoverCardContent className="w-64">
+                            <div className="flex gap-3">
+                              <Avatar className="w-12 h-12">
+                                <AvatarImage src={message.userImage || undefined} />
+                                <AvatarFallback>{message.userName[0]}</AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1 space-y-2">
+                                <h4 className="font-semibold">{message.userName}</h4>
+                                {message.userId !== session?.user?.id && session?.user && (
+                                  <Button
+                                    size="sm"
+                                    className="w-full"
+                                    onClick={() => {
+                                      const dmId = createDMId(session.user.id, message.userId);
+                                      router.push(`/community?dm=${dmId}`);
+                                    }}
+                                  >
+                                    <Mail className="w-4 h-4 mr-2" />
+                                    Send DM
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          </HoverCardContent>
+                        </HoverCard>
                         <span className="text-[10px] sm:text-xs text-muted-foreground">
                           {new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
@@ -584,22 +760,24 @@ export default function CommunityPage() {
                     </div>
                   </div>
                   <div className="flex-shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                    {!selectedDM && (
                     <Button
                       variant="ghost"
                       size="sm"
                       className="h-6 px-1.5 sm:px-2 gap-0.5 sm:gap-1 text-xs"
-                      onClick={() => handleHype(message.id)}
-                      disabled={hypedMessages.has(message.id)}
+                      onClick={() => handleHype(typeof message.id === 'number' ? message.id : 0)}
+                      disabled={typeof message.id === 'number' && hypedMessages.has(message.id)}
                     >
                       <Zap className={`w-3 h-3 ${message.hypes ? 'fill-yellow-500 text-yellow-500' : ''}`} />
                       <span className="hidden sm:inline">{message.hypes || 0}</span>
                     </Button>
-                    {message.userId === session?.user?.id && (
+                    )}
+                    {message.userId === session?.user?.id && typeof message.id === 'number' && (
                       <Button
                         variant="ghost"
                         size="sm"
                         className="h-6 px-1.5 text-xs text-destructive hover:text-destructive"
-                        onClick={() => handleDeleteMessage(message.id)}
+                        onClick={() => handleDeleteMessage(message.id as number)}
                       >
                         <Trash2 className="w-3 h-3" />
                       </Button>
@@ -625,7 +803,7 @@ export default function CommunityPage() {
         </div>
 
         {/* Message Input */}
-        <div className="p-2 sm:p-4 border-t">
+        <div className="p-2 sm:p-4 border-t safe-area-bottom">
           <ChatEditor
             value={input}
             onChange={setInput}

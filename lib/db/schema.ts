@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean, serial, integer } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, boolean, serial, integer, index } from 'drizzle-orm/pg-core';
 
 export const user = pgTable('user', {
   id: text('id').primaryKey(),
@@ -219,5 +219,15 @@ export const chatMessages = pgTable('chat_messages', {
   userName: text('user_name').notNull(),
   userImage: text('user_image'),
   hypes: integer('hypes').default(0).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const directMessages = pgTable('direct_messages', {
+  id: serial('id').primaryKey(),
+  content: text('content').notNull(),
+  senderId: text('sender_id').notNull().references(() => user.id),
+  receiverId: text('receiver_id').notNull().references(() => user.id),
+  senderName: text('sender_name').notNull(),
+  senderImage: text('sender_image'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });

@@ -5,8 +5,8 @@
   "private": true,
   "scripts": {
     "build": "next build",
-    "dev": "node server.mjs",
-    "start": "NODE_ENV=production node server.mjs",
+    "dev": "node --max-old-space-size=4096 server.mjs",
+    "start": "NODE_ENV=production node --max-old-space-size=4096 server.mjs",
     "postinstall": "fumadocs-mdx",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",

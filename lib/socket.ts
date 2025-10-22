@@ -20,6 +20,11 @@ export function initSocket(httpServer: HTTPServer): SocketIOServer {
 
   io.on('connection', (socket) => {
     console.log('User connected:', socket.id);
+    
+    socket.on('join:dm', (userId: string) => {
+      socket.join(userId);
+    });
+    
     io?.emit('users:count', io.engine.clientsCount);
 
     socket.on('chat:message', async (data: { content: string; userId: string; userName: string; userImage?: string }) => {
@@ -37,6 +42,26 @@ export function initSocket(httpServer: HTTPServer): SocketIOServer {
         io?.emit('chat:message', message);
       } catch (error) {
         console.error('Error saving message:', error);
+      }
+    });
+
+    socket.on('dm:message', async (data: { content: string; senderId: string; receiverId: string; senderName: string; senderImage?: string }) => {
+      try {
+        const { db } = await import('./db');
+        const { directMessages } = await import('./db/schema');
+        
+        const [message] = await db.insert(directMessages).values({
+          content: data.content,
+          senderId: data.senderId,
+          receiverId: data.receiverId,
+          senderName: data.senderName,
+          senderImage: data.senderImage,
+        }).returning();
+
+        socket.emit('dm:message', message);
+        socket.to(data.receiverId).emit('dm:message', message);
+      } catch (error) {
+        console.error('Error saving DM:', error);
       }
     });
 

@@ -28,6 +28,16 @@ interface Message {
   hypes?: number;
 }
 
+interface DMMessage {
+  id: number;
+  content: string;
+  senderId: string;
+  receiverId: string;
+  senderName: string;
+  senderImage?: string | null;
+  createdAt: string;
+}
+
 export default function CommunityPage() {
   const { data: session, isPending } = useSession();
   const { socket, isConnected } = useSocket();
@@ -41,6 +51,10 @@ export default function CommunityPage() {
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [linkToOpen, setLinkToOpen] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedDM, setSelectedDM] = useState<{ userId: string; userName: string; userImage?: string | null } | null>(null);
+  const [dmMessages, setDmMessages] = useState<DMMessage[]>([]);
+  const [dmLoading, setDmLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const oldestMessageId = useRef<number | null>(null);
@@ -53,14 +67,55 @@ export default function CommunityPage() {
   }, [session, isPending]);
 
   useEffect(() => {
+    if (!selectedDM || !session?.user) return;
+    
+    setDmLoading(true);
+    fetch(`/api/chat/dm?userId=${session.user.id}&otherUserId=${selectedDM.userId}`)
+      .then(res => res.json())
+      .then(data => {
+        setDmMessages(data);
+        setDmLoading(false);
+      })
+      .catch(err => {
+        console.error('Error loading DMs:', err);
+        setDmLoading(false);
+      });
+  }, [selectedDM, session]);
+
+  useEffect(() => {
+    if (!socket || !isConnected || !session?.user) return;
+    
+    socket.emit('join:dm', session.user.id);
+    
+    const handleDM = (message: DMMessage) => {
+      if (selectedDM && (message.senderId === selectedDM.userId || message.receiverId === selectedDM.userId)) {
+        setDmMessages(prev => [...prev, message]);
+      }
+    };
+    
+    socket.on('dm:message', handleDM);
+    
+    return () => {
+      socket.off('dm:message', handleDM);
+    };
+  }, [socket, isConnected, session, selectedDM]);
+
+  useEffect(() => {
     const controller = new AbortController();
     
     fetch('/api/chat/messages?limit=30', { signal: controller.signal })
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to fetch messages');
+        return res.json();
+      })
       .then(data => {
-        console.log('Loaded messages:', data);
+        if (!Array.isArray(data)) {
+          setError('Failed to load messages');
+          setLoading(false);
+          return;
+        }
         setMessages(data);
-        const users = Array.from(new Set(data.map((m: Message) => m.userName)));
+        const users = Array.from(new Set(data.map((m: Message) => m.userName))) as string[];
         setUniqueUsers(users);
         if (data.length > 0) {
           oldestMessageId.current = data[0].id;
@@ -70,9 +125,9 @@ export default function CommunityPage() {
       })
       .catch(err => {
         if (err.name !== 'AbortError') {
-          console.error('Error loading messages:', err);
-          setLoading(false);
+          setError('Failed to connect to chat');
         }
+        setLoading(false);
       });
     
     return () => controller.abort();
@@ -87,7 +142,14 @@ export default function CommunityPage() {
     
     try {
       const res = await fetch(`/api/chat/messages?limit=20&before=${oldestMessageId.current}`);
+      if (!res.ok) throw new Error('Failed to fetch more messages');
       const data = await res.json();
+      
+      if (!Array.isArray(data)) {
+        console.error('Invalid data format:', data);
+        setHasMore(false);
+        return;
+      }
       
       if (data.length > 0) {
         setMessages(prev => [...data, ...prev]);
@@ -108,6 +170,7 @@ export default function CommunityPage() {
       }
     } catch (err) {
       console.error('Error loading more messages:', err);
+      setHasMore(false);
     } finally {
       setIsLoadingMore(false);
     }
@@ -197,15 +260,25 @@ export default function CommunityPage() {
       return;
     }
 
-    const messageData = {
-      content: input.trim(),
-      userId: session.user.id,
-      userName: session.user.name || 'Anonymous',
-      userImage: session.user.image || null,
-    };
+    if (selectedDM) {
+      const dmData = {
+        content: input.trim(),
+        senderId: session.user.id,
+        receiverId: selectedDM.userId,
+        senderName: session.user.name || 'Anonymous',
+        senderImage: session.user.image || null,
+      };
+      socket.emit('dm:message', dmData);
+    } else {
+      const messageData = {
+        content: input.trim(),
+        userId: session.user.id,
+        userName: session.user.name || 'Anonymous',
+        userImage: session.user.image || null,
+      };
+      socket.emit('chat:message', messageData);
+    }
     
-    console.log('Sending message:', messageData);
-    socket.emit('chat:message', messageData);
     setInput('');
   };
 
@@ -231,6 +304,17 @@ export default function CommunityPage() {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
 
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center space-y-4">
+          <p className="text-destructive">{error}</p>
+          <Button onClick={() => window.location.reload()}>Retry</Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen bg-background overflow-hidden">
       {/* Server Sidebar - Hidden on mobile */}
@@ -248,8 +332,17 @@ export default function CommunityPage() {
               return (
                 <div
                   key={user}
-                  className="w-12 h-12 rounded-2xl bg-muted flex items-center justify-center hover:rounded-xl transition-all cursor-pointer relative group"
+                  className={`w-12 h-12 rounded-2xl flex items-center justify-center hover:rounded-xl transition-all cursor-pointer relative group ${
+                    selectedDM?.userName === user ? 'bg-primary' : 'bg-muted'
+                  }`}
                   title={user}
+                  onClick={() => {
+                    setSelectedDM({ 
+                      userId: latestMessage.userId, 
+                      userName: user, 
+                      userImage: latestMessage.userImage 
+                    });
+                  }}
                 >
                   <Avatar className="w-10 h-10">
                     <AvatarImage src={latestMessage?.userImage || undefined} />
@@ -272,7 +365,12 @@ export default function CommunityPage() {
             <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase">
               Text Channels
             </div>
-            <div className="px-2 py-1.5 rounded flex items-center gap-1.5 bg-muted cursor-pointer">
+            <div 
+              className={`px-2 py-1.5 rounded flex items-center gap-1.5 cursor-pointer ${
+                !selectedDM ? 'bg-muted' : 'hover:bg-muted/50'
+              }`}
+              onClick={() => setSelectedDM(null)}
+            >
               <Hash className="w-5 h-5" />
               <span className="text-sm font-medium">general</span>
             </div>
@@ -300,9 +398,21 @@ export default function CommunityPage() {
       <div className="flex-1 flex flex-col">
         {/* Chat Header */}
         <div className="h-12 px-2 sm:px-4 flex items-center justify-between shadow-sm border-b">
-          <div className="flex items-center">
-            <Hash className="w-5 h-5 sm:w-6 sm:h-6 text-muted-foreground mr-2" />
-            <span className="font-semibold text-sm sm:text-base">general</span>
+          <div className="flex items-center gap-2">
+            {selectedDM ? (
+              <>
+                <Avatar className="w-6 h-6 sm:w-8 sm:h-8">
+                  <AvatarImage src={selectedDM.userImage || undefined} />
+                  <AvatarFallback className="text-xs">{selectedDM.userName[0]}</AvatarFallback>
+                </Avatar>
+                <span className="font-semibold text-sm sm:text-base">{selectedDM.userName}</span>
+              </>
+            ) : (
+              <>
+                <Hash className="w-5 h-5 sm:w-6 sm:h-6 text-muted-foreground" />
+                <span className="font-semibold text-sm sm:text-base">general</span>
+              </>
+            )}
           </div>
           <div className="flex items-center gap-1 sm:gap-2">
             <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-10 sm:w-10">
@@ -338,8 +448,23 @@ export default function CommunityPage() {
               </div>
             ) : (
               <div className="py-4 space-y-0.5">
-            {messages.map((message, idx) => {
-              const prevMessage = messages[idx - 1];
+            {(selectedDM ? dmMessages.map(dm => ({
+              id: dm.id,
+              content: dm.content,
+              userId: dm.senderId,
+              userName: dm.senderName,
+              userImage: dm.senderImage,
+              createdAt: dm.createdAt,
+            })) : messages).map((message, idx) => {
+              const displayMessages = selectedDM ? dmMessages.map(dm => ({
+                id: dm.id,
+                content: dm.content,
+                userId: dm.senderId,
+                userName: dm.senderName,
+                userImage: dm.senderImage,
+                createdAt: dm.createdAt,
+              })) : messages;
+              const prevMessage = displayMessages[idx - 1];
               const showAvatar = !prevMessage || prevMessage.userId !== message.userId;
               const timeDiff = prevMessage ? new Date(message.createdAt).getTime() - new Date(prevMessage.createdAt).getTime() : Infinity;
               const isGrouped = !showAvatar && timeDiff < 300000;
@@ -529,7 +654,7 @@ export default function CommunityPage() {
             onChange={setInput}
             onSend={sendMessage}
             disabled={!isConnected}
-            placeholder={isConnected ? "Message #general" : "Connecting..."}
+            placeholder={isConnected ? (selectedDM ? `Message @${selectedDM.userName}` : "Message #general") : "Connecting..."}
             users={uniqueUsers}
           />
         </div>

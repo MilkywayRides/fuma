@@ -10,7 +10,8 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
-import confetti from 'canvas-confetti';
+import { Loader2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 function OnboardingDialogContent() {
   const isOnboarding = useOnboarding();
@@ -18,44 +19,15 @@ function OnboardingDialogContent() {
   const [interests, setInterests] = React.useState<string[]>([]);
   const [phoneNumber, setPhoneNumber] = React.useState('');
   const [countryCode, setCountryCode] = React.useState('+1');
+  const [loading, setLoading] = React.useState(false);
   const { toast } = useToast();
-  const confettiTriggered = React.useRef(false);
-
-  React.useEffect(() => {
-    if (isOnboarding && !confettiTriggered.current) {
-      confettiTriggered.current = true;
-      const end = Date.now() + 3 * 1000;
-      const colors = ['#a786ff', '#fd8bbc', '#eca184', '#f8deb1'];
-
-      const frame = () => {
-        if (Date.now() > end) return;
-        confetti({
-          particleCount: 2,
-          angle: 60,
-          spread: 55,
-          startVelocity: 60,
-          origin: { x: 0, y: 0.5 },
-          colors,
-        });
-        confetti({
-          particleCount: 2,
-          angle: 120,
-          spread: 55,
-          startVelocity: 60,
-          origin: { x: 1, y: 0.5 },
-          colors,
-        });
-        requestAnimationFrame(frame);
-      };
-      frame();
-    }
-  }, [isOnboarding]);
 
   const onContinue = () => {
     setStep(step + 1);
   };
 
   const onFinish = async () => {
+    setLoading(true);
     try {
       const res = await fetch('/api/user/profile', {
         method: 'PATCH',
@@ -76,6 +48,7 @@ function OnboardingDialogContent() {
         description: 'Failed to complete onboarding. Please try again.',
         variant: 'destructive',
       });
+      setLoading(false);
     }
   };
 
@@ -89,16 +62,31 @@ function OnboardingDialogContent() {
     <Dialog open={isOnboarding}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-semibold tracking-tight">
-            {step === 1 ? '🎉 Welcome to Fuma!' : step === 2 ? 'What are your interests?' : 'Contact Information'}
-          </DialogTitle>
-          <DialogDescription>
-            {step === 1 && "We're excited to have you here. Let's get you set up in just a few steps."}
-            {step === 2 && "Select the topics you're interested in to personalize your experience."}
-            {step === 3 && "Add your contact information to stay connected (optional)."}
-          </DialogDescription>
+          <motion.div
+            key={step}
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <DialogTitle className="text-2xl font-semibold tracking-tight">
+              {step === 1 ? '🎉 Welcome to Fuma!' : step === 2 ? 'What are your interests?' : 'Contact Information'}
+            </DialogTitle>
+            <DialogDescription>
+              {step === 1 && "We're excited to have you here. Let's get you set up in just a few steps."}
+              {step === 2 && "Select the topics you're interested in to personalize your experience."}
+              {step === 3 && "Add your contact information to stay connected (optional)."}
+            </DialogDescription>
+          </motion.div>
         </DialogHeader>
-        <div className="space-y-6 py-4">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={step}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.2 }}
+            className="space-y-6 py-4"
+          >
           {step === 2 && (
             <div className="space-y-4">
               <div className="flex items-center space-x-3 rounded-lg border p-4 hover:bg-accent transition-colors">
@@ -144,7 +132,8 @@ function OnboardingDialogContent() {
               </div>
             </div>
           )}
-        </div>
+          </motion.div>
+        </AnimatePresence>
         <DialogFooter className="gap-2">
           {step > 1 && step < 3 && (
             <Button variant="outline" onClick={() => setStep(step - 1)}>Back</Button>
@@ -153,8 +142,11 @@ function OnboardingDialogContent() {
             <Button onClick={onContinue}>Continue</Button>
           ) : (
             <>
-              <Button variant="outline" onClick={() => setStep(step - 1)}>Back</Button>
-              <Button onClick={onFinish}>Finish</Button>
+              <Button variant="outline" onClick={() => setStep(step - 1)} disabled={loading}>Back</Button>
+              <Button onClick={onFinish} disabled={loading}>
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {loading ? 'Finishing...' : 'Finish'}
+              </Button>
             </>
           )}
         </DialogFooter>

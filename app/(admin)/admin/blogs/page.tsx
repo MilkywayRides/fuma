@@ -8,6 +8,8 @@ export const metadata: Metadata = {
   title: 'Blog Posts - Admin',
 };
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminPage() {
   const allPosts = await db.select().from(posts).orderBy(desc(posts.createdAt));
 

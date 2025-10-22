@@ -17,7 +17,7 @@ export function setCache(key: string, data: any): void {
   
   if (cache.size > 100) {
     const firstKey = cache.keys().next().value;
-    cache.delete(firstKey);
+    if (firstKey) cache.delete(firstKey);
   }
 }
 

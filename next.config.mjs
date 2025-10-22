@@ -27,7 +27,6 @@ const config = {
   experimental: {
     optimizePackageImports: ['lucide-react', 'react-icons'],
   },
-  swcMinify: true,
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
   },

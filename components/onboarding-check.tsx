@@ -1,7 +1,7 @@
 'use client';
 
 import { type ReactElement, useEffect, useState, Suspense } from 'react';
-import { auth } from '@/lib/auth';
+import { authClient } from '@/lib/auth-client';
 import { OnboardingDialog } from './onboarding-dialog';
 import { useOnboarding } from '@/hooks/use-onboarding';
 
@@ -22,9 +22,7 @@ function OnboardingCheckContent({ children }: OnboardingCheckProps): ReactElemen
 
       try {
         // Get session
-        const session = await auth.api.getSession({
-          headers: { cookie: document.cookie }
-        });
+        const { data: session } = await authClient.getSession();
 
         if (!mounted || !session?.user) {
           setLoading(false);

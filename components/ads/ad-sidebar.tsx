@@ -31,6 +31,9 @@ export function AdSidebar({ position }: { position: string }) {
     <div className="space-y-4">
       {visibleAds.map((ad) => (
         <div key={ad.id} className="relative rounded-lg border bg-card p-4 shadow-sm">
+          <div className="absolute top-2 left-2 px-2 py-0.5 text-xs font-medium bg-background/80 backdrop-blur-sm border rounded">
+            Ad
+          </div>
           <button
             onClick={() => setDismissed([...dismissed, ad.id])}
             className="absolute top-2 right-2 p-1 rounded hover:bg-accent"

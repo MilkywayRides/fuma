@@ -29,10 +29,10 @@ export function AdInline({ position }: { position: string }) {
   if (!ad || dismissed) return null;
 
   return (
-    <div className="my-8 relative rounded-lg border-2 border-dashed bg-muted/50 p-6">
-      <div className="absolute -top-3 left-4 bg-background px-2 flex items-center gap-1 text-xs text-muted-foreground">
+    <div className="my-8 relative rounded-lg border bg-muted/50 p-6">
+      <div className="absolute top-2 left-2 px-2 py-1 flex items-center gap-1 text-xs font-medium bg-background/80 backdrop-blur-sm border rounded">
         <Sparkles className="w-3 h-3" />
-        Sponsored
+        Ad
       </div>
       
       <button

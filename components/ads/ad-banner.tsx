@@ -38,6 +38,9 @@ export function AdBanner({ position }: { position: string }) {
 
   return (
     <div className="relative w-full bg-gradient-to-r from-primary/10 via-primary/5 to-background border-y">
+      <div className="absolute top-2 left-2 px-2 py-1 text-xs font-medium bg-background/80 backdrop-blur-sm border rounded">
+        Ad
+      </div>
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-4 flex-1">

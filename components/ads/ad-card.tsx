@@ -30,6 +30,9 @@ export function AdCard({ position }: { position: string }) {
 
   return (
     <div className="relative rounded-lg border bg-card text-card-foreground shadow-sm overflow-hidden">
+      <div className="absolute top-2 left-2 z-10 px-2 py-1 text-xs font-medium bg-background/80 backdrop-blur-sm border rounded">
+        Ad
+      </div>
       <button
         onClick={() => setDismissed(true)}
         className="absolute top-2 right-2 z-10 p-1.5 rounded-md hover:bg-accent transition-colors"

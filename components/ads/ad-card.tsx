@@ -21,7 +21,13 @@ export function AdCard({ position }: { position: string }) {
       .then(data => {
         const filtered = data.filter((a: Ad & { position: string }) => a.position === position);
         if (filtered.length > 0) {
-          setAd(filtered[Math.floor(Math.random() * filtered.length)]);
+          const selectedAd = filtered[Math.floor(Math.random() * filtered.length)];
+          setAd(selectedAd);
+          if (navigator.sendBeacon) {
+            navigator.sendBeacon(`/api/ads/${selectedAd.id}/view`);
+          } else {
+            fetch(`/api/ads/${selectedAd.id}/view`, { method: 'POST', keepalive: true });
+          }
         }
       });
   }, [position]);
@@ -42,7 +48,7 @@ export function AdCard({ position }: { position: string }) {
       
       {ad.imageUrl && (
         <div className="relative h-48 w-full overflow-hidden">
-          <img src={ad.imageUrl} alt={ad.title} className="w-full h-full object-cover" />
+          <img src={ad.imageUrl} alt={ad.title} className="w-full h-full object-cover" loading="lazy" />
         </div>
       )}
       
@@ -52,7 +58,7 @@ export function AdCard({ position }: { position: string }) {
         
         {ad.link && (
           <a
-            href={ad.link}
+            href={`/api/ads/redirect/${ad.id}`}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"

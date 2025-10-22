@@ -439,7 +439,7 @@ export default function CommunityPage() {
 
         {/* Messages */}
         <div className="flex-1 h-0 relative">
-          <ScrollArea ref={scrollAreaRef} className="h-full" onScrollCapture={handleScroll}>
+          <ScrollArea ref={scrollAreaRef} className="h-full" onScrollCapture={handleScroll} style={{ willChange: 'scroll-position' }}>
             <div className="px-2 sm:px-4">
             {isLoadingMore && (
               <div className="py-2 flex justify-center">

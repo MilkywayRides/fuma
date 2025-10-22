@@ -2,15 +2,15 @@
 
 import dynamic from 'next/dynamic';
 import { useTheme } from 'next-themes';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, memo } from 'react';
 import { LoadingSpinner } from '@/components/loading-spinner';
 
 const BackgroundGradientAnimation = dynamic(
   () => import('@/components/ui/background-gradient-animation').then(mod => ({ default: mod.BackgroundGradientAnimation })),
-  { ssr: false }
+  { ssr: false, loading: () => <div className="h-[75vh] mt-[30px] mx-[30px] rounded-3xl bg-muted animate-pulse" /> }
 );
-const BlogPostsSection = dynamic(() => import('@/components/blog-posts-section').then(mod => ({ default: mod.BlogPostsSection })));
-const Footer = dynamic(() => import('@/components/footer').then(mod => ({ default: mod.Footer })));
+const BlogPostsSection = dynamic(() => import('@/components/blog-posts-section').then(mod => ({ default: mod.BlogPostsSection })), { ssr: false });
+const Footer = dynamic(() => import('@/components/footer').then(mod => ({ default: mod.Footer })), { ssr: false });
 
 export default function HomePage() {
   const { theme } = useTheme();

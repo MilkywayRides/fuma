@@ -21,6 +21,13 @@ export function AdSidebar({ position }: { position: string }) {
       .then(data => {
         const filtered = data.filter((a: Ad & { position: string }) => a.position === position);
         setAds(filtered);
+        filtered.forEach((ad: Ad) => {
+          if (navigator.sendBeacon) {
+            navigator.sendBeacon(`/api/ads/${ad.id}/view`);
+          } else {
+            fetch(`/api/ads/${ad.id}/view`, { method: 'POST', keepalive: true });
+          }
+        });
       });
   }, [position]);
 
@@ -42,7 +49,7 @@ export function AdSidebar({ position }: { position: string }) {
           </button>
           
           {ad.imageUrl && (
-            <img src={ad.imageUrl} alt={ad.title} className="w-full rounded mb-3 aspect-video object-cover" />
+            <img src={ad.imageUrl} alt={ad.title} className="w-full rounded mb-3 aspect-video object-cover" loading="lazy" />
           )}
           
           <h4 className="font-semibold text-sm mb-2">{ad.title}</h4>
@@ -50,7 +57,7 @@ export function AdSidebar({ position }: { position: string }) {
           
           {ad.link && (
             <a
-              href={ad.link}
+              href={`/api/ads/redirect/${ad.id}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-xs text-primary hover:underline font-medium"

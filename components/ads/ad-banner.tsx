@@ -23,16 +23,14 @@ export function AdBanner({ position }: { position: string }) {
         if (filtered.length > 0) {
           const selectedAd = filtered[Math.floor(Math.random() * filtered.length)];
           setAd(selectedAd);
-          fetch(`/api/ads/${selectedAd.id}/view`, { method: 'POST' });
+          if (navigator.sendBeacon) {
+            navigator.sendBeacon(`/api/ads/${selectedAd.id}/view`);
+          } else {
+            fetch(`/api/ads/${selectedAd.id}/view`, { method: 'POST', keepalive: true });
+          }
         }
       });
   }, [position]);
-
-  const handleClick = () => {
-    if (ad) {
-      fetch(`/api/ads/${ad.id}/click`, { method: 'POST' });
-    }
-  };
 
   if (!ad || dismissed) return null;
 
@@ -45,7 +43,7 @@ export function AdBanner({ position }: { position: string }) {
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-4 flex-1">
             {ad.imageUrl && (
-              <img src={ad.imageUrl} alt={ad.title} className="w-16 h-16 rounded object-cover" />
+              <img src={ad.imageUrl} alt={ad.title} className="w-16 h-16 rounded object-cover" loading="lazy" />
             )}
             <div className="flex-1">
               <h3 className="font-semibold mb-1">{ad.title}</h3>
@@ -56,10 +54,9 @@ export function AdBanner({ position }: { position: string }) {
           <div className="flex items-center gap-2">
             {ad.link && (
               <a
-                href={ad.link}
+                href={`/api/ads/redirect/${ad.id}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                onClick={handleClick}
                 className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
               >
                 Learn More

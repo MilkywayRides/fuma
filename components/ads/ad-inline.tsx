@@ -21,7 +21,13 @@ export function AdInline({ position }: { position: string }) {
       .then(data => {
         const filtered = data.filter((a: Ad & { position: string }) => a.position === position);
         if (filtered.length > 0) {
-          setAd(filtered[Math.floor(Math.random() * filtered.length)]);
+          const selectedAd = filtered[Math.floor(Math.random() * filtered.length)];
+          setAd(selectedAd);
+          if (navigator.sendBeacon) {
+            navigator.sendBeacon(`/api/ads/${selectedAd.id}/view`);
+          } else {
+            fetch(`/api/ads/${selectedAd.id}/view`, { method: 'POST', keepalive: true });
+          }
         }
       });
   }, [position]);
@@ -44,7 +50,7 @@ export function AdInline({ position }: { position: string }) {
       
       <div className="flex gap-4 items-start">
         {ad.imageUrl && (
-          <img src={ad.imageUrl} alt={ad.title} className="w-24 h-24 rounded object-cover flex-shrink-0" />
+          <img src={ad.imageUrl} alt={ad.title} className="w-24 h-24 rounded object-cover flex-shrink-0" loading="lazy" />
         )}
         
         <div className="flex-1">
@@ -53,7 +59,7 @@ export function AdInline({ position }: { position: string }) {
           
           {ad.link && (
             <a
-              href={ad.link}
+              href={`/api/ads/redirect/${ad.id}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center text-sm font-medium text-primary hover:underline"

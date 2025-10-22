@@ -83,24 +83,6 @@ export default function CommunityPage() {
   }, [selectedDM, session]);
 
   useEffect(() => {
-    if (!socket || !isConnected || !session?.user) return;
-    
-    socket.emit('join:dm', session.user.id);
-    
-    const handleDM = (message: DMMessage) => {
-      if (selectedDM && (message.senderId === selectedDM.userId || message.receiverId === selectedDM.userId)) {
-        setDmMessages(prev => [...prev, message]);
-      }
-    };
-    
-    socket.on('dm:message', handleDM);
-    
-    return () => {
-      socket.off('dm:message', handleDM);
-    };
-  }, [socket, isConnected, session, selectedDM]);
-
-  useEffect(() => {
     const controller = new AbortController();
     
     fetch('/api/chat/messages?limit=30', { signal: controller.signal })
@@ -176,52 +158,7 @@ export default function CommunityPage() {
     }
   };
 
-  useEffect(() => {
-    if (!socket || !isConnected) {
-      console.log('Socket not ready:', { socket: !!socket, isConnected });
-      return;
-    }
 
-    console.log('Setting up socket listeners');
-
-    const handleMessage = (message: Message) => {
-      console.log('✅ Received message:', message);
-      setMessages(prev => [...prev, message]);
-      setUniqueUsers(prev => {
-        if (!prev.includes(message.userName)) {
-          return [...prev, message.userName];
-        }
-        return prev;
-      });
-    };
-
-    const handleUserCount = (count: number) => {
-      console.log('👥 Online users:', count);
-      setOnlineUsers(count);
-    };
-
-    const handleHypeUpdate = (data: { messageId: number; hypes: number }) => {
-      setMessages(prev => prev.map(msg => 
-        msg.id === data.messageId ? { ...msg, hypes: data.hypes } : msg
-      ));
-    };
-
-    const handleMessageDelete = (data: { messageId: number }) => {
-      setMessages(prev => prev.filter(msg => msg.id !== data.messageId));
-    };
-
-    socket.on('chat:message', handleMessage);
-    socket.on('users:count', handleUserCount);
-    socket.on('message:hype', handleHypeUpdate);
-    socket.on('message:delete', handleMessageDelete);
-
-    return () => {
-      socket.off('chat:message', handleMessage);
-      socket.off('users:count', handleUserCount);
-      socket.off('message:hype', handleHypeUpdate);
-      socket.off('message:delete', handleMessageDelete);
-    };
-  }, [socket, isConnected]);
 
   useEffect(() => {
     if (!showScrollButton && messages.length > 0) {
@@ -252,52 +189,57 @@ export default function CommunityPage() {
     }
   };
 
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (!input.trim() || !session?.user) return;
-    
-    if (!socket || !isConnected) {
-      console.error('Socket not connected');
-      return;
-    }
 
-    if (selectedDM) {
-      const dmData = {
-        content: input.trim(),
-        senderId: session.user.id,
-        receiverId: selectedDM.userId,
-        senderName: session.user.name || 'Anonymous',
-        senderImage: session.user.image || null,
-      };
-      socket.emit('dm:message', dmData);
-    } else {
-      const messageData = {
-        content: input.trim(),
-        userId: session.user.id,
-        userName: session.user.name || 'Anonymous',
-        userImage: session.user.image || null,
-      };
-      socket.emit('chat:message', messageData);
-    }
+    const messageData = {
+      content: input.trim(),
+      userId: session.user.id,
+      userName: session.user.name || 'Anonymous',
+      userImage: session.user.image || null,
+    };
     
     setInput('');
+    
+    try {
+      const res = await fetch('/api/chat/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(messageData),
+      });
+      
+      if (res.ok) {
+        const newMessage = await res.json();
+        setMessages(prev => [...prev, newMessage]);
+      }
+    } catch (error) {
+      console.error('Failed to send message:', error);
+    }
   };
 
-  const handleHype = (messageId: number) => {
-    if (!socket || !isConnected || hypedMessages.has(messageId)) return;
+  const handleHype = async (messageId: number) => {
+    if (hypedMessages.has(messageId)) return;
     
-    socket.emit('message:hype', { messageId });
     setHypedMessages(prev => new Set(prev).add(messageId));
-    
     setMessages(prev => prev.map(msg => 
       msg.id === messageId ? { ...msg, hypes: (msg.hypes || 0) + 250 } : msg
     ));
+    
+    fetch('/api/chat/hype', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messageId }),
+    }).catch(() => {});
   };
 
-  const handleDeleteMessage = (messageId: number) => {
-    if (!socket || !isConnected) return;
-    
-    socket.emit('message:delete', { messageId });
+  const handleDeleteMessage = async (messageId: number) => {
     setMessages(prev => prev.filter(msg => msg.id !== messageId));
+    
+    fetch('/api/chat/delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messageId }),
+    }).catch(() => {});
   };
 
   if (isPending) {
@@ -307,6 +249,26 @@ export default function CommunityPage() {
       </div>
     );
   }
+
+  useEffect(() => {
+    if (!isConnected) return;
+    
+    const pollMessages = setInterval(() => {
+      const lastId = messages[messages.length - 1]?.id;
+      if (lastId) {
+        fetch(`/api/chat/messages?limit=10&after=${lastId}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.length > 0) {
+              setMessages(prev => [...prev, ...data]);
+            }
+          })
+          .catch(() => {});
+      }
+    }, 3000);
+    
+    return () => clearInterval(pollMessages);
+  }, [messages, isConnected]);
 
   if (error) {
     return (

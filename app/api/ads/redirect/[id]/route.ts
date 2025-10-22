@@ -9,8 +9,7 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
-  const adId = parseInt(id);
+  const { id: adId } = await params;
   
   try {
     const [ad] = await db.select({ link: advertisements.link }).from(advertisements).where(eq(advertisements.id, adId)).limit(1);

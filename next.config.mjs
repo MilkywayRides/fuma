@@ -19,9 +19,7 @@ const config = {
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 60,
   },
-  env: {
-    DATABASE_URL: process.env.DATABASE_URL,
-  },
+
   compress: true,
   poweredByHeader: false,
   experimental: {
@@ -30,7 +28,6 @@ const config = {
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
   },
-  output: 'standalone',
 };
 
 export default withMDX(config);

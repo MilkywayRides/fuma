@@ -171,7 +171,7 @@ export const flowchartEmbeds = pgTable('flowchartEmbeds', {
 });
 
 export const advertisements = pgTable('advertisements', {
-  id: serial('id').primaryKey(),
+  id: text('id').primaryKey(),
   title: text('title').notNull(),
   content: text('content').notNull(),
   link: text('link'),
@@ -184,7 +184,7 @@ export const advertisements = pgTable('advertisements', {
 
 export const adClicks = pgTable('adClicks', {
   id: serial('id').primaryKey(),
-  adId: integer('adId')
+  adId: text('adId')
     .notNull()
     .references(() => advertisements.id, { onDelete: 'cascade' }),
   ipAddress: text('ipAddress'),
@@ -194,7 +194,7 @@ export const adClicks = pgTable('adClicks', {
 
 export const adViews = pgTable('adViews', {
   id: serial('id').primaryKey(),
-  adId: integer('adId')
+  adId: text('adId')
     .notNull()
     .references(() => advertisements.id, { onDelete: 'cascade' }),
   ipAddress: text('ipAddress'),

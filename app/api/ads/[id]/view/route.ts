@@ -10,7 +10,7 @@ export async function POST(
   const ipAddress = request.headers.get('x-forwarded-for') || 'unknown';
 
   await db.insert(adViews).values({
-    adId: parseInt(id),
+    adId: id,
     ipAddress,
   });
 

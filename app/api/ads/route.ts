@@ -5,6 +5,10 @@ import { desc, eq } from 'drizzle-orm';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 
+function generateId(): string {
+  return Math.random().toString(36).substring(2, 10);
+}
+
 export async function GET() {
   const ads = await db.select().from(advertisements).where(eq(advertisements.active, true)).orderBy(desc(advertisements.createdAt));
   return NextResponse.json(ads);
@@ -20,6 +24,7 @@ export async function POST(request: Request) {
   const { title, content, link, imageUrl, position } = body;
 
   const [ad] = await db.insert(advertisements).values({
+    id: generateId(),
     title,
     content,
     link,

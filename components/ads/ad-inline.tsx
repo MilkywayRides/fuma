@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { X, Sparkles } from 'lucide-react';
 
 interface Ad {
-  id: number;
+  id: string;
   title: string;
   content: string;
   link: string | null;

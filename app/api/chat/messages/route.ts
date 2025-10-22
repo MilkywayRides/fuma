@@ -6,6 +6,7 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const limit = parseInt(url.searchParams.get('limit') || '30');
   const before = url.searchParams.get('before');
+  const after = url.searchParams.get('after');
 
   let query = db
     .select({
@@ -24,6 +25,9 @@ export async function GET(request: Request) {
   if (before) {
     const { lt } = await import('drizzle-orm');
     query = query.where(lt(chatMessages.id, parseInt(before))) as any;
+  } else if (after) {
+    const { gt } = await import('drizzle-orm');
+    query = query.where(gt(chatMessages.id, parseInt(after))) as any;
   }
 
   const messages = await query;

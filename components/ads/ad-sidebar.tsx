@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 
 interface Ad {
-  id: number;
+  id: string;
   title: string;
   content: string;
   link: string | null;
@@ -13,7 +13,7 @@ interface Ad {
 
 export function AdSidebar({ position }: { position: string }) {
   const [ads, setAds] = useState<Ad[]>([]);
-  const [dismissed, setDismissed] = useState<number[]>([]);
+  const [dismissed, setDismissed] = useState<string[]>([]);
 
   useEffect(() => {
     fetch('/api/ads')
@@ -42,7 +42,7 @@ export function AdSidebar({ position }: { position: string }) {
             Ad
           </div>
           <button
-            onClick={() => setDismissed([...dismissed, ad.id])}
+            onClick={() => setDismissed(prev => [...prev, ad.id])}
             className="absolute top-2 right-2 p-1 rounded hover:bg-accent"
           >
             <X className="w-3 h-3" />

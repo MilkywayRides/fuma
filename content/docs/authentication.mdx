@@ -1,0 +1,113 @@
+---
+title: Authentication
+description: Sign up, sign in, and account management
+---
+
+## Account Creation
+
+### Sign Up Process
+
+1. Visit `/sign-up`
+2. Enter your details:
+   - **Name**: Your full name
+   - **Email**: Valid email address
+   - **Password**: Minimum 8 characters
+3. Click "Sign Up"
+4. Account created with User role by default
+
+### Password Requirements
+- Minimum 8 characters
+- No special character requirements
+- Case-sensitive
+
+## Signing In
+
+### Sign In Process
+
+1. Visit `/sign-in`
+2. Enter credentials:
+   - Email address
+   - Password
+3. Click "Sign In"
+4. Redirected to home page
+
+### First Time Login
+After first sign-in, you'll see an onboarding dialog introducing platform features.
+
+## User Profile
+
+### Accessing Profile
+Click your avatar in the bottom-left corner (desktop) to view:
+- Name and email
+- Settings option
+- Sign out button
+
+### Settings
+Press **Alt + S** or click Settings to access:
+- Profile information
+- Account preferences
+- Theme settings
+
+## Account Security
+
+### Password Management
+Currently, password changes require admin assistance. Contact your administrator to reset your password.
+
+### Session Management
+- Sessions persist across browser restarts
+- Sign out to end session
+- Automatic session refresh
+
+## Sign Out
+
+### How to Sign Out
+
+1. Click your avatar (bottom-left on desktop)
+2. Click "Sign Out"
+3. Redirected to sign-in page
+4. Session cleared
+
+## Role Management
+
+### Default Role
+New accounts start as **User** role with access to:
+- Public blog posts
+- Community chat
+- Documentation
+
+### Role Upgrades
+Administrators can upgrade your role using:
+```bash
+npm run set-admin your@email.com Admin
+```
+
+### Role Permissions
+
+**User**:
+- View published blog posts
+- Participate in community chat
+- Access documentation
+
+**Admin**:
+- All User permissions
+- Access admin dashboard
+- Create/edit blog posts
+- Manage content
+
+**SuperAdmin**:
+- All Admin permissions
+- Full system access
+
+## Troubleshooting
+
+### Can't Sign In
+- Verify email and password
+- Check for typos
+- Ensure account exists
+- Contact administrator
+
+### Forgot Password
+Contact your administrator for password reset.
+
+### Account Locked
+Contact administrator if you're unable to access your account.

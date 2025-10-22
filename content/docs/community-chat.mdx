@@ -1,0 +1,98 @@
+---
+title: Community Chat
+description: Real-time Discord-style chat with channels and direct messages
+---
+
+## Overview
+
+The Community Chat at `/community` provides a Discord-like experience with real-time messaging, channels, and direct messages.
+
+## Interface Layout
+
+### Desktop View
+- **Server Sidebar** (left): Shows DM avatars
+- **Channel Sidebar**: Lists text channels and user profile
+- **Main Chat Area**: Messages and input editor
+- **Members Sidebar** (right): Online users list
+
+### Mobile View
+- **Menu Button**: Toggle channels sidebar
+- **Users Button**: Toggle members sidebar
+- **Responsive Layout**: Optimized for mobile keyboards
+
+## Channels
+
+### General Channel
+Access via `/community?channel=ch_general_001`
+
+The default public channel where all users can chat.
+
+## Direct Messages
+
+### Starting a DM
+1. Hover over any username in chat
+2. Click "Send DM" button in the hover card
+3. Or click user avatar in the left sidebar
+
+### DM URLs
+Format: `/community?dm=dm_userId1_userId2`
+
+DM IDs are deterministic hashes of both user IDs for privacy.
+
+## Message Features
+
+### Rich Text Formatting
+- **Bold**: `**text**`
+- **Italic**: `*text*`
+- **Code**: `` `code` ``
+- **Code Block**: ` ```code``` `
+
+### LaTeX Math
+- Inline: `$equation$`
+- Block: `$$equation$$`
+
+### User Mentions
+Type `@username` to mention users (highlighted in blue)
+
+### YouTube Embeds
+Paste YouTube links to auto-embed videos
+
+### External Links
+Links show confirmation dialog before opening
+
+### Emoji Picker
+Click emoji icon in editor to insert emojis
+
+### File Upload
+Click paperclip icon to upload files (images, documents)
+
+## Message Actions
+
+### Hype Button
+- Click ⚡ to give 250 hype points
+- Only available in channels (not DMs)
+- One hype per user per message
+
+### Delete Message
+- Only your own messages
+- Click trash icon to delete
+
+## Online Users
+
+View all online users in the right sidebar:
+- Green indicator shows online status
+- Updates every 5 seconds
+- Shows user avatars and names
+
+## Keyboard Shortcuts
+
+- **Enter**: Send message
+- **Shift + Enter**: New line
+- **Alt + S**: Open settings (from user button)
+
+## Mobile Features
+
+- Input sticks above keyboard
+- Swipe-friendly sidebars
+- Optimized touch targets
+- Responsive message layout

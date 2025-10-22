@@ -1,0 +1,49 @@
+---
+title: Getting Started
+description: Learn how to set up and use BlazeNeuro
+---
+
+## Welcome to BlazeNeuro
+
+BlazeNeuro is a modern blog and community platform with real-time chat, role-based access control, and powerful content management features.
+
+## Quick Start
+
+### 1. Create an Account
+
+Visit `/sign-up` to create your account with:
+- Full name
+- Email address
+- Password (minimum 8 characters)
+
+### 2. Sign In
+
+Go to `/sign-in` and enter your credentials to access the platform.
+
+### 3. Complete Onboarding
+
+After signing in for the first time, you'll see an onboarding dialog that introduces you to the platform's features.
+
+## User Roles
+
+BlazeNeuro has three user roles:
+
+- **User**: Default role, can view published blog posts and participate in community chat
+- **Admin**: Can access admin dashboard, create/edit blog posts, and manage content
+- **SuperAdmin**: Full access to all features
+
+To change a user's role, run:
+```bash
+npm run set-admin <email> <role>
+```
+
+Example:
+```bash
+npm run set-admin user@example.com Admin
+```
+
+## Next Steps
+
+- [Explore the Community Chat](/docs/community-chat)
+- [Learn About Blog Features](/docs/blog-features)
+- [Admin Dashboard Guide](/docs/admin-dashboard)

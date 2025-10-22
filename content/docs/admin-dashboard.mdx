@@ -1,0 +1,105 @@
+---
+title: Admin Dashboard
+description: Manage blog posts, scripts, and content (Admin/SuperAdmin only)
+---
+
+## Admin Access
+
+The admin dashboard is available at `/admin` for users with Admin or SuperAdmin roles.
+
+## Dashboard Overview
+
+### Posts Management
+View all blog posts with:
+- Title and slug
+- Publication status (Published/Draft)
+- Creation date
+- Quick actions (Edit, Delete)
+
+### Navigation
+- **All Posts**: Main dashboard view
+- **New Post**: Create new blog post
+- **Scripts**: Flow scripts dashboard
+- **View Blog**: Return to public blog
+
+## Creating Blog Posts
+
+### 1. Access New Post
+Click "New Post" button or visit `/admin/posts/new`
+
+### 2. Fill Post Details
+- **Title**: Post headline (auto-generates slug)
+- **Slug**: URL-friendly identifier
+- **Content**: Markdown editor with preview
+- **Published**: Toggle to publish immediately
+
+### 3. Markdown Editor
+Features:
+- Live preview
+- Toolbar with formatting options
+- Fullscreen mode
+- Syntax highlighting
+- Dark mode support
+
+### 4. Save Post
+Click "Create Post" to save. Published posts appear immediately on the blog.
+
+## Editing Posts
+
+### 1. Access Edit Page
+From dashboard, click "Edit" on any post or visit `/admin/posts/[id]/edit`
+
+### 2. Modify Content
+- Update title, slug, or content
+- Toggle published status
+- Preview changes
+
+### 3. Save Changes
+Click "Update Post" to save modifications.
+
+## Deleting Posts
+
+1. Click "Delete" button on post
+2. Confirm deletion
+3. Post is permanently removed
+
+## Flow Scripts
+
+### Scripts Dashboard
+Access at `/admin/scripts` to view all workflow automations.
+
+### Visual Flow Editor
+Visit `/admin/scripts/[uuid]` for n8n-style visual workflow editor:
+- Drag-and-drop nodes
+- Connect workflow steps
+- Configure node settings
+- Test and deploy flows
+
+### Python Backend
+Scripts execute on Modal for serverless Python execution.
+
+## Best Practices
+
+### Content Management
+- Use descriptive titles
+- Create SEO-friendly slugs
+- Preview before publishing
+- Keep drafts for work-in-progress
+
+### Publishing Workflow
+1. Create post as draft
+2. Review and edit content
+3. Preview formatting
+4. Publish when ready
+
+### Markdown Tips
+- Use headers for structure
+- Add code blocks for examples
+- Include images for visual content
+- Use lists for readability
+
+## Admin Shortcuts
+
+- **Alt + S**: Open settings from user button
+- **Markdown Preview**: Toggle in editor
+- **Fullscreen**: Expand editor for focus

@@ -497,7 +497,8 @@ export default function CommunityPage() {
                         const youtubeRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})(?:[^\s]*)?/g;
                         const match = message.content.match(youtubeRegex);
                         if (match) {
-                          const videoId = match[0].match(/([a-zA-Z0-9_-]{11})/)[1];
+                          const videoId = match[0].match(/([a-zA-Z0-9_-]{11})/)?.[1];
+                          if (!videoId) return null;
                           const textContent = message.content.replace(youtubeRegex, '').trim();
                           return (
                             <div className="space-y-2">

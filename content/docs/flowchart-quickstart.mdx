@@ -1,0 +1,130 @@
+---
+title: Flowchart Quick Start
+description: Get started with flowchart creation in 5 minutes
+---
+
+# Flowchart Quick Start
+
+Create your first flowchart in minutes with this quick start guide.
+
+## Step 1: Access Flow Editor
+
+1. Navigate to `/admin/flow`
+2. Click **"Create New Flowchart"**
+3. Enter a name for your flowchart
+4. Click **"Create"**
+
+## Step 2: Add Nodes Visually
+
+### Using Context Menu
+1. Right-click anywhere on the canvas
+2. Select node type:
+   - **Input Node** - Starting point
+   - **Default Node** - Processing step
+   - **Output Node** - End point
+
+### Editing Nodes
+- Click on a node to select it
+- Edit title and content in the properties panel
+- Drag nodes to reposition them
+
+## Step 3: Connect Nodes
+
+1. Hover over a node to see connection handles
+2. Click and drag from one node to another
+3. Release to create a connection
+
+## Step 4: Use Code Editor
+
+### Open Code Panel
+Click **"Show Code"** button in the top toolbar
+
+### Quick Script Example
+```javascript
+// Clear canvas
+clearAll();
+
+// Create a simple workflow
+const start = addNode('input', 100, 200, {
+  title: 'Start',
+  content: 'Begin'
+});
+
+const process = addNode('default', 300, 200, {
+  title: 'Process',
+  content: 'Work'
+});
+
+const end = addNode('output', 500, 200, {
+  title: 'End',
+  content: 'Done'
+});
+
+// Connect them
+connectNodes(start, process);
+connectNodes(process, end);
+```
+
+Click **"Run Script"** to execute.
+
+## Step 5: Save Your Work
+
+Click the **"Save"** button in the top toolbar to persist your flowchart.
+
+## Common Patterns
+
+### Linear Workflow
+```javascript
+clearAll();
+const nodes = [];
+for (let i = 0; i < 5; i++) {
+  nodes.push(addNode('default', i * 200 + 100, 200, {
+    title: `Step ${i + 1}`
+  }));
+}
+for (let i = 0; i < nodes.length - 1; i++) {
+  connectNodes(nodes[i], nodes[i + 1]);
+}
+```
+
+### Grid Layout
+```javascript
+clearAll();
+createGrid(3, 3, 200);
+```
+
+### Tree Structure
+```javascript
+clearAll();
+createTree(3, 2); // 3 levels, 2 branches
+```
+
+### Circular Flow
+```javascript
+clearAll();
+const nodes = [];
+for (let i = 0; i < 6; i++) {
+  nodes.push(addNode('default', 0, 0, { title: `Step ${i + 1}` }));
+}
+layoutCircular(nodes, 400, 300, 200);
+```
+
+## Keyboard Shortcuts
+
+- **Delete** - Remove selected node/edge
+- **Ctrl/Cmd + Z** - Undo (browser default)
+- **Spacebar** - Works in code editor
+
+## Next Steps
+
+- Read the [Complete API Reference](/docs/flowchart-scripting)
+- Learn about [JSON Editing](/docs/flowchart-json)
+- Explore [Advanced Patterns](/docs/flowchart-patterns)
+
+## Tips
+
+1. **Start Simple** - Begin with a few nodes and build up
+2. **Use Scripting** - Automate repetitive tasks with code
+3. **Save Often** - Click save regularly to avoid losing work
+4. **Experiment** - Try different layouts and patterns
+5. **Check Docs** - Refer to API docs for advanced features

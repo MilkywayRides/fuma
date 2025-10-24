@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import ReactFlow, {
   Background,
@@ -17,7 +17,7 @@ import ReactFlow, {
   useReactFlow,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { ArrowLeft, Save, Loader2 } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, Code } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { DefaultNode, InputNode, OutputNode } from '@/components/flow-nodes';
@@ -28,6 +28,8 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from '@/components/ui/context-menu';
+import Editor from '@monaco-editor/react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const customNodeTypes = {
   default: DefaultNode,
@@ -46,7 +48,28 @@ function FlowEditor({ initialNodes, initialEdges, onSave }: { initialNodes: Node
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; flowX: number; flowY: number } | null>(null);
 
   useEffect(() => {
-    onSave(nodes, edges);
+    setNodes(initialNodes);
+  }, [initialNodes, setNodes]);
+
+  useEffect(() => {
+    setEdges(initialEdges);
+  }, [initialEdges, setEdges]);
+
+  const saveTimeoutRef = useRef<NodeJS.Timeout>();
+  
+  useEffect(() => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    saveTimeoutRef.current = setTimeout(() => {
+      onSave(nodes, edges);
+    }, 300);
+    
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
   }, [nodes, edges]);
 
   const onConnect = useCallback(
@@ -143,6 +166,25 @@ export default function FlowchartEditor() {
   const [title, setTitle] = useState('');
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [codeEditorOpen, setCodeEditorOpen] = useState(false);
+  const [code, setCode] = useState('');
+  const [editorWidth, setEditorWidth] = useState(50);
+  const [isResizing, setIsResizing] = useState(false);
+  const [isCodeEditing, setIsCodeEditing] = useState(false);
+  const [scriptCode, setScriptCode] = useState(`// Declarative Flowchart Definition
+// Define your flowchart structure - running multiple times produces same result
+
+return {
+  nodes: [
+    { id: 'start', type: 'input', x: 100, y: 100, title: 'Start', content: 'Begin' },
+    { id: 'process', type: 'default', x: 300, y: 100, title: 'Process', content: 'Work' },
+    { id: 'end', type: 'output', x: 500, y: 100, title: 'End', content: 'Done' }
+  ],
+  edges: [
+    { from: 'start', to: 'process' },
+    { from: 'process', to: 'end' }
+  ]
+};`);
 
   useEffect(() => {
     setLoading(true);
@@ -180,9 +222,119 @@ export default function FlowchartEditor() {
     setEdges(newEdges);
   }, []);
 
+  const handleOpenCodeEditor = () => {
+    setCodeEditorOpen(!codeEditorOpen);
+  };
 
+  const generateScriptFromFlow = useCallback((nodes: Node[], edges: Edge[]) => {
+    const nodesDef = nodes.map(n => 
+      `    { id: '${n.id}', type: '${n.type}', x: ${Math.round(n.position.x)}, y: ${Math.round(n.position.y)}, title: '${n.data.title || ''}', content: '${n.data.content || ''}' }`
+    ).join(',\n');
+    
+    const edgesDef = edges.map(e => 
+      `    { from: '${e.source}', to: '${e.target}' }`
+    ).join(',\n');
+    
+    return `// Declarative Flowchart Definition\n// Define your flowchart structure - running multiple times produces same result\n\nreturn {\n  nodes: [\n${nodesDef}\n  ],\n  edges: [\n${edgesDef}\n  ]\n};`;
+  }, []);
 
+  useEffect(() => {
+    if (!isCodeEditing && nodes.length > 0) {
+      const timer = setTimeout(() => {
+        setCode(JSON.stringify({ nodes, edges }, null, 2));
+        const scriptDef = generateScriptFromFlow(nodes, edges);
+        setScriptCode(scriptDef);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [nodes, edges, isCodeEditing, generateScriptFromFlow]);
 
+  const handleCodeChange = (value: string | undefined) => {
+    if (!value) return;
+    setCode(value);
+    setIsCodeEditing(true);
+    try {
+      const flowData = JSON.parse(value);
+      setNodes(flowData.nodes || []);
+      setEdges(flowData.edges || []);
+    } catch (error) {
+      // Invalid JSON
+    }
+    setTimeout(() => setIsCodeEditing(false), 100);
+  };
+
+  const handleScriptChange = (value: string | undefined) => {
+    if (value !== undefined) {
+      setScriptCode(value);
+    }
+  };
+
+  const executeScript = () => {
+    try {
+      setIsCodeEditing(true);
+      
+      const func = new Function(scriptCode);
+      const definition = func();
+      
+      if (!definition || !definition.nodes) {
+        throw new Error('Script must return an object with nodes array');
+      }
+      
+      const newNodes: Node[] = definition.nodes.map((n: any) => ({
+        id: n.id || `node-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        type: n.type || 'default',
+        position: { x: n.x || 0, y: n.y || 0 },
+        data: {
+          title: n.title || 'Node',
+          content: n.content || ''
+        }
+      }));
+      
+      const newEdges: Edge[] = (definition.edges || []).map((e: any) => ({
+        id: `e${e.from}-${e.to}`,
+        source: e.from,
+        target: e.to,
+        type: 'animated'
+      }));
+      
+      setNodes(newNodes);
+      setEdges(newEdges);
+      
+      toast.success(`Flowchart updated: ${newNodes.length} nodes, ${newEdges.length} edges`);
+      
+      setTimeout(() => setIsCodeEditing(false), 100);
+    } catch (error: any) {
+      toast.error(`Script error: ${error.message}`);
+      setIsCodeEditing(false);
+    }
+  };
+
+  const handleMouseDown = () => {
+    setIsResizing(true);
+  };
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!isResizing) return;
+    const newWidth = (e.clientX / window.innerWidth) * 100;
+    if (newWidth > 20 && newWidth < 80) {
+      setEditorWidth(newWidth);
+    }
+  }, [isResizing]);
+
+  const handleMouseUp = () => {
+    setIsResizing(false);
+  };
+
+  useEffect(() => {
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isResizing, handleMouseMove]);
 
   if (loading) {
     return (
@@ -193,24 +345,94 @@ export default function FlowchartEditor() {
   }
 
   return (
-    <div className="fixed inset-0 bg-background z-50">
-      <div className="absolute top-4 left-4 z-10 flex gap-2">
-        <Button variant="outline" size="icon" onClick={() => router.push('/admin/flow')}>
-          <ArrowLeft className="w-4 h-4" />
-        </Button>
-        <Button onClick={handleSave} disabled={saving}>
-          <Save className="w-4 h-4 mr-2" />
-          {saving ? 'Saving...' : 'Save'}
-        </Button>
-        <div className="px-4 py-2 bg-card border rounded-md">
-          <span className="font-medium">{title}</span>
-        </div>
-      </div>
+    <div className="fixed inset-0 bg-background z-50 flex">
+      {codeEditorOpen && (
+        <>
+          <div className="h-full flex flex-col border-r" style={{ width: `${editorWidth}%` }}>
+            <Tabs defaultValue="scripting" className="h-full flex flex-col">
+              <div className="p-4 border-b">
+                <TabsList>
+                  <TabsTrigger value="scripting">Scripting</TabsTrigger>
+                  <TabsTrigger value="json">JSON</TabsTrigger>
+                </TabsList>
+              </div>
+              <TabsContent value="scripting" className="flex-1 m-0 flex flex-col">
+                <div className="p-2 border-b flex items-center justify-between bg-muted/50">
+                  <span className="text-xs text-muted-foreground">Declarative API - Define desired state (syncs with UI)</span>
+                  <Button size="sm" onClick={executeScript}>Apply Script</Button>
+                </div>
+                <div onKeyDown={(e) => e.stopPropagation()} className="flex-1">
+                  <Editor
+                    height="100%"
+                    defaultLanguage="javascript"
+                    value={scriptCode}
+                    onChange={handleScriptChange}
+                    theme="vs-dark"
+                    options={{
+                      minimap: { enabled: false },
+                      fontSize: 14,
+                      lineNumbers: 'on',
+                      scrollBeyondLastLine: false,
+                      automaticLayout: true,
+                      tabSize: 2,
+                      wordWrap: 'on',
+                    }}
+                  />
+                </div>
+              </TabsContent>
+              <TabsContent value="json" className="flex-1 m-0">
+                <div onKeyDown={(e) => e.stopPropagation()} className="h-full">
+                  <Editor
+                    height="100%"
+                    defaultLanguage="json"
+                    value={code}
+                    onChange={handleCodeChange}
+                    theme="vs-dark"
+                    options={{
+                      minimap: { enabled: true },
+                      fontSize: 14,
+                      lineNumbers: 'on',
+                      scrollBeyondLastLine: false,
+                      automaticLayout: true,
+                      formatOnPaste: true,
+                      formatOnType: true,
+                      tabSize: 2,
+                    }}
+                  />
+                </div>
+              </TabsContent>
+            </Tabs>
+          </div>
+          <div
+            className="w-1 bg-border hover:bg-primary cursor-col-resize transition-colors"
+            onMouseDown={handleMouseDown}
+          />
+        </>
+      )}
 
-      <div className="w-full h-full">
-        <ReactFlowProvider>
-          <FlowEditor initialNodes={nodes} initialEdges={edges} onSave={onFlowChange} />
-        </ReactFlowProvider>
+      <div className="flex-1 h-full relative">
+        <div className="absolute top-4 left-4 z-10 flex gap-2">
+          <Button variant="outline" size="icon" onClick={() => router.push('/admin/flow')}>
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
+          <Button onClick={handleSave} disabled={saving}>
+            <Save className="w-4 h-4 mr-2" />
+            {saving ? 'Saving...' : 'Save'}
+          </Button>
+          <Button variant="outline" onClick={handleOpenCodeEditor}>
+            <Code className="w-4 h-4 mr-2" />
+            {codeEditorOpen ? 'Hide' : 'Show'} Code
+          </Button>
+          <div className="px-4 py-2 bg-card border rounded-md">
+            <span className="font-medium">{title}</span>
+          </div>
+        </div>
+
+        <div className="w-full h-full">
+          <ReactFlowProvider>
+            <FlowEditor initialNodes={nodes} initialEdges={edges} onSave={onFlowChange} />
+          </ReactFlowProvider>
+        </div>
       </div>
       
       <style jsx global>{`

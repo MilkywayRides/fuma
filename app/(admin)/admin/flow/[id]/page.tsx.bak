@@ -1,0 +1,769 @@
+'use client';
+
+import { useEffect, useState, useCallback } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import ReactFlow, {
+  Background,
+  Controls,
+  MiniMap,
+  addEdge,
+  useNodesState,
+  useEdgesState,
+  Connection,
+  Node,
+  Edge,
+  ConnectionMode,
+  ReactFlowProvider,
+  useReactFlow,
+} from 'reactflow';
+import 'reactflow/dist/style.css';
+import { ArrowLeft, Save, Loader2, Code } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
+import { DefaultNode, InputNode, OutputNode } from '@/components/flow-nodes';
+import { AnimatedEdge } from '@/components/animated-edge';
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from '@/components/ui/context-menu';
+import Editor from '@monaco-editor/react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
+const customNodeTypes = {
+  default: DefaultNode,
+  input: InputNode,
+  output: OutputNode,
+};
+
+const edgeTypes = {
+  animated: AnimatedEdge,
+};
+
+function FlowEditor({ initialNodes, initialEdges, onSave }: { initialNodes: Node[], initialEdges: Edge[], onSave: (nodes: Node[], edges: Edge[]) => void }) {
+  const reactFlowInstance = useReactFlow();
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; flowX: number; flowY: number } | null>(null);
+
+  useEffect(() => {
+    setNodes(initialNodes);
+  }, [initialNodes, setNodes]);
+
+  useEffect(() => {
+    setEdges(initialEdges);
+  }, [initialEdges, setEdges]);
+
+  useEffect(() => {
+    onSave(nodes, edges);
+  }, [nodes, edges]);
+
+  const onConnect = useCallback(
+    (connection: Connection) => {
+      const newEdge = { ...connection, type: 'animated', id: `e${connection.source}-${connection.target}` };
+      setEdges((eds) => addEdge(newEdge, eds));
+      toast.success('Connected!');
+    },
+    [setEdges]
+  );
+
+  const onPaneClick = useCallback(() => {
+    setNodes((nds) => nds.map((node) => ({ ...node, selected: false })));
+    setEdges((eds) => eds.map((edge) => ({ ...edge, selected: false })));
+  }, [setNodes, setEdges]);
+
+  const onPaneContextMenu = useCallback((event: React.MouseEvent) => {
+    event.preventDefault();
+    const flowPosition = reactFlowInstance.screenToFlowPosition({ x: event.clientX, y: event.clientY });
+    setContextMenu({ x: event.clientX, y: event.clientY, flowX: flowPosition.x, flowY: flowPosition.y });
+  }, [reactFlowInstance]);
+
+  const addNode = (type: string) => {
+    if (!contextMenu) return;
+    const newNode: Node = {
+      id: `${Date.now()}`,
+      type,
+      position: { x: contextMenu.flowX, y: contextMenu.flowY },
+      data: { 
+        title: type === 'input' ? 'Input' : type === 'output' ? 'Output' : 'Title',
+        content: type === 'input' ? 'Start node' : type === 'output' ? 'End node' : 'Content'
+      },
+    };
+    setNodes((nds) => [...nds, newNode]);
+    setContextMenu(null);
+  };
+
+  return (
+    <>
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
+        onPaneClick={onPaneClick}
+        onPaneContextMenu={onPaneContextMenu}
+        nodeTypes={customNodeTypes}
+        edgeTypes={edgeTypes}
+        connectionMode={ConnectionMode.Loose}
+        deleteKeyCode="Delete"
+        defaultEdgeOptions={{ type: 'animated' }}
+        fitView
+      >
+        <Background />
+        <Controls />
+        <MiniMap />
+      </ReactFlow>
+      {contextMenu && (
+        <div
+          className="fixed bg-popover border rounded-md shadow-md p-1 z-50"
+          style={{ left: `${contextMenu.x}px`, top: `${contextMenu.y}px` }}
+          onMouseLeave={() => setContextMenu(null)}
+        >
+          <button
+            className="w-full text-left px-2 py-1.5 text-sm hover:bg-accent rounded-sm"
+            onClick={() => addNode('input')}
+          >
+            Add Input Node
+          </button>
+          <button
+            className="w-full text-left px-2 py-1.5 text-sm hover:bg-accent rounded-sm"
+            onClick={() => addNode('default')}
+          >
+            Add Default Node
+          </button>
+          <button
+            className="w-full text-left px-2 py-1.5 text-sm hover:bg-accent rounded-sm"
+            onClick={() => addNode('output')}
+          >
+            Add Output Node
+          </button>
+        </div>
+      )}
+    </>
+  );
+}
+
+export default function FlowchartEditor() {
+  const params = useParams();
+  const router = useRouter();
+  const [nodes, setNodes] = useState<Node[]>([]);
+  const [edges, setEdges] = useState<Edge[]>([]);
+  const [title, setTitle] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [codeEditorOpen, setCodeEditorOpen] = useState(false);
+  const [code, setCode] = useState('');
+  const [editorWidth, setEditorWidth] = useState(50);
+  const [isResizing, setIsResizing] = useState(false);
+  const [isCodeEditing, setIsCodeEditing] = useState(false);
+  const [pyodideReady, setPyodideReady] = useState(false);
+  const [pyodide, setPyodide] = useState<any>(null);
+  const [pythonCode, setPythonCode] = useState(`# Flowchart Python API - Create flowcharts with Python!
+
+# Available API:
+# add_node(type, x, y, data) -> node_id
+# add_edge(source, target) -> edge_id
+# connect_nodes(source_id, target_id)
+# clear_all()
+# create_grid(rows, cols, spacing=200)
+# create_tree(depth, branches=2)
+
+# Example: Simple workflow
+start = add_node('input', 100, 100, {'title': 'Start', 'content': 'Begin'})
+process = add_node('default', 300, 100, {'title': 'Process', 'content': 'Work'})
+end = add_node('output', 500, 100, {'title': 'End', 'content': 'Done'})
+connect_nodes(start, process)
+connect_nodes(process, end)
+`);
+  const [scriptCode, setScriptCode] = useState(`// Flowchart Scripting API
+
+// Core API:
+// addNode(type, x, y, data) -> nodeId
+// connectNodes(sourceId, targetId)
+// clearAll()
+// createGrid(rows, cols, spacing)
+// createTree(depth, branches)
+
+// Example: Simple workflow
+const start = addNode('input', 100, 100, { title: 'Start', content: 'Begin' });
+const process = addNode('default', 300, 100, { title: 'Process', content: 'Work' });
+const end = addNode('output', 500, 100, { title: 'End', content: 'Done' });
+connectNodes(start, process);
+connectNodes(process, end);
+`);
+
+  useEffect(() => {
+    setLoading(true);
+    fetch(`/api/flowcharts/${params.id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setTitle(data.title);
+        const flowData = JSON.parse(data.data);
+        setNodes(flowData.nodes || []);
+        setEdges(flowData.edges || []);
+      })
+      .finally(() => setLoading(false));
+  }, [params.id]);
+
+  useEffect(() => {
+    const loadPyodide = async () => {
+      try {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js';
+        script.async = true;
+        script.onload = async () => {
+          // @ts-ignore
+          const pyodideInstance = await window.loadPyodide({
+            indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.25.0/full/',
+          });
+          setPyodide(pyodideInstance);
+          setPyodideReady(true);
+        };
+        document.head.appendChild(script);
+      } catch (error) {
+        console.error('Failed to load Pyodide:', error);
+      }
+    };
+    loadPyodide();
+  }, []);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await fetch(`/api/flowcharts/${params.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          data: JSON.stringify({ nodes, edges }),
+        }),
+      });
+      toast.success('Flowchart saved');
+    } catch (error) {
+      toast.error('Failed to save');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const onFlowChange = useCallback((newNodes: Node[], newEdges: Edge[]) => {
+    if (!isCodeEditing) {
+      setNodes(newNodes);
+      setEdges(newEdges);
+    }
+  }, [isCodeEditing]);
+
+  const handleOpenCodeEditor = () => {
+    setCodeEditorOpen(!codeEditorOpen);
+  };
+
+  useEffect(() => {
+    if (!isCodeEditing) {
+      try {
+        // Deep clone to avoid Pyodide proxy issues
+        const plainNodes = JSON.parse(JSON.stringify(nodes));
+        const plainEdges = JSON.parse(JSON.stringify(edges));
+        setCode(JSON.stringify({ nodes: plainNodes, edges: plainEdges }, null, 2));
+      } catch (error) {
+        console.error('Error updating code:', error);
+      }
+    }
+  }, [nodes, edges, isCodeEditing]);
+
+  const handleCodeChange = (value: string | undefined) => {
+    if (!value) return;
+    setCode(value);
+    setIsCodeEditing(true);
+    try {
+      const flowData = JSON.parse(value);
+      setNodes(flowData.nodes || []);
+      setEdges(flowData.edges || []);
+    } catch (error) {
+      // Invalid JSON
+    }
+    setTimeout(() => setIsCodeEditing(false), 100);
+  };
+
+  const executePythonScript = async () => {
+    if (!pyodideReady || !pyodide) {
+      toast.error('Python runtime is loading...');
+      return;
+    }
+
+    try {
+      let newNodes: Node[] = [];
+      let newEdges: Edge[] = [];
+
+      const api = {
+        add_node: (type: string, x: number, y: number, data: any) => {
+          const id = `node-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+          const plainData = JSON.parse(JSON.stringify(data));
+          newNodes.push({ id, type, position: { x, y }, data: plainData });
+          return id;
+        },
+        add_edge: (source: string, target: string) => {
+          const id = `e${source}-${target}`;
+          newEdges.push({ id, source, target, type: 'animated' });
+          return id;
+        },
+        connect_nodes: (sourceId: string, targetId: string) => api.add_edge(sourceId, targetId),
+        clear_all: () => {
+          newNodes = [];
+          newEdges = [];
+          setNodes([]);
+          setEdges([]);
+        },
+        create_grid: (rows: number, cols: number, spacing = 200) => {
+          const ids = [];
+          for (let i = 0; i < rows; i++) {
+            for (let j = 0; j < cols; j++) {
+              ids.push(api.add_node('default', j * spacing, i * spacing, {
+                title: `Node ${i}-${j}`,
+                content: `Row ${i}, Col ${j}`
+              }));
+            }
+          }
+          return ids;
+        },
+        create_tree: (depth: number, branches = 2) => {
+          const ids: string[] = [];
+          const createLevel = (level: number, parentId: string | null, x: number, y: number, width: number): void => {
+            if (level > depth) return;
+            const id = api.add_node('default', x, y, { title: `L${level}`, content: `Level ${level}` });
+            ids.push(id);
+            if (parentId) api.connect_nodes(parentId, id);
+            if (level < depth) {
+              const childWidth = width / branches;
+              for (let i = 0; i < branches; i++) {
+                createLevel(level + 1, id, x - width/2 + childWidth * i + childWidth/2, y + 150, childWidth);
+              }
+            }
+          };
+          createLevel(0, null, 400, 50, 800);
+          return ids;
+        },
+      };
+
+      pyodide.globals.set('add_node', api.add_node);
+      pyodide.globals.set('add_edge', api.add_edge);
+      pyodide.globals.set('connect_nodes', api.connect_nodes);
+      pyodide.globals.set('clear_all', api.clear_all);
+      pyodide.globals.set('create_grid', api.create_grid);
+      pyodide.globals.set('create_tree', api.create_tree);
+
+      await pyodide.runPythonAsync(pythonCode);
+      
+      setNodes((nds) => [...nds, ...newNodes]);
+      setEdges((eds) => [...eds, ...newEdges]);
+      toast.success(`Python executed: ${newNodes.length} nodes, ${newEdges.length} edges created`);
+    } catch (error: any) {
+      toast.error(`Python error: ${error.message}`);
+    }
+  };
+
+  const executeScript = () => {
+    try {
+      let newNodes: Node[] = [];
+      let newEdges: Edge[] = [];
+
+      const api = {
+        addNode: (type: string, x: number, y: number, data: any) => {
+          const id = `node-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+          newNodes.push({ id, type, position: { x, y }, data });
+          return id;
+        },
+        connectNodes: (sourceId: string, targetId: string) => {
+          const id = `e${sourceId}-${targetId}`;
+          newEdges.push({ id, source: sourceId, target: targetId, type: 'animated' });
+          return id;
+        },
+        clearAll: () => {
+          newNodes = [];
+          newEdges = [];
+          setNodes([]);
+          setEdges([]);
+        },
+        createGrid: (rows: number, cols: number, spacing = 200) => {
+          const ids = [];
+          for (let i = 0; i < rows; i++) {
+            for (let j = 0; j < cols; j++) {
+              ids.push(api.addNode('default', j * spacing, i * spacing, {
+                title: `Node ${i}-${j}`,
+                content: `Row ${i}, Col ${j}`
+              }));
+            }
+          }
+          return ids;
+        },
+        createTree: (depth: number, branches = 2) => {
+          const ids: string[] = [];
+          const createLevel = (level: number, parentId: string | null, x: number, y: number, width: number): void => {
+            if (level > depth) return;
+            const id = api.addNode('default', x, y, { title: `L${level}`, content: `Level ${level}` });
+            ids.push(id);
+            if (parentId) api.connectNodes(parentId, id);
+            if (level < depth) {
+              const childWidth = width / branches;
+              for (let i = 0; i < branches; i++) {
+                createLevel(level + 1, id, x - width/2 + childWidth * i + childWidth/2, y + 150, childWidth);
+              }
+            }
+          };
+          createLevel(0, null, 400, 50, 800);
+          return ids;
+        },
+      };
+
+      const { addNode, connectNodes, clearAll, createGrid, createTree } = api;
+      eval(scriptCode);
+      
+      setNodes((nds) => [...nds, ...newNodes]);
+      setEdges((eds) => [...eds, ...newEdges]);
+      toast.success(`Script executed: ${newNodes.length} nodes, ${newEdges.length} edges created`);
+    } catch (error: any) {
+      toast.error(`Script error: ${error.message}`);
+    }
+  };de[] = [];
+      let newEdges: Edge[] = [];
+
+      const api = {
+        add_node: (type: string, x: number, y: number, data: any) => {
+          const id = `node-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+          newNodes.push({ id, type, position: { x, y }, data });
+          return id;
+        },
+        add_edge: (source: string, target: string) => {
+          const id = `e${source}-${target}`;
+          newEdges.push({ id, source, target, type: 'animated' });
+          return id;
+        },
+        connect_nodes: (sourceId: string, targetId: string) => api.add_edge(sourceId, targetId),
+        clear_all: () => {
+          newNodes = [];
+          newEdges = [];
+          setNodes([]);
+          setEdges([]);
+        },
+        create_grid: (rows: number, cols: number, spacing = 200) => {
+          const ids = [];
+          for (let i = 0; i < rows; i++) {
+            for (let j = 0; j < cols; j++) {
+              ids.push(api.add_node('default', j * spacing, i * spacing, {
+                title: `Node ${i}-${j}`,
+                content: `Row ${i}, Col ${j}`
+              }));
+            }
+          }
+          return ids;
+        },
+        create_tree: (depth: number, branches = 2) => {
+          const ids: string[] = [];
+          const createLevel = (level: number, parentId: string | null, x: number, y: number, width: number): void => {
+            if (level > depth) return;
+            const id = api.add_node('default', x, y, { title: `L${level}`, content: `Level ${level}` });
+            ids.push(id);
+            if (parentId) api.connect_nodes(parentId, id);
+            if (level < depth) {
+              const childWidth = width / branches;
+              for (let i = 0; i < branches; i++) {
+                createLevel(level + 1, id, x - width/2 + childWidth * i + childWidth/2, y + 150, childWidth);
+              }
+            }
+          };
+          createLevel(0, null, 400, 50, 800);
+          return ids;
+        },
+      };
+
+      pyodide.globals.set('add_node', api.add_node);
+      pyodide.globals.set('add_edge', api.add_edge);
+      pyodide.globals.set('connect_nodes', api.connect_nodes);
+      pyodide.globals.set('clear_all', api.clear_all);
+      pyodide.globals.set('create_grid', api.create_grid);
+      pyodide.globals.set('create_tree', api.create_tree);
+
+      await pyodide.runPythonAsync(pythonCode);
+      
+      setNodes((nds) => [...nds, ...newNodes]);
+      setEdges((eds) => [...eds, ...newEdges]);
+      toast.success(`Python executed: ${newNodes.length} nodes, ${newEdges.length} edges created`);
+    } catch (error: any) {
+      toast.error(`Python error: ${error.message}`);
+    }
+  };
+
+  const executeScript = () => {
+    try {
+      let newNodes: Node[] = [];
+      let newEdges: Edge[] = [];
+
+      const api = {
+        addNode: (type: string, x: number, y: number, data: any) => {
+          const id = `node-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+          newNodes.push({ id, type, position: { x, y }, data });
+          return id;
+        },
+        connectNodes: (sourceId: string, targetId: string) => {
+          const id = `e${sourceId}-${targetId}`;
+          newEdges.push({ id, source: sourceId, target: targetId, type: 'animated' });
+          return id;
+        },
+        clearAll: () => {
+          newNodes = [];
+          newEdges = [];
+          setNodes([]);
+          setEdges([]);
+        },
+        createGrid: (rows: number, cols: number, spacing = 200) => {
+          const ids = [];
+          for (let i = 0; i < rows; i++) {
+            for (let j = 0; j < cols; j++) {
+              ids.push(api.addNode('default', j * spacing, i * spacing, {
+                title: `Node ${i}-${j}`,
+                content: `Row ${i}, Col ${j}`
+              }));
+            }
+          }
+          return ids;
+        },
+        createTree: (depth: number, branches = 2) => {
+          const ids: string[] = [];
+          const createLevel = (level: number, parentId: string | null, x: number, y: number, width: number): void => {
+            if (level > depth) return;
+            const id = api.addNode('default', x, y, { title: `L${level}`, content: `Level ${level}` });
+            ids.push(id);
+            if (parentId) api.connectNodes(parentId, id);
+            if (level < depth) {
+              const childWidth = width / branches;
+              for (let i = 0; i < branches; i++) {
+                createLevel(level + 1, id, x - width/2 + childWidth * i + childWidth/2, y + 150, childWidth);
+              }
+            }
+          };
+          createLevel(0, null, 400, 50, 800);
+          return ids;
+        },
+      };
+
+      const { addNode, connectNodes, clearAll, createGrid, createTree } = api;
+      eval(scriptCode);
+      
+      setNodes((nds) => [...nds, ...newNodes]);
+      setEdges((eds) => [...eds, ...newEdges]);
+      toast.success(`Script executed: ${newNodes.length} nodes, ${newEdges.length} edges created`);
+    } catch (error: any) {
+      toast.error(`Script error: ${error.message}`);
+    }
+  };
+
+  const handleMouseDown = () => {
+    setIsResizing(true);
+  };
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!isResizing) return;
+    const newWidth = (e.clientX / window.innerWidth) * 100;
+    if (newWidth > 20 && newWidth < 80) {
+      setEditorWidth(newWidth);
+    }
+  }, [isResizing]);
+
+  const handleMouseUp = () => {
+    setIsResizing(false);
+  };
+
+  useEffect(() => {
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isResizing, handleMouseMove]);
+
+  if (loading) {
+    return (
+      <div className="fixed inset-0 bg-background z-50 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 bg-background z-50 flex">
+      {codeEditorOpen && (
+        <>
+          <div className="h-full flex flex-col border-r" style={{ width: `${editorWidth}%` }}>
+            <Tabs defaultValue="scripting" className="h-full flex flex-col">
+              <div className="p-4 border-b">
+                <TabsList>
+                  <TabsTrigger value="scripting">Scripting</TabsTrigger>
+                  <TabsTrigger value="python">Python</TabsTrigger>
+                  <TabsTrigger value="json">JSON</TabsTrigger>
+                </TabsList>
+              </div>
+              <TabsContent value="scripting" className="flex-1 m-0 flex flex-col">
+                <div className="p-2 border-b flex items-center justify-between bg-muted/50">
+                  <span className="text-xs text-muted-foreground">JavaScript API</span>
+                  <Button size="sm" onClick={executeScript}>Run Script</Button>
+                </div>
+                <div onKeyDown={(e) => e.stopPropagation()} className="flex-1">
+                  <Editor
+                    height="100%"
+                    defaultLanguage="javascript"
+                    value={scriptCode}
+                    onChange={(value) => setScriptCode(value || '')}
+                    theme="vs-dark"
+                    options={{
+                      minimap: { enabled: false },
+                      fontSize: 14,
+                      lineNumbers: 'on',
+                      scrollBeyondLastLine: false,
+                      automaticLayout: true,
+                      tabSize: 2,
+                      wordWrap: 'on',
+                    }}
+                  />
+                </div>
+              </TabsContent>
+              <TabsContent value="python" className="flex-1 m-0 flex flex-col">
+                <div className="p-2 border-b flex items-center justify-between bg-muted/50">
+                  <span className="text-xs text-muted-foreground">
+                    {pyodideReady ? '🐍 Python API' : '⏳ Loading Python...'}
+                  </span>
+                  <Button size="sm" onClick={executePythonScript} disabled={!pyodideReady}>
+                    {pyodideReady ? 'Run Python' : 'Loading...'}
+                  </Button>
+                </div>
+                <div onKeyDown={(e) => e.stopPropagation()} className="flex-1">
+                  <Editor
+                    height="100%"
+                    defaultLanguage="python"
+                    value={pythonCode}
+                    onChange={(value) => setPythonCode(value || '')}
+                    theme="vs-dark"
+                    options={{
+                      minimap: { enabled: false },
+                      fontSize: 14,
+                      lineNumbers: 'on',
+                      scrollBeyondLastLine: false,
+                      automaticLayout: true,
+                      tabSize: 4,
+                      wordWrap: 'on',
+                    }}
+                  />
+                </div>
+              </TabsContent>
+              <TabsContent value="json" className="flex-1 m-0">
+                <div onKeyDown={(e) => e.stopPropagation()} className="h-full">
+                  <Editor
+                    height="100%"
+                    defaultLanguage="json"
+                    value={code}
+                    onChange={handleCodeChange}
+                    theme="vs-dark"
+                    options={{
+                      minimap: { enabled: true },
+                      fontSize: 14,
+                      lineNumbers: 'on',
+                      scrollBeyondLastLine: false,
+                      automaticLayout: true,
+                      formatOnPaste: true,
+                      formatOnType: true,
+                      tabSize: 2,
+                    }}
+                  />
+                </div>
+              </TabsContent>
+            </Tabs>
+          </div>
+          <div
+            className="w-1 bg-border hover:bg-primary cursor-col-resize transition-colors"
+            onMouseDown={handleMouseDown}
+          />
+        </>
+      )}
+
+      <div className="flex-1 h-full relative">
+        <div className="absolute top-4 left-4 z-10 flex gap-2">
+          <Button variant="outline" size="icon" onClick={() => router.push('/admin/flow')}>
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
+          <Button onClick={handleSave} disabled={saving}>
+            <Save className="w-4 h-4 mr-2" />
+            {saving ? 'Saving...' : 'Save'}
+          </Button>
+          <Button variant="outline" onClick={handleOpenCodeEditor}>
+            <Code className="w-4 h-4 mr-2" />
+            {codeEditorOpen ? 'Hide' : 'Show'} Code
+          </Button>
+          <div className="px-4 py-2 bg-card border rounded-md">
+            <span className="font-medium">{title}</span>
+          </div>
+        </div>
+
+        <div className="w-full h-full">
+          <ReactFlowProvider>
+            <FlowEditor initialNodes={nodes} initialEdges={edges} onSave={onFlowChange} />
+          </ReactFlowProvider>
+        </div>
+      </div>
+      
+      <style jsx global>{`
+        .react-flow__node {
+          background: transparent !important;
+          border: none !important;
+          padding: 0 !important;
+          width: auto !important;
+        }
+        .react-flow__handle {
+          width: 20px !important;
+          height: 20px !important;
+          border: none !important;
+          background: transparent !important;
+          border-radius: 50% !important;
+          cursor: pointer !important;
+          z-index: 1000 !important;
+          opacity: 0 !important;
+        }
+        .react-flow__handle-left {
+          left: -10px !important;
+        }
+        .react-flow__handle-right {
+          right: -10px !important;
+        }
+        .react-flow__handle:hover {
+          width: 24px !important;
+          height: 24px !important;
+          background: #2563eb !important;
+        }
+        .react-flow__handle.connecting {
+          background: #10b981 !important;
+        }
+        .react-flow__handle.valid {
+          background: #10b981 !important;
+        }
+        .react-flow__edge-path {
+          stroke: #94a3b8 !important;
+          stroke-width: 2px !important;
+          stroke-linecap: round !important;
+          stroke-dasharray: 0 !important;
+        }
+        .react-flow__edge.animated path:nth-child(2) {
+          stroke: url(#beam-gradient) !important;
+          stroke-width: 2px !important;
+          stroke-opacity: 1 !important;
+          stroke-linecap: round !important;
+          stroke-dasharray: 0 !important;
+        }
+        .react-flow__edge.selected .react-flow__edge-path {
+          stroke: #3b82f6 !important;
+          stroke-width: 3px !important;
+        }
+      `}</style>
+    </div>
+  );
+}

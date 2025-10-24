@@ -1,0 +1,533 @@
+---
+title: Flowchart Scripting API
+description: Complete guide to programmatically creating and manipulating flowcharts using JavaScript
+---
+
+# Flowchart Scripting API
+
+Create complex flowcharts programmatically using our powerful JavaScript API. Build workflows, diagrams, and automation flows with code.
+
+## Getting Started
+
+Access the scripting interface by clicking **"Show Code"** → **"Scripting"** tab in the flowchart editor at `/admin/flow/[id]`.
+
+## Core API Reference
+
+### addNode()
+
+Create a new node in the flowchart.
+
+```javascript
+addNode(type, x, y, data) → nodeId
+```
+
+**Parameters:**
+- `type` (string): Node type - `'input'`, `'default'`, or `'output'`
+- `x` (number): X-coordinate position
+- `y` (number): Y-coordinate position
+- `data` (object): Node data with `title` and `content` properties
+
+**Returns:** `string` - Unique node ID
+
+**Example:**
+```javascript
+const node = addNode('default', 200, 100, {
+  title: 'Process Data',
+  content: 'Transform input'
+});
+```
+
+---
+
+### connectNodes()
+
+Connect two nodes with an animated edge.
+
+```javascript
+connectNodes(sourceId, targetId) → edgeId
+```
+
+**Parameters:**
+- `sourceId` (string): ID of the source node
+- `targetId` (string): ID of the target node
+
+**Returns:** `string` - Unique edge ID
+
+**Example:**
+```javascript
+const start = addNode('input', 100, 100, { title: 'Start' });
+const end = addNode('output', 300, 100, { title: 'End' });
+connectNodes(start, end);
+```
+
+---
+
+### clearAll()
+
+Remove all nodes and edges from the flowchart.
+
+```javascript
+clearAll()
+```
+
+**Example:**
+```javascript
+clearAll(); // Start fresh
+```
+
+---
+
+## Layout Functions
+
+### createGrid()
+
+Generate a grid of nodes automatically.
+
+```javascript
+createGrid(rows, cols, spacing = 200) → nodeIds[]
+```
+
+**Parameters:**
+- `rows` (number): Number of rows
+- `cols` (number): Number of columns
+- `spacing` (number, optional): Space between nodes (default: 200)
+
+**Returns:** `string[]` - Array of created node IDs
+
+**Example:**
+```javascript
+// Create a 3x3 grid
+clearAll();
+const nodes = createGrid(3, 3, 250);
+```
+
+---
+
+### createTree()
+
+Generate a tree structure with branches.
+
+```javascript
+createTree(depth, branches = 2) → nodeIds[]
+```
+
+**Parameters:**
+- `depth` (number): Tree depth (levels)
+- `branches` (number, optional): Branches per node (default: 2)
+
+**Returns:** `string[]` - Array of created node IDs
+
+**Example:**
+```javascript
+// Create a binary tree with 3 levels
+clearAll();
+createTree(3, 2);
+
+// Create a tree with 4 branches per node
+createTree(2, 4);
+```
+
+---
+
+### layoutCircular()
+
+Arrange nodes in a circular pattern.
+
+```javascript
+layoutCircular(nodeIds, centerX = 400, centerY = 300, radius = 200)
+```
+
+**Parameters:**
+- `nodeIds` (string[]): Array of node IDs to arrange
+- `centerX` (number, optional): Circle center X (default: 400)
+- `centerY` (number, optional): Circle center Y (default: 300)
+- `radius` (number, optional): Circle radius (default: 200)
+
+**Example:**
+```javascript
+const nodes = [];
+for (let i = 0; i < 8; i++) {
+  nodes.push(addNode('default', 0, 0, { title: `Node ${i}` }));
+}
+layoutCircular(nodes, 400, 300, 250);
+```
+
+---
+
+### layoutVertical()
+
+Stack nodes vertically.
+
+```javascript
+layoutVertical(nodeIds, startX = 100, startY = 100, spacing = 150)
+```
+
+**Parameters:**
+- `nodeIds` (string[]): Array of node IDs to arrange
+- `startX` (number, optional): Starting X position (default: 100)
+- `startY` (number, optional): Starting Y position (default: 100)
+- `spacing` (number, optional): Vertical spacing (default: 150)
+
+**Example:**
+```javascript
+const nodes = createGrid(1, 5);
+layoutVertical(nodes, 200, 100, 200);
+```
+
+---
+
+### layoutHorizontal()
+
+Arrange nodes horizontally.
+
+```javascript
+layoutHorizontal(nodeIds, startX = 100, startY = 100, spacing = 200)
+```
+
+**Parameters:**
+- `nodeIds` (string[]): Array of node IDs to arrange
+- `startX` (number, optional): Starting X position (default: 100)
+- `startY` (number, optional): Starting Y position (default: 100)
+- `spacing` (number, optional): Horizontal spacing (default: 200)
+
+**Example:**
+```javascript
+const nodes = createGrid(5, 1);
+layoutHorizontal(nodes, 100, 300, 250);
+```
+
+---
+
+## Complete Examples
+
+### Example 1: Simple Linear Workflow
+
+```javascript
+clearAll();
+
+const start = addNode('input', 100, 200, {
+  title: 'Start',
+  content: 'Begin process'
+});
+
+const step1 = addNode('default', 300, 200, {
+  title: 'Validate',
+  content: 'Check input data'
+});
+
+const step2 = addNode('default', 500, 200, {
+  title: 'Process',
+  content: 'Transform data'
+});
+
+const end = addNode('output', 700, 200, {
+  title: 'Complete',
+  content: 'Output result'
+});
+
+connectNodes(start, step1);
+connectNodes(step1, step2);
+connectNodes(step2, end);
+```
+
+---
+
+### Example 2: Branching Workflow
+
+```javascript
+clearAll();
+
+const start = addNode('input', 400, 50, { title: 'Start' });
+
+const branch1 = addNode('default', 200, 200, { title: 'Path A' });
+const branch2 = addNode('default', 400, 200, { title: 'Path B' });
+const branch3 = addNode('default', 600, 200, { title: 'Path C' });
+
+const merge = addNode('default', 400, 350, { title: 'Merge' });
+const end = addNode('output', 400, 500, { title: 'End' });
+
+connectNodes(start, branch1);
+connectNodes(start, branch2);
+connectNodes(start, branch3);
+
+connectNodes(branch1, merge);
+connectNodes(branch2, merge);
+connectNodes(branch3, merge);
+
+connectNodes(merge, end);
+```
+
+---
+
+### Example 3: Circular Process Flow
+
+```javascript
+clearAll();
+
+const steps = [
+  'Plan',
+  'Design',
+  'Develop',
+  'Test',
+  'Deploy',
+  'Monitor',
+  'Review',
+  'Improve'
+];
+
+const nodes = [];
+for (let i = 0; i < steps.length; i++) {
+  nodes.push(addNode('default', 0, 0, {
+    title: steps[i],
+    content: `Step ${i + 1}`
+  }));
+}
+
+layoutCircular(nodes, 400, 300, 250);
+
+// Connect in a cycle
+for (let i = 0; i < nodes.length; i++) {
+  const next = (i + 1) % nodes.length;
+  connectNodes(nodes[i], nodes[next]);
+}
+```
+
+---
+
+### Example 4: Automated Grid with Connections
+
+```javascript
+clearAll();
+
+const rows = 3;
+const cols = 4;
+const nodes = createGrid(rows, cols, 250);
+
+// Connect horizontally
+for (let i = 0; i < rows; i++) {
+  for (let j = 0; j < cols - 1; j++) {
+    const current = i * cols + j;
+    const next = current + 1;
+    connectNodes(nodes[current], nodes[next]);
+  }
+}
+
+// Connect vertically
+for (let i = 0; i < rows - 1; i++) {
+  for (let j = 0; j < cols; j++) {
+    const current = i * cols + j;
+    const below = (i + 1) * cols + j;
+    connectNodes(nodes[current], nodes[below]);
+  }
+}
+```
+
+---
+
+### Example 5: Dynamic Pipeline
+
+```javascript
+clearAll();
+
+const stages = ['Collect', 'Clean', 'Transform', 'Analyze', 'Visualize'];
+const nodes = [];
+
+for (let i = 0; i < stages.length; i++) {
+  const node = addNode('default', i * 200 + 100, 200, {
+    title: stages[i],
+    content: `Stage ${i + 1}`
+  });
+  nodes.push(node);
+}
+
+// Connect pipeline
+for (let i = 0; i < nodes.length - 1; i++) {
+  connectNodes(nodes[i], nodes[i + 1]);
+}
+
+// Add input and output
+const input = addNode('input', 50, 200, { title: 'Data Source' });
+const output = addNode('output', nodes.length * 200 + 50, 200, { title: 'Dashboard' });
+
+connectNodes(input, nodes[0]);
+connectNodes(nodes[nodes.length - 1], output);
+```
+
+---
+
+### Example 6: Hierarchical Organization
+
+```javascript
+clearAll();
+
+// Create CEO
+const ceo = addNode('input', 400, 50, {
+  title: 'CEO',
+  content: 'Chief Executive'
+});
+
+// Create departments
+const depts = ['Engineering', 'Sales', 'Marketing', 'Operations'];
+const deptNodes = [];
+
+for (let i = 0; i < depts.length; i++) {
+  const node = addNode('default', 150 + i * 200, 200, {
+    title: depts[i],
+    content: 'Department Head'
+  });
+  deptNodes.push(node);
+  connectNodes(ceo, node);
+}
+
+// Create teams under each department
+deptNodes.forEach((dept, i) => {
+  for (let j = 0; j < 2; j++) {
+    const team = addNode('output', 100 + i * 200 + j * 100, 350, {
+      title: `Team ${j + 1}`,
+      content: 'Team Lead'
+    });
+    connectNodes(dept, team);
+  }
+});
+```
+
+---
+
+## Advanced Patterns
+
+### Pattern: State Machine
+
+```javascript
+clearAll();
+
+const states = ['Idle', 'Processing', 'Success', 'Error'];
+const nodes = {};
+
+states.forEach((state, i) => {
+  nodes[state] = addNode('default', 200 + i * 200, 200, {
+    title: state,
+    content: `State: ${state}`
+  });
+});
+
+// Define transitions
+connectNodes(nodes['Idle'], nodes['Processing']);
+connectNodes(nodes['Processing'], nodes['Success']);
+connectNodes(nodes['Processing'], nodes['Error']);
+connectNodes(nodes['Success'], nodes['Idle']);
+connectNodes(nodes['Error'], nodes['Idle']);
+```
+
+---
+
+### Pattern: Data Pipeline with Parallel Processing
+
+```javascript
+clearAll();
+
+const input = addNode('input', 100, 300, { title: 'Input' });
+
+// Create parallel processors
+const processors = [];
+for (let i = 0; i < 4; i++) {
+  const proc = addNode('default', 300, 100 + i * 150, {
+    title: `Processor ${i + 1}`,
+    content: 'Parallel task'
+  });
+  processors.push(proc);
+  connectNodes(input, proc);
+}
+
+// Merge results
+const merge = addNode('default', 500, 300, { title: 'Merge' });
+processors.forEach(proc => connectNodes(proc, merge));
+
+const output = addNode('output', 700, 300, { title: 'Output' });
+connectNodes(merge, output);
+```
+
+---
+
+## Tips & Best Practices
+
+### 1. Use Meaningful Names
+```javascript
+// Good
+const validateInput = addNode('default', 100, 100, {
+  title: 'Validate Input',
+  content: 'Check data format'
+});
+
+// Avoid
+const node1 = addNode('default', 100, 100, { title: 'Node 1' });
+```
+
+### 2. Plan Your Layout
+```javascript
+// Define spacing constants
+const SPACING_X = 200;
+const SPACING_Y = 150;
+const START_X = 100;
+const START_Y = 100;
+
+// Use consistent positioning
+const node1 = addNode('default', START_X, START_Y, { title: 'Step 1' });
+const node2 = addNode('default', START_X + SPACING_X, START_Y, { title: 'Step 2' });
+```
+
+### 3. Store Node IDs
+```javascript
+// Store IDs for later reference
+const workflow = {
+  start: addNode('input', 100, 200, { title: 'Start' }),
+  process: addNode('default', 300, 200, { title: 'Process' }),
+  end: addNode('output', 500, 200, { title: 'End' })
+};
+
+connectNodes(workflow.start, workflow.process);
+connectNodes(workflow.process, workflow.end);
+```
+
+### 4. Use Loops for Repetitive Tasks
+```javascript
+// Create multiple similar nodes
+const nodes = [];
+for (let i = 0; i < 10; i++) {
+  nodes.push(addNode('default', i * 150, 200, {
+    title: `Step ${i + 1}`,
+    content: `Process ${i + 1}`
+  }));
+}
+
+// Connect them sequentially
+for (let i = 0; i < nodes.length - 1; i++) {
+  connectNodes(nodes[i], nodes[i + 1]);
+}
+```
+
+---
+
+## Troubleshooting
+
+### Script Not Running
+- Check browser console for errors
+- Ensure all parentheses and brackets are closed
+- Verify node IDs exist before connecting
+
+### Nodes Overlapping
+- Increase spacing values in layout functions
+- Use different Y coordinates for different levels
+- Apply layout functions after creating nodes
+
+### Connections Not Showing
+- Verify both node IDs are valid
+- Check that nodes were created before connecting
+- Ensure node IDs are stored correctly
+
+---
+
+## Next Steps
+
+- Explore the [JSON Editor](/docs/flowchart-json) for direct data manipulation
+- Learn about [Flow Execution](/docs/flow-execution) for running workflows
+- Check out [Advanced Patterns](/docs/flowchart-patterns) for complex scenarios

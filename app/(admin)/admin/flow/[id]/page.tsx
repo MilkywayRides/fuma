@@ -17,7 +17,7 @@ import ReactFlow, {
   useReactFlow,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { ArrowLeft, Save, Loader2, Code } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, Code, Send, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { DefaultNode, InputNode, OutputNode } from '@/components/flow-nodes';
@@ -30,6 +30,10 @@ import {
 } from '@/components/ui/context-menu';
 import Editor from '@monaco-editor/react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const customNodeTypes = {
   default: DefaultNode,
@@ -55,7 +59,7 @@ function FlowEditor({ initialNodes, initialEdges, onSave }: { initialNodes: Node
     setEdges(initialEdges);
   }, [initialEdges, setEdges]);
 
-  const saveTimeoutRef = useRef<NodeJS.Timeout>();
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   useEffect(() => {
     if (saveTimeoutRef.current) {
@@ -171,6 +175,11 @@ export default function FlowchartEditor() {
   const [editorWidth, setEditorWidth] = useState(50);
   const [isResizing, setIsResizing] = useState(false);
   const [isCodeEditing, setIsCodeEditing] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiModel, setAiModel] = useState('gpt-4');
+  const [editorTheme, setEditorTheme] = useState('vs-dark');
+  const editorRef = useRef<any>(null);
   const [scriptCode, setScriptCode] = useState(`// Declarative Flowchart Definition
 // Define your flowchart structure - running multiple times produces same result
 
@@ -269,6 +278,65 @@ return {
     }
   };
 
+  const handleAiGenerate = async () => {
+    if (!aiPrompt.trim()) {
+      toast.error('Please enter a prompt');
+      return;
+    }
+    
+    setAiLoading(true);
+    const originalCode = scriptCode;
+    try {
+      const response = await fetch('/api/ai/flowchart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          prompt: aiPrompt, 
+          model: aiModel,
+          currentCode: scriptCode 
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'AI generation failed');
+      }
+      
+      const newCode = data.code;
+      setScriptCode(newCode);
+      
+      if (editorRef.current) {
+        const editor = editorRef.current;
+        const model = editor.getModel();
+        if (model) {
+          const oldLines = originalCode.split('\n');
+          const newLines = newCode.split('\n');
+          const decorations: any[] = [];
+          
+          newLines.forEach((line, i) => {
+            if (i >= oldLines.length || line !== oldLines[i]) {
+              decorations.push({
+                range: { startLineNumber: i + 1, startColumn: 1, endLineNumber: i + 1, endColumn: 1 },
+                options: { isWholeLine: true, className: 'line-insert' }
+              });
+            }
+          });
+          
+          editor.deltaDecorations([], decorations);
+          setTimeout(() => editor.deltaDecorations(decorations.map((d: any) => d.id), []), 3000);
+        }
+      }
+      
+      toast.success('AI generated code! Review and click Apply Script');
+      setAiPrompt('');
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
   const executeScript = () => {
     try {
       setIsCodeEditing(true);
@@ -336,6 +404,16 @@ return {
     }
   }, [isResizing, handleMouseMove]);
 
+  useEffect(() => {
+    const updateTheme = () => {
+      setEditorTheme(document.documentElement.classList.contains('dark') ? 'vs-dark' : 'light');
+    };
+    updateTheme();
+    const observer = new MutationObserver(updateTheme);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
+
   if (loading) {
     return (
       <div className="fixed inset-0 bg-background z-50 flex items-center justify-center">
@@ -361,23 +439,75 @@ return {
                   <span className="text-xs text-muted-foreground">Declarative API - Define desired state (syncs with UI)</span>
                   <Button size="sm" onClick={executeScript}>Apply Script</Button>
                 </div>
-                <div onKeyDown={(e) => e.stopPropagation()} className="flex-1">
-                  <Editor
-                    height="100%"
-                    defaultLanguage="javascript"
-                    value={scriptCode}
-                    onChange={handleScriptChange}
-                    theme="vs-dark"
-                    options={{
-                      minimap: { enabled: false },
-                      fontSize: 14,
-                      lineNumbers: 'on',
-                      scrollBeyondLastLine: false,
-                      automaticLayout: true,
-                      tabSize: 2,
-                      wordWrap: 'on',
-                    }}
-                  />
+                <div className="flex-1 flex flex-col relative">
+                  <div onKeyDown={(e) => e.stopPropagation()} className="flex-1" style={{ paddingBottom: '60px' }}>
+                    <Editor
+                      height="100%"
+                      defaultLanguage="javascript"
+                      value={scriptCode}
+                      onChange={handleScriptChange}
+                      theme={editorTheme}
+                      options={{
+                        minimap: { enabled: false },
+                        fontSize: 14,
+                        lineNumbers: 'on',
+                        scrollBeyondLastLine: false,
+                        automaticLayout: true,
+                        tabSize: 2,
+                        wordWrap: 'on',
+                        renderLineHighlight: 'all',
+                      }}
+                      onMount={(editor, monaco) => {
+                        editor.onDidChangeModelContent(() => {
+                          const model = editor.getModel();
+                          if (!model) return;
+                          const decorations = model.getAllDecorations();
+                          const newDecorations = decorations.filter(d => 
+                            d.options.className?.includes('line-insert') || 
+                            d.options.className?.includes('line-delete')
+                          );
+                          editor.deltaDecorations(newDecorations.map(d => d.id), []);
+                        });
+                      }}
+                    />
+                  </div>
+                  <div className="absolute bottom-3 left-3 right-3 bg-background border rounded-lg shadow-lg p-2">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-primary shrink-0" />
+                      <Select value={aiModel} onValueChange={setAiModel}>
+                        <SelectTrigger className="w-32 h-8 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="gpt-4">GPT-4</SelectItem>
+                          <SelectItem value="gpt-3.5">GPT-3.5</SelectItem>
+                          <SelectItem value="claude-3">Claude 3</SelectItem>
+                          <SelectItem value="gemini">Gemini</SelectItem>
+                          <SelectItem value="grok">Grok</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Input
+                        placeholder="Describe flowchart... (Ctrl+Enter)"
+                        value={aiPrompt}
+                        onChange={(e) => setAiPrompt(e.target.value)}
+                        onKeyDown={(e) => {
+                          e.stopPropagation();
+                          if (e.key === 'Enter' && e.ctrlKey) {
+                            handleAiGenerate();
+                          }
+                        }}
+                        className="h-8 text-sm"
+                      />
+                      <Button 
+                        size="sm"
+                        onClick={handleAiGenerate}
+                        disabled={aiLoading}
+                        className="h-8 px-3 shrink-0"
+                      >
+                        {aiLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </TabsContent>
               <TabsContent value="json" className="flex-1 m-0">
@@ -387,7 +517,7 @@ return {
                     defaultLanguage="json"
                     value={code}
                     onChange={handleCodeChange}
-                    theme="vs-dark"
+                    theme={editorTheme}
                     options={{
                       minimap: { enabled: true },
                       fontSize: 14,
@@ -436,6 +566,12 @@ return {
       </div>
       
       <style jsx global>{`
+        .monaco-editor .line-insert {
+          background: rgba(34, 197, 94, 0.2) !important;
+        }
+        .monaco-editor .line-delete {
+          background: rgba(239, 68, 68, 0.2) !important;
+        }
         .react-flow__node {
           background: transparent !important;
           border: none !important;

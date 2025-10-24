@@ -17,7 +17,7 @@ import ReactFlow, {
   useReactFlow,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { ArrowLeft, Save, Loader2, Code, Send, Sparkles } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, Code, Send, Sparkles, Copy, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { DefaultNode, InputNode, OutputNode } from '@/components/flow-nodes';
@@ -180,6 +180,7 @@ export default function FlowchartEditor() {
   const [aiModel, setAiModel] = useState('gpt-4');
   const [editorTheme, setEditorTheme] = useState('vs-dark');
   const editorRef = useRef<any>(null);
+  const [copied, setCopied] = useState(false);
   const [scriptCode, setScriptCode] = useState(`// Declarative Flowchart Definition
 // Define your flowchart structure - running multiple times produces same result
 
@@ -437,7 +438,50 @@ return {
               <TabsContent value="scripting" className="flex-1 m-0 flex flex-col">
                 <div className="p-2 border-b flex items-center justify-between bg-muted/50">
                   <span className="text-xs text-muted-foreground">Declarative API - Define desired state (syncs with UI)</span>
-                  <Button size="sm" onClick={executeScript}>Apply Script</Button>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" onClick={() => {
+                      const context = `# Flowchart Programming Guide
+
+## Current Flowchart: ${title}
+
+## Declarative API Format
+This flowchart uses a declarative JavaScript API. The code returns an object defining the desired state:
+
+\`\`\`javascript
+return {
+  nodes: [
+    { id: 'unique-id', type: 'input'|'default'|'output', x: number, y: number, title: 'string', content: 'string' }
+  ],
+  edges: [
+    { from: 'source-id', to: 'target-id' }
+  ]
+};
+\`\`\`
+
+## Current Code
+\`\`\`javascript
+${scriptCode}
+\`\`\`
+
+## Instructions
+- Use descriptive IDs (e.g., 'start', 'process1', 'decision', 'end')
+- Position nodes with 150-200px spacing
+- Types: 'input' for start, 'output' for end, 'default' for process nodes
+- Keep titles short (1-3 words), content can be descriptive
+- Running the same code multiple times produces the same result (idempotent)
+
+## Task
+Modify or extend this flowchart based on requirements.`;
+                      navigator.clipboard.writeText(context);
+                      setCopied(true);
+                      toast.success('Context copied to clipboard!');
+                      setTimeout(() => setCopied(false), 2000);
+                    }}>
+                      {copied ? <Check className="w-3 h-3 mr-1" /> : <Copy className="w-3 h-3 mr-1" />}
+                      Copy Context
+                    </Button>
+                    <Button size="sm" onClick={executeScript}>Apply Script</Button>
+                  </div>
                 </div>
                 <div className="flex-1 flex flex-col relative">
                   <div onKeyDown={(e) => e.stopPropagation()} className="flex-1" style={{ paddingBottom: '60px' }}>
@@ -482,7 +526,7 @@ return {
                           <SelectItem value="gpt-4">GPT-4</SelectItem>
                           <SelectItem value="gpt-3.5">GPT-3.5</SelectItem>
                           <SelectItem value="claude-3">Claude 3</SelectItem>
-                          <SelectItem value="gemini">Gemini</SelectItem>
+
                           <SelectItem value="grok">Grok</SelectItem>
                         </SelectContent>
                       </Select>

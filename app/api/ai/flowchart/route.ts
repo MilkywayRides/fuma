@@ -63,7 +63,7 @@ ${currentCode}`;
 
       case 'gemini':
         apiKey = process.env.GOOGLE_API_KEY;
-        apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent';
+        apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
         requestBody = {
           contents: [{
             parts: [{ text: `${systemPrompt}\n\n${prompt}` }]
@@ -101,9 +101,7 @@ ${currentCode}`;
     if (model === 'claude-3') {
       headers['x-api-key'] = apiKey;
       headers['anthropic-version'] = '2023-06-01';
-    } else if (model === 'gemini') {
-      headers['x-goog-api-key'] = apiKey;
-    } else {
+    } else if (model !== 'gemini') {
       headers['Authorization'] = `Bearer ${apiKey}`;
     }
 

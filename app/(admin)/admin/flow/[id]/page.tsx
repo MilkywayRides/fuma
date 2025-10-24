@@ -315,7 +315,7 @@ return {
           const newLines = newCode.split('\n');
           const decorations: any[] = [];
           
-          newLines.forEach((line, i) => {
+          newLines.forEach((line: string, i: number) => {
             if (i >= oldLines.length || line !== oldLines[i]) {
               decorations.push({
                 range: { startLineNumber: i + 1, startColumn: 1, endLineNumber: i + 1, endColumn: 1 },
@@ -342,7 +342,12 @@ return {
     try {
       setIsCodeEditing(true);
       
-      const func = new Function(scriptCode);
+      let cleanCode = scriptCode.trim();
+      if (cleanCode.startsWith('```javascript') || cleanCode.startsWith('```js')) {
+        cleanCode = cleanCode.replace(/```(?:javascript|js)?\n?/g, '').replace(/```$/g, '').trim();
+      }
+      
+      const func = new Function(cleanCode);
       const definition = func();
       
       if (!definition || !definition.nodes) {
@@ -469,6 +474,15 @@ ${scriptCode}
 - Types: 'input' for start, 'output' for end, 'default' for process nodes
 - Keep titles short (1-3 words), content can be descriptive
 - Running the same code multiple times produces the same result (idempotent)
+
+## LaTeX Math Support
+You can include mathematical formulas in node content using LaTeX syntax:
+- Inline math: \\( formula \\) or $ formula $
+- Block math: \\[ formula \\] or $$ formula $$
+- Examples:
+  - Quadratic: \\( ax^2 + bx + c = 0 \\)
+  - Integral: \\( \\int_a^b f(x)dx \\)
+  - Matrix: \\( \\begin{bmatrix} a & b \\\\ c & d \\end{bmatrix} \\)
 
 ## Task
 Modify or extend this flowchart based on requirements.`;

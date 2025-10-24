@@ -1,42 +1,61 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { db } from './lib/db';
-import { user, systemSettings } from './lib/db/schema';
-import { eq } from 'drizzle-orm';
-import { auth } from './lib/auth';
-
-export const runtime = 'nodejs';
-
-const publicPaths = ['/_next', '/api', '/favicon.ico', '/banned', '/sign-in', '/sign-up'];
+import { systemSettings } from './lib/db/schema';
+import { getSession, getUser } from './lib/auth-middleware';
 
 export async function middleware(request: NextRequest) {
   try {
-    const pathname = request.nextUrl.pathname;
-    
-    if (publicPaths.some(path => pathname.startsWith(path))) {
+    console.log('🔍 Middleware triggered for path:', request.nextUrl.pathname);
+
+    // Skip middleware for certain paths
+    if (request.nextUrl.pathname.startsWith('/_next') || 
+        request.nextUrl.pathname.startsWith('/api') || 
+        request.nextUrl.pathname === '/favicon.ico' ||
+        request.nextUrl.pathname === '/banned') {
       return NextResponse.next();
     }
 
     const token = request.cookies.get('better-auth.session_token')?.value;
-    if (!token) return NextResponse.next();
+    console.log('🔑 Session token:', token ? 'Found' : 'Not found');
 
+    if (!token) {
+      return NextResponse.next();
+    }
+
+    // Add no-cache headers to request
     const requestHeaders = new Headers(request.headers);
     requestHeaders.set('Cache-Control', 'no-cache');
 
-    const userSession = await auth.api.getSession({ headers: requestHeaders });
-    if (!userSession) return NextResponse.next();
+    const userSession = await getSession();
+    console.log('👤 Session:', userSession ? 'Found' : 'Not found');
 
-    const [userRecord] = await db.select().from(user).where(eq(user.id, userSession.user.id)).limit(1);
-    if (!userRecord) return NextResponse.next();
+    if (!userSession) {
+      return NextResponse.next();
+    }
 
+    const userRecord = await getUser(userSession.userId);
+    console.log('👤 User:', userRecord ? 'Found' : 'Not found', 'Onboarding:', userRecord?.onboardingCompleted);
+
+    if (!userRecord) {
+      return NextResponse.next();
+    }
+
+    // Handle banned users first
     if (userRecord.banned) {
+      console.log('🚫 Redirecting banned user');
       return NextResponse.redirect(new URL('/banned', request.url));
     }
 
+    // Check onboarding status if user hasn't completed it
     if (!userRecord.onboardingCompleted) {
       const [setting] = await db.select().from(systemSettings).limit(1);
+      console.log('⚙️ System settings:', setting);
+
       if (setting?.onboardingEnabled && !request.nextUrl.searchParams.has('onboarding')) {
-        return NextResponse.redirect(new URL('/?onboarding=true', request.url));
+        console.log('🔄 Redirecting to onboarding');
+        const redirectUrl = new URL('/?onboarding=true', request.url);
+        return NextResponse.redirect(redirectUrl);
       }
     }
 
@@ -53,6 +72,12 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    /*
+     * Match all request paths except:
+     * - /api/* (API routes)
+     * - /_next/* (Next.js internals)
+     * - /favicon.ico, /sitemap.xml (static files)
+     */
     '/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml).*)',
     '/'
   ],

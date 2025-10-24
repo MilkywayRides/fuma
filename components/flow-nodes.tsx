@@ -1,5 +1,24 @@
+'use client';
 import { memo, useState } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
+import katex from 'katex';
+import 'katex/dist/katex.min.css';
+
+const renderLatex = (text: string) => {
+  return text.replace(/\\\((.*?)\\\)/g, (_, formula) => {
+    try {
+      return katex.renderToString(formula, { throwOnError: false });
+    } catch {
+      return formula;
+    }
+  }).replace(/\\\[(.*?)\\\]/gs, (_, formula) => {
+    try {
+      return katex.renderToString(formula, { displayMode: true, throwOnError: false });
+    } catch {
+      return formula;
+    }
+  });
+};
 
 export const DefaultNode = memo(({ data, selected }: NodeProps) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -37,7 +56,7 @@ export const DefaultNode = memo(({ data, selected }: NodeProps) => {
         ) : (
           <div>
             <div className="font-semibold text-sm text-foreground mb-1">{title}</div>
-            <div className="text-xs text-muted-foreground">{content}</div>
+            <div className="text-xs text-muted-foreground" dangerouslySetInnerHTML={{ __html: renderLatex(content) }} />
           </div>
         )}
       </div>
@@ -84,7 +103,7 @@ export const InputNode = memo(({ data, selected }: NodeProps) => {
         ) : (
           <div>
             <div className="font-semibold text-sm text-foreground mb-1">{title}</div>
-            <div className="text-xs text-muted-foreground">{content}</div>
+            <div className="text-xs text-muted-foreground" dangerouslySetInnerHTML={{ __html: renderLatex(content) }} />
           </div>
         )}
       </div>
@@ -131,7 +150,7 @@ export const OutputNode = memo(({ data, selected }: NodeProps) => {
         ) : (
           <div>
             <div className="font-semibold text-sm text-foreground mb-1">{title}</div>
-            <div className="text-xs text-muted-foreground">{content}</div>
+            <div className="text-xs text-muted-foreground" dangerouslySetInnerHTML={{ __html: renderLatex(content) }} />
           </div>
         )}
       </div>

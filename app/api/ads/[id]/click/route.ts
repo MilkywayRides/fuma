@@ -11,7 +11,7 @@ export async function POST(
   const userAgent = request.headers.get('user-agent') || 'unknown';
 
   await db.insert(adClicks).values({
-    adId: id,
+    adId: parseInt(id, 10),
     ipAddress,
     userAgent,
   });

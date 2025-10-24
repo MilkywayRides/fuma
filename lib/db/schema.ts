@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean, serial, integer, index } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, boolean, integer } from 'drizzle-orm/pg-core';
 
 export const user = pgTable('user', {
   id: text('id').primaryKey(),
@@ -65,9 +65,8 @@ export const flowScript = pgTable('flowScript', {
   executionCount: integer('executionCount').default(0).notNull(),
 });
 
-// Flow execution history
 export const flowExecution = pgTable('flowExecution', {
-  id: serial('id').primaryKey(),
+  id: integer('id').notNull().primaryKey(),
   flowId: text('flowId')
     .notNull()
     .references(() => flowScript.id),
@@ -90,13 +89,10 @@ export const verification = pgTable('verification', {
   updatedAt: timestamp('updatedAt'),
 });
 
-export const posts = pgTable('posts', {
-  id: serial('id').primaryKey(),
+export const blogPosts = pgTable('blogPosts', {
+  id: integer('id').notNull().primaryKey(),
   title: text('title').notNull(),
-  slug: text('slug').notNull().unique(),
   content: text('content').notNull(),
-  excerpt: text('excerpt'),
-  published: boolean('published').default(false).notNull(),
   authorId: text('authorId')
     .notNull()
     .references(() => user.id),
@@ -117,11 +113,11 @@ export const flowcharts = pgTable('flowcharts', {
 });
 
 export const comments = pgTable('comments', {
-  id: serial('id').primaryKey(),
+  id: integer('id').notNull().primaryKey(),
   content: text('content').notNull(),
   postId: integer('postId')
     .notNull()
-    .references(() => posts.id, { onDelete: 'cascade' }),
+    .references(() => blogPosts.id, { onDelete: 'cascade' }),
   authorId: text('authorId')
     .notNull()
     .references(() => user.id),
@@ -132,7 +128,7 @@ export const comments = pgTable('comments', {
 });
 
 export const commentReactions = pgTable('commentReactions', {
-  id: serial('id').primaryKey(),
+  id: integer('id').notNull().primaryKey(),
   commentId: integer('commentId')
     .notNull()
     .references(() => comments.id, { onDelete: 'cascade' }),
@@ -144,13 +140,13 @@ export const commentReactions = pgTable('commentReactions', {
 });
 
 export const systemSettings = pgTable('system_settings', {
-  id: serial('id').primaryKey(),
+  id: integer('id').notNull().primaryKey(),
   onboardingEnabled: boolean('onboardingEnabled').default(true).notNull(),
   updatedAt: timestamp('updatedAt').defaultNow().notNull(),
 });
 
 export const siteVisits = pgTable('siteVisits', {
-  id: serial('id').primaryKey(),
+  id: integer('id').notNull().primaryKey(),
   userId: text('userId').references(() => user.id),
   ipAddress: text('ipAddress'),
   userAgent: text('userAgent'),
@@ -159,7 +155,7 @@ export const siteVisits = pgTable('siteVisits', {
 });
 
 export const flowchartEmbeds = pgTable('flowchartEmbeds', {
-  id: serial('id').primaryKey(),
+  id: integer('id').notNull().primaryKey(),
   flowchartId: text('flowchartId')
     .notNull()
     .references(() => flowcharts.id, { onDelete: 'cascade' }),
@@ -171,7 +167,7 @@ export const flowchartEmbeds = pgTable('flowchartEmbeds', {
 });
 
 export const advertisements = pgTable('advertisements', {
-  id: text('id').primaryKey(),
+  id: integer('id').notNull().primaryKey(),
   title: text('title').notNull(),
   content: text('content').notNull(),
   link: text('link'),
@@ -183,8 +179,8 @@ export const advertisements = pgTable('advertisements', {
 });
 
 export const adClicks = pgTable('adClicks', {
-  id: serial('id').primaryKey(),
-  adId: text('adId')
+  id: integer('id').notNull().primaryKey(),
+  adId: integer('adId')
     .notNull()
     .references(() => advertisements.id, { onDelete: 'cascade' }),
   ipAddress: text('ipAddress'),
@@ -193,8 +189,8 @@ export const adClicks = pgTable('adClicks', {
 });
 
 export const adViews = pgTable('adViews', {
-  id: serial('id').primaryKey(),
-  adId: text('adId')
+  id: integer('id').notNull().primaryKey(),
+  adId: integer('adId')
     .notNull()
     .references(() => advertisements.id, { onDelete: 'cascade' }),
   ipAddress: text('ipAddress'),
@@ -202,7 +198,7 @@ export const adViews = pgTable('adViews', {
 });
 
 export const apiKeys = pgTable('apiKeys', {
-  id: serial('id').primaryKey(),
+  id: integer('id').notNull().primaryKey(),
   key: text('key').notNull().unique(),
   name: text('name').notNull(),
   userId: text('userId')
@@ -212,22 +208,26 @@ export const apiKeys = pgTable('apiKeys', {
   createdAt: timestamp('createdAt').defaultNow().notNull(),
 });
 
-export const chatMessages = pgTable('chat_messages', {
-  id: serial('id').primaryKey(),
+export const chatMessages = pgTable('chatMessages', {
+  id: integer('id').notNull().primaryKey(),
   content: text('content').notNull(),
-  userId: text('user_id').notNull(),
-  userName: text('user_name').notNull(),
-  userImage: text('user_image'),
-  hypes: integer('hypes').default(0).notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
+  role: text('role').notNull(), // 'user' or 'assistant'
+  userId: text('userId')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  metadata: text('metadata'), // JSON string for additional data
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
 });
 
-export const directMessages = pgTable('direct_messages', {
-  id: serial('id').primaryKey(),
+export const directMessages = pgTable('directMessages', {
+  id: integer('id').notNull().primaryKey(),
   content: text('content').notNull(),
-  senderId: text('sender_id').notNull().references(() => user.id),
-  receiverId: text('receiver_id').notNull().references(() => user.id),
-  senderName: text('sender_name').notNull(),
-  senderImage: text('sender_image'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
+  fromId: text('fromId')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  toId: text('toId')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  read: boolean('read').default(false).notNull(),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
 });

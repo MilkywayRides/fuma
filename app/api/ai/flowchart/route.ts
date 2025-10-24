@@ -24,8 +24,11 @@ Rules:
 - Use descriptive IDs (e.g., 'start', 'process1', 'decision', 'end')
 - Position nodes with good spacing (150-200px apart)
 - Use 'input' type for start nodes, 'output' for end nodes, 'default' for others
-- Keep titles short (1-3 words), content can be longer
-- Return ONLY the JavaScript code, no explanations
+- Keep titles short (1-3 words)
+- For content with formulas: use template literals with backticks and escape properly
+- Example: content: \`Formula: \\\\(x^2\\\\)\` or use single-line strings only
+- CRITICAL: All strings must be valid JavaScript - no unescaped newlines in quotes
+- Return ONLY valid JavaScript code, no explanations
 
 Current code context:
 ${currentCode}`;
@@ -140,7 +143,23 @@ ${currentCode}`;
       generatedCode = codeMatch[1];
     }
 
-    return NextResponse.json({ code: generatedCode.trim() });
+    generatedCode = generatedCode
+      .replace(/&#39;/g, "'")
+      .replace(/&quot;/g, '"')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&')
+      .trim();
+
+    try {
+      new Function(generatedCode);
+    } catch (syntaxError: any) {
+      return NextResponse.json({ 
+        error: `Generated code has syntax error: ${syntaxError.message}. Please try again with simpler prompt.` 
+      }, { status: 400 });
+    }
+
+    return NextResponse.json({ code: generatedCode });
   } catch (error: any) {
     console.error('AI API error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });

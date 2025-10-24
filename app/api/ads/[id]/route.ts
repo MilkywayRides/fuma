@@ -20,7 +20,7 @@ export async function PUT(
 
   const [ad] = await db.update(advertisements)
     .set({ title, content, link, imageUrl, position, active, updatedAt: new Date() })
-    .where(eq(advertisements.id, id))
+    .where(eq(advertisements.id, parseInt(id, 10)))
     .returning();
 
   return NextResponse.json(ad);
@@ -36,7 +36,7 @@ export async function DELETE(
   }
 
   const { id } = await params;
-  await db.delete(advertisements).where(eq(advertisements.id, id));
+  await db.delete(advertisements).where(eq(advertisements.id, parseInt(id, 10)));
 
   return NextResponse.json({ success: true });
 }

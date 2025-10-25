@@ -8,15 +8,17 @@ export async function POST(request: Request) {
     return Response.json({ error: 'Missing required fields' }, { status: 400 });
   }
 
+  const generatedId = Math.floor(Math.random() * 1_000_000_000);
+
   const [newMessage] = await db
     .insert(directMessages)
     .values({
-      senderId,
-      receiverId,
-      senderName,
-      senderImage,
+      id: generatedId,
+      fromId: senderId,
+      toId: receiverId,
       content,
       createdAt: new Date(),
+      read: false,
     })
     .returning();
 

@@ -1,6 +1,6 @@
 import 'katex/dist/katex.css';
 import { db } from '@/lib/db';
-import { posts, comments, user } from '@/lib/db/schema';
+import { blogPosts, comments, user } from '@/lib/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
 import { MarkdownContent } from '@/components/markdown-content';
@@ -15,8 +15,8 @@ export default async function BlogPostPage({
   const { slug } = await params;
   const [post] = await db
     .select()
-    .from(posts)
-    .where(and(eq(posts.slug, slug), eq(posts.published, true)));
+    .from(blogPosts)
+    .where(and(eq(blogPosts.slug, slug), eq(blogPosts.published, true)));
 
   if (!post) {
     notFound();

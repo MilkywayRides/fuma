@@ -1,6 +1,6 @@
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { posts } from '@/lib/db/schema';
+import { blogPosts } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
@@ -10,7 +10,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const [post] = await db.select().from(posts).where(eq(posts.slug, id));
+  const [post] = await db.select().from(blogPosts).where(eq(blogPosts.slug, id));
 
   if (!post) {
     return NextResponse.json({ error: 'Post not found' }, { status: 404 });
@@ -36,7 +36,7 @@ export async function PUT(
   const { title, slug, excerpt, content, published } = body;
 
   const [post] = await db
-    .update(posts)
+    .update(blogPosts)
     .set({
       title,
       slug,
@@ -45,7 +45,7 @@ export async function PUT(
       published,
       updatedAt: new Date(),
     })
-    .where(eq(posts.slug, id))
+    .where(eq(blogPosts.slug, id))
     .returning();
 
   return NextResponse.json(post);
@@ -64,7 +64,7 @@ export async function DELETE(
   }
 
   const { id } = await params;
-  await db.delete(posts).where(eq(posts.slug, id));
+  await db.delete(blogPosts).where(eq(blogPosts.slug, id));
 
   return NextResponse.json({ success: true });
 }

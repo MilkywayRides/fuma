@@ -5,8 +5,10 @@ import { desc, eq } from 'drizzle-orm';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 
-function generateId(): string {
-  return Math.random().toString(36).substring(2, 10);
+function generateId(): number {
+  // Generate a numeric id to satisfy the current schema (integer primary key).
+  // In production this should be replaced by an auto-incrementing/identity column.
+  return Math.floor(Math.random() * 1_000_000_000);
 }
 
 export async function GET() {

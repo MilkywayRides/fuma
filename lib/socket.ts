@@ -32,11 +32,14 @@ export function initSocket(httpServer: HTTPServer): SocketIOServer {
         const { db } = await import('./db');
         const { chatMessages } = await import('./db/schema');
         
+        const generatedId = Math.floor(Math.random() * 1_000_000_000);
         const [message] = await db.insert(chatMessages).values({
+          id: generatedId,
           content: data.content,
+          role: 'user',
           userId: data.userId,
-          userName: data.userName,
-          userImage: data.userImage,
+          metadata: JSON.stringify({ userName: data.userName, userImage: data.userImage }),
+          createdAt: new Date(),
         }).returning();
 
         io?.emit('chat:message', message);
@@ -50,12 +53,14 @@ export function initSocket(httpServer: HTTPServer): SocketIOServer {
         const { db } = await import('./db');
         const { directMessages } = await import('./db/schema');
         
+        const generatedDmId = Math.floor(Math.random() * 1_000_000_000);
         const [message] = await db.insert(directMessages).values({
+          id: generatedDmId,
           content: data.content,
-          senderId: data.senderId,
-          receiverId: data.receiverId,
-          senderName: data.senderName,
-          senderImage: data.senderImage,
+          fromId: data.senderId,
+          toId: data.receiverId,
+          createdAt: new Date(),
+          read: false,
         }).returning();
 
         socket.emit('dm:message', message);

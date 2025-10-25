@@ -25,7 +25,9 @@ export async function GET(
   }
 
   const referrer = request.headers.get('referer') || 'direct';
+  const generatedId = Math.floor(Math.random() * 1_000_000_000);
   await db.insert(flowchartEmbeds).values({
+    id: generatedId,
     flowchartId: id,
     userId,
     referrer,

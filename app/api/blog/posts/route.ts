@@ -1,5 +1,5 @@
 import { db } from '@/lib/db';
-import { posts } from '@/lib/db/schema';
+import { blogPosts } from '@/lib/db/schema';
 import { eq, desc } from 'drizzle-orm';
 import { NextRequest } from 'next/server';
 
@@ -9,17 +9,17 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const limit = parseInt(searchParams.get('limit') || '10');
 
-  const blogPosts = await db
+  const posts = await db
     .select({
-      id: posts.id,
-      title: posts.title,
-      slug: posts.slug,
-      excerpt: posts.excerpt,
-      createdAt: posts.createdAt,
+      id: blogPosts.id,
+      title: blogPosts.title,
+      slug: blogPosts.slug,
+      excerpt: blogPosts.excerpt,
+      createdAt: blogPosts.createdAt,
     })
-    .from(posts)
-    .where(eq(posts.published, true))
-    .orderBy(desc(posts.createdAt))
+    .from(blogPosts)
+    .where(eq(blogPosts.published, true))
+    .orderBy(desc(blogPosts.createdAt))
     .limit(limit);
 
   return Response.json(blogPosts, {

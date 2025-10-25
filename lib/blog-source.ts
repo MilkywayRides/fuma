@@ -1,13 +1,13 @@
 import { db } from './db';
-import { posts } from './db/schema';
+import { blogPosts } from './db/schema';
 import { eq } from 'drizzle-orm';
 
 export async function getBlogTree() {
   const publishedPosts = await db
     .select()
-    .from(posts)
-    .where(eq(posts.published, true))
-    .orderBy(posts.createdAt);
+    .from(blogPosts)
+    .where(eq(blogPosts.published, true))
+    .orderBy(blogPosts.createdAt);
 
   return {
     name: 'Blog',
@@ -23,12 +23,12 @@ export async function getBlogTree() {
 export async function getAllBlogPosts() {
   return await db
     .select({
-      id: posts.id,
-      title: posts.title,
-      slug: posts.slug,
-      content: posts.content,
-      excerpt: posts.excerpt,
+      id: blogPosts.id,
+      title: blogPosts.title,
+      slug: blogPosts.slug,
+      content: blogPosts.content,
+      excerpt: blogPosts.excerpt,
     })
-    .from(posts)
-    .where(eq(posts.published, true));
+    .from(blogPosts)
+    .where(eq(blogPosts.published, true));
 }

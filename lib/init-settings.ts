@@ -15,7 +15,9 @@ async function initializeSettings() {
   
   if (!existing) {
     console.log('No settings found. Creating initial settings...');
+    const generatedId = Math.floor(Math.random() * 1_000_000_000);
     await db.insert(systemSettings).values({
+      id: generatedId,
       onboardingEnabled: true,
       updatedAt: new Date()
     });

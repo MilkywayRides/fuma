@@ -1,6 +1,6 @@
 import 'katex/dist/katex.css';
 import { db } from '@/lib/db';
-import { posts } from '@/lib/db/schema';
+import { blogPosts } from '@/lib/db/schema';
 import { desc, eq } from 'drizzle-orm';
 import Link from 'next/link';
 import { MarkdownContent } from '@/components/markdown-content';
@@ -15,18 +15,22 @@ export const metadata: Metadata = {
 
 export const revalidate = 60;
 
+// Force dynamic rendering to avoid build-time DB queries when the database may
+// not be available during CI or local builds.
+export const dynamic = 'force-dynamic';
+
 export default async function BlogPage() {
   const publishedPosts = await db
     .select({
-      id: posts.id,
-      title: posts.title,
-      slug: posts.slug,
-      excerpt: posts.excerpt,
-      createdAt: posts.createdAt,
+      id: blogPosts.id,
+      title: blogPosts.title,
+      slug: blogPosts.slug,
+      excerpt: blogPosts.excerpt,
+      createdAt: blogPosts.createdAt,
     })
-    .from(posts)
-    .where(eq(posts.published, true))
-    .orderBy(desc(posts.createdAt))
+    .from(blogPosts)
+    .where(eq(blogPosts.published, true))
+    .orderBy(desc(blogPosts.createdAt))
     .limit(50);
 
   return (

@@ -93,6 +93,9 @@ export const blogPosts = pgTable('blogPosts', {
   id: integer('id').notNull().primaryKey(),
   title: text('title').notNull(),
   content: text('content').notNull(),
+  excerpt: text('excerpt'),
+  slug: text('slug').notNull().unique(),
+  published: boolean('published').default(false).notNull(),
   authorId: text('authorId')
     .notNull()
     .references(() => user.id),
@@ -211,6 +214,7 @@ export const apiKeys = pgTable('apiKeys', {
 export const chatMessages = pgTable('chatMessages', {
   id: integer('id').notNull().primaryKey(),
   content: text('content').notNull(),
+  hypes: integer('hypes').default(0).notNull(),
   role: text('role').notNull(), // 'user' or 'assistant'
   userId: text('userId')
     .notNull()

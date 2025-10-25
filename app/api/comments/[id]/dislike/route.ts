@@ -48,7 +48,8 @@ export async function POST(
       return NextResponse.json({ action: 'switched' });
     }
   } else {
-    await db.insert(commentReactions).values({ commentId, userId, type: 'dislike' });
+    const generatedId = Math.floor(Math.random() * 1_000_000_000);
+    await db.insert(commentReactions).values({ id: generatedId, commentId, userId, type: 'dislike' });
     await db.update(comments).set({ dislikes: sql`${comments.dislikes} + 1` }).where(eq(comments.id, commentId));
     return NextResponse.json({ action: 'added' });
   }

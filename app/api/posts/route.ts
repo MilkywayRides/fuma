@@ -1,6 +1,6 @@
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { posts } from '@/lib/db/schema';
+import { blogPosts } from '@/lib/db/schema';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 
@@ -17,7 +17,7 @@ export async function POST(req: Request) {
   const { title, slug, excerpt, content, published } = body;
 
   const [post] = await db
-    .insert(posts)
+    .insert(blogPosts)
     .values({
       title,
       slug,
@@ -25,7 +25,7 @@ export async function POST(req: Request) {
       content,
       published,
       authorId: session.user.id,
-    })
+    } as any)
     .returning();
 
   return NextResponse.json(post);

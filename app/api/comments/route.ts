@@ -29,9 +29,11 @@ export async function POST(request: Request) {
 
   const { postId, content, parentId } = await request.json();
 
+  const generatedId = Math.floor(Math.random() * 1_000_000_000);
   const [comment] = await db
     .insert(comments)
     .values({
+      id: generatedId,
       postId: parseInt(postId),
       content,
       authorId: userId,

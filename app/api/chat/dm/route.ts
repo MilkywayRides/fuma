@@ -16,9 +16,9 @@ export async function GET(request: Request) {
     .from(directMessages)
     .where(
       or(
-        and(eq(directMessages.senderId, userId), eq(directMessages.receiverId, otherUserId)),
-        and(eq(directMessages.senderId, otherUserId), eq(directMessages.receiverId, userId))
-      )
+          and(eq(directMessages.fromId, userId), eq(directMessages.toId, otherUserId)),
+          and(eq(directMessages.fromId, otherUserId), eq(directMessages.toId, userId))
+        )
     )
     .orderBy(desc(directMessages.createdAt))
     .limit(50);

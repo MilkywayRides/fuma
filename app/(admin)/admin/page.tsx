@@ -1,5 +1,5 @@
 import { db } from '@/lib/db';
-import { user, posts, comments, flowcharts, siteVisits, flowchartEmbeds } from '@/lib/db/schema';
+import { user, blogPosts, comments, flowcharts, siteVisits, flowchartEmbeds } from '@/lib/db/schema';
 import { sql, count, desc } from 'drizzle-orm';
 import { DashboardStats } from '@/components/dashboard-stats';
 import { Metadata } from 'next';
@@ -8,10 +8,14 @@ export const metadata: Metadata = {
   title: 'Dashboard - Admin',
 };
 
+// Force dynamic rendering so Next.js doesn't try to prerender this page at build
+// time and run database queries against an unavailable dev database.
+export const dynamic = 'force-dynamic';
+
 export default async function AdminPage() {
   const [[totalUsers], [totalPosts], [totalComments], [totalFlowcharts]] = await Promise.all([
     db.select({ count: count() }).from(user),
-    db.select({ count: count() }).from(posts),
+    db.select({ count: count() }).from(blogPosts),
     db.select({ count: count() }).from(comments),
     db.select({ count: count() }).from(flowcharts),
   ]);
@@ -24,9 +28,9 @@ export default async function AdminPage() {
   }).from(user);
 
   const [postStats] = await db.select({
-    published: sql<number>`count(*) filter (where ${posts.published} = true)`,
-    drafts: sql<number>`count(*) filter (where ${posts.published} = false)`,
-  }).from(posts);
+    published: sql<number>`count(*) filter (where ${blogPosts.published} = true)`,
+    drafts: sql<number>`count(*) filter (where ${blogPosts.published} = false)`,
+  }).from(blogPosts);
 
   const [flowStats] = await db.select({
     published: sql<number>`count(*) filter (where ${flowcharts.published} = true)`,
@@ -34,34 +38,34 @@ export default async function AdminPage() {
   }).from(flowcharts);
 
   const topPosts = await db.select({
-    id: posts.id,
-    title: posts.title,
+    id: blogPosts.id,
+    title: blogPosts.title,
     commentCount: sql<number>`count(${comments.id})`,
-  }).from(posts)
-    .leftJoin(comments, sql`${comments.postId} = ${posts.id}`)
-    .groupBy(posts.id, posts.title)
+  }).from(blogPosts)
+    .leftJoin(comments, sql`${comments.postId} = ${blogPosts.id}`)
+    .groupBy(blogPosts.id, blogPosts.title)
     .orderBy(sql`count(${comments.id}) desc`)
     .limit(5);
 
   const recentActivity = await db.select({
-    id: posts.id,
-    title: posts.title,
-    published: posts.published,
-    createdAt: posts.createdAt,
+    id: blogPosts.id,
+    title: blogPosts.title,
+    published: blogPosts.published,
+    createdAt: blogPosts.createdAt,
     authorName: user.name,
-  }).from(posts)
-    .leftJoin(user, sql`${posts.authorId} = ${user.id}`)
-    .orderBy(desc(posts.createdAt))
+  }).from(blogPosts)
+    .leftJoin(user, sql`${blogPosts.authorId} = ${user.id}`)
+    .orderBy(desc(blogPosts.createdAt))
     .limit(8);
 
   const activeUsers = await db.select({
     id: user.id,
     name: user.name,
-    postCount: sql<number>`count(${posts.id})`,
+    postCount: sql<number>`count(${blogPosts.id})`,
   }).from(user)
-    .leftJoin(posts, sql`${posts.authorId} = ${user.id}`)
+    .leftJoin(blogPosts, sql`${blogPosts.authorId} = ${user.id}`)
     .groupBy(user.id, user.name)
-    .orderBy(sql`count(${posts.id}) desc`)
+    .orderBy(sql`count(${blogPosts.id}) desc`)
     .limit(5);
 
   const commentActivity = await db.select({
@@ -75,13 +79,13 @@ export default async function AdminPage() {
     .limit(5);
 
   const postEngagement = await db.select({
-    postId: posts.id,
-    title: posts.title,
+    postId: blogPosts.id,
+    title: blogPosts.title,
     likes: sql<number>`sum(${comments.likes})`,
     dislikes: sql<number>`sum(${comments.dislikes})`,
-  }).from(posts)
-    .leftJoin(comments, sql`${comments.postId} = ${posts.id}`)
-    .groupBy(posts.id, posts.title)
+  }).from(blogPosts)
+    .leftJoin(comments, sql`${comments.postId} = ${blogPosts.id}`)
+    .groupBy(blogPosts.id, blogPosts.title)
     .orderBy(sql`sum(${comments.likes}) desc`)
     .limit(5);
 
@@ -89,11 +93,11 @@ export default async function AdminPage() {
     id: comments.id,
     content: comments.content,
     authorName: user.name,
-    postTitle: posts.title,
+    postTitle: blogPosts.title,
     createdAt: comments.createdAt,
   }).from(comments)
     .leftJoin(user, sql`${comments.authorId} = ${user.id}`)
-    .leftJoin(posts, sql`${comments.postId} = ${posts.id}`)
+    .leftJoin(blogPosts, sql`${comments.postId} = ${blogPosts.id}`)
     .orderBy(desc(comments.createdAt))
     .limit(6);
 

@@ -9,7 +9,9 @@ export async function POST(request: Request) {
   const { path } = await request.json();
   const headersList = await headers();
   
+  const generatedId = Math.floor(Math.random() * 1_000_000_000);
   await db.insert(siteVisits).values({
+    id: generatedId,
     userId: session?.user?.id || null,
     ipAddress: headersList.get('x-forwarded-for') || headersList.get('x-real-ip'),
     userAgent: headersList.get('user-agent'),

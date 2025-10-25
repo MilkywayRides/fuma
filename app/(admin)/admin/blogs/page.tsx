@@ -1,5 +1,5 @@
 import { db } from '@/lib/db';
-import { posts } from '@/lib/db/schema';
+import { blogPosts } from '@/lib/db/schema';
 import { desc } from 'drizzle-orm';
 import Link from 'next/link';
 import { Metadata } from 'next';
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic';
 
 export default async function AdminPage() {
-  const allPosts = await db.select().from(posts).orderBy(desc(posts.createdAt));
+  const allPosts = await db.select().from(blogPosts).orderBy(desc(blogPosts.createdAt));
 
   return (
     <div>

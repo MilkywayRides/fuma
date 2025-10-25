@@ -20,6 +20,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }
 
   const execution = await db.insert(flowExecution).values({
+    id: Math.floor(Math.random() * 1000000),
     flowId: id,
     status: 'running',
     startedAt: new Date(),

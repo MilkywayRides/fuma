@@ -22,7 +22,9 @@ export async function POST(req: Request) {
   if (!name) return NextResponse.json({ error: 'Name required' }, { status: 400 });
 
   const key = `bn_${crypto.randomBytes(32).toString('hex')}`;
+  const generatedId = Math.floor(Math.random() * 1_000_000_000);
   const [newKey] = await db.insert(apiKeys).values({
+    id: generatedId,
     key,
     name,
     userId: session.user.id,

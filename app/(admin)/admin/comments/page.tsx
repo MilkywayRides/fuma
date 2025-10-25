@@ -1,5 +1,5 @@
 import { db } from '@/lib/db';
-import { comments, user, posts } from '@/lib/db/schema';
+import { comments, user, blogPosts } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { AdminCommentsList } from '@/components/admin-comments-list';
 import { Metadata } from 'next';
@@ -7,6 +7,10 @@ import { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'Comments - Admin',
 };
+
+// Avoid build-time prerendering database queries in environments where the
+// database (and tables) may not exist. Force dynamic rendering instead.
+export const dynamic = 'force-dynamic';
 
 export default async function CommentsPage() {
   const allComments = await db
@@ -17,13 +21,13 @@ export default async function CommentsPage() {
       dislikes: comments.dislikes,
       createdAt: comments.createdAt,
       authorName: user.name,
-      postTitle: posts.title,
-      postId: posts.id,
+      postTitle: blogPosts.title,
+      postId: blogPosts.id,
       parentId: comments.parentId,
     })
     .from(comments)
     .leftJoin(user, eq(comments.authorId, user.id))
-    .leftJoin(posts, eq(comments.postId, posts.id))
+    .leftJoin(blogPosts, eq(comments.postId, blogPosts.id))
     .orderBy(comments.createdAt);
 
   return (

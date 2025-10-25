@@ -70,6 +70,7 @@ export async function PATCH(request: Request) {
       await db
         .insert(systemSettings)
         .values({
+          id: 1,
           onboardingEnabled: enabled,
           updatedAt: new Date()
         });

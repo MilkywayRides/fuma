@@ -16,16 +16,22 @@ export async function POST(req: Request) {
   const body = await req.json();
   const { title, slug, excerpt, content, published } = body;
 
+  // blogPosts.id is a required numeric primary key in the current schema.
+  // Generate a numeric id here so the insert succeeds. Long-term you should
+  // make this an auto-increment/identity column or use UUIDs.
+  const generatedId = Math.floor(Math.random() * 1_000_000_000);
+
   const [post] = await db
     .insert(blogPosts)
     .values({
+      id: generatedId,
       title,
       slug,
       excerpt,
       content,
-      published,
+      published: !!published,
       authorId: session.user.id,
-    } as any)
+    })
     .returning();
 
   return NextResponse.json(post);

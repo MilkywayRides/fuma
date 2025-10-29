@@ -4,6 +4,7 @@ import { blogPosts } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 
 export async function GET(
   req: Request,
@@ -48,6 +49,10 @@ export async function PUT(
     .where(eq(blogPosts.slug, id))
     .returning();
 
+  revalidatePath('/');
+  revalidatePath('/blog');
+  revalidatePath(`/blog/${slug}`);
+
   return NextResponse.json(post);
 }
 
@@ -65,6 +70,10 @@ export async function DELETE(
 
   const { id } = await params;
   await db.delete(blogPosts).where(eq(blogPosts.slug, id));
+
+  revalidatePath('/');
+  revalidatePath('/blog');
+  revalidatePath(`/blog/${id}`);
 
   return NextResponse.json({ success: true });
 }

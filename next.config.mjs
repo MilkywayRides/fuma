@@ -23,11 +23,12 @@ const config = {
   compress: true,
   poweredByHeader: false,
   experimental: {
-    optimizePackageImports: ['lucide-react', 'react-icons'],
+    optimizePackageImports: ['lucide-react', 'react-icons', '@radix-ui/react-icons', 'framer-motion'],
   },
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
   },
+  cacheMaxMemorySize: 50 * 1024 * 1024,
 };
 
 export default withMDX(config);

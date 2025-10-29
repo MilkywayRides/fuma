@@ -235,3 +235,43 @@ export const directMessages = pgTable('directMessages', {
   read: boolean('read').default(false).notNull(),
   createdAt: timestamp('createdAt').defaultNow().notNull(),
 });
+
+export const sentEmails = pgTable('sentEmails', {
+  id: integer('id').notNull().primaryKey(),
+  emailAddressId: integer('emailAddressId')
+    .notNull()
+    .references(() => emailAddresses.id, { onDelete: 'cascade' }),
+  to: text('to').notNull(),
+  subject: text('subject').notNull(),
+  body: text('body').notNull(),
+  html: text('html'),
+  status: text('status').default('sent').notNull(),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+});
+
+export const emailAddresses = pgTable('emailAddresses', {
+  id: integer('id').notNull().primaryKey(),
+  uuid: text('uuid').notNull().unique(),
+  address: text('address').notNull().unique(),
+  userId: text('userId')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  active: boolean('active').default(true).notNull(),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+});
+
+export const emails = pgTable('emails', {
+  id: integer('id').notNull().primaryKey(),
+  emailAddressId: integer('emailAddressId')
+    .notNull()
+    .references(() => emailAddresses.id, { onDelete: 'cascade' }),
+  from: text('from').notNull(),
+  to: text('to').notNull(),
+  subject: text('subject').notNull(),
+  body: text('body').notNull(),
+  html: text('html'),
+  read: boolean('read').default(false).notNull(),
+  starred: boolean('starred').default(false).notNull(),
+  folder: text('folder').default('inbox').notNull(),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+});

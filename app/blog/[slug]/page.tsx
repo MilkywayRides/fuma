@@ -40,29 +40,31 @@ export default async function BlogPostPage({
   return (
     <>
       <AdBanner position="banner" />
-      <div className="container px-4 py-8 md:py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-          <article className="lg:col-span-2">
-        <h1 className="text-4xl font-bold mb-4">{post.title}</h1>
-        <time className="text-sm text-fd-muted-foreground mb-8 block">
-          {new Date(post.createdAt).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          })}
-        </time>
-            <MarkdownContent content={post.content} userId={post.authorId} />
+      <div className="container px-4 py-8 md:py-12 max-w-6xl mx-auto">
+        <div className="flex flex-col lg:flex-row gap-8">
+          <article className="flex-1 min-w-0 max-w-3xl">
+            <h1 className="text-4xl font-bold mb-4">{post.title}</h1>
+            <time className="text-sm text-fd-muted-foreground mb-8 block">
+              {new Date(post.createdAt).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              })}
+            </time>
+            <div className="prose prose-slate dark:prose-invert max-w-none">
+              <MarkdownContent content={post.content} userId={post.authorId} />
+            </div>
+            
+            <div className="mt-8 md:mt-12">
+              <CommentsSection postId={post.id} initialComments={postComments} />
+            </div>
           </article>
           
-          <aside className="lg:col-span-1 order-first lg:order-last">
+          <aside className="w-full lg:w-64 flex-shrink-0">
             <div className="lg:sticky lg:top-4">
               <AdSidebar position="sidebar" />
             </div>
           </aside>
-        </div>
-        
-        <div className="mt-8 md:mt-12 lg:col-span-2">
-          <CommentsSection postId={post.id} initialComments={postComments} />
         </div>
       </div>
     </>

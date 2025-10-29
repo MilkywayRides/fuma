@@ -2,6 +2,9 @@ import { source } from '@/lib/source';
 import { createFromSource } from 'fumadocs-core/search/server';
 import { getAllBlogPosts } from '@/lib/blog-source';
 
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 type SearchIndex = any[];
 
 const searchAPI = createFromSource(source, {

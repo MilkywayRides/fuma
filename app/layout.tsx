@@ -10,6 +10,8 @@ const inter = Inter({
   subsets: ['latin'],
   display: 'swap',
   preload: true,
+  variable: '--font-inter',
+  adjustFontFallback: true,
 });
 
 export const metadata: Metadata = {
@@ -18,10 +20,13 @@ export const metadata: Metadata = {
     template: '%s | BlazeNeuro',
   },
   description: 'Modern blog application with Next.js',
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
 };
 
 export const viewport = {
   themeColor: '#000000',
+  width: 'device-width',
+  initialScale: 1,
 };
 
 export default function Layout({ children }: LayoutProps<'/'>) {

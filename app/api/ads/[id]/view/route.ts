@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
-import { adViews } from '@/lib/db/schema';
+import { adViews, advertisements } from '@/lib/db/schema';
+import { eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
 export async function POST(
@@ -19,6 +20,12 @@ export async function POST(
   // schema. Generate a lightweight temporary id here so the insert satisfies
   // the typed signature. In a production schema this should be an auto-
   // incrementing/serial/identity column instead.
+  const [ad] = await db.select().from(advertisements).where(eq(advertisements.id, adIdNum)).limit(1);
+  
+  if (!ad) {
+    return NextResponse.json({ error: 'Ad not found' }, { status: 404 });
+  }
+
   const generatedId = Math.floor(Math.random() * 1_000_000_000);
 
   await db.insert(adViews).values({

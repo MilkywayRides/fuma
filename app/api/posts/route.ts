@@ -3,6 +3,10 @@ import { db } from '@/lib/db';
 import { blogPosts } from '@/lib/db/schema';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
+
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 export async function POST(req: Request) {
   const session = await auth.api.getSession({
@@ -33,6 +37,9 @@ export async function POST(req: Request) {
       authorId: session.user.id,
     })
     .returning();
+
+  revalidatePath('/');
+  revalidatePath('/blog');
 
   return NextResponse.json(post);
 }

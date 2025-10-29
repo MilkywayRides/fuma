@@ -23,10 +23,6 @@ export async function middleware(request: NextRequest) {
       return NextResponse.next();
     }
 
-    // Add no-cache headers to request
-    const requestHeaders = new Headers(request.headers);
-    requestHeaders.set('Cache-Control', 'no-cache');
-
     const userSession = await getSession();
     console.log('👤 Session:', userSession ? 'Found' : 'Not found');
 
@@ -59,11 +55,7 @@ export async function middleware(request: NextRequest) {
       }
     }
 
-    return NextResponse.next({
-      request: {
-        headers: new Headers(request.headers),
-      },
-    });
+    return NextResponse.next();
   } catch (error) {
     console.error('⚠️ Middleware error:', error);
     return NextResponse.next();

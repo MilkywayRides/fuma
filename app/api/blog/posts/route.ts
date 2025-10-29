@@ -4,6 +4,8 @@ import { eq, desc } from 'drizzle-orm';
 import { NextRequest } from 'next/server';
 
 export const revalidate = 60;
+export const runtime = 'nodejs';
+export const dynamic = 'force-static';
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -22,7 +24,7 @@ export async function GET(request: NextRequest) {
     .orderBy(desc(blogPosts.createdAt))
     .limit(limit);
 
-  return Response.json(blogPosts, {
+  return Response.json(posts, {
     headers: {
       'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120',
     },

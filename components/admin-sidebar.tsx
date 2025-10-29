@@ -1,14 +1,29 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { LayoutDashboard, Workflow, Settings, MessageSquare, Users, FileText, Megaphone, Menu, X, Code, GitBranch } from 'lucide-react';
+import { LayoutDashboard, Workflow, Settings, MessageSquare, Users, FileText, Megaphone, Menu, X, Code, GitBranch, Mail, ChevronDown, ChevronRight } from 'lucide-react';
 import { APP_NAME } from '@/lib/config';
 import { UserButton } from './user-button';
 
+interface EmailAddress {
+  id: number;
+  uuid: string;
+  address: string;
+}
+
 export function AdminSidebar({ userName, userEmail, developerMode }: { userName: string; userEmail: string; developerMode?: boolean }) {
+  const [emailAddresses, setEmailAddresses] = useState<EmailAddress[]>([]);
+  const [mailExpanded, setMailExpanded] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/admin/emails')
+      .then(res => res.json())
+      .then(data => setEmailAddresses(data))
+      .catch(() => {});
+  }, []);
   const navItems = [
     { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/admin/blogs', label: 'Blogs', icon: FileText },
@@ -66,6 +81,52 @@ export function AdminSidebar({ userName, userEmail, developerMode }: { userName:
               </Link>
             );
           })}
+          
+          <div>
+            <button
+              onClick={() => setMailExpanded(!mailExpanded)}
+              className={cn(
+                'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors',
+                pathname.startsWith('/admin/mail')
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+              )}
+            >
+              <Mail className="h-4 w-4" />
+              <span className="flex-1 text-left">Mail</span>
+              {mailExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+            </button>
+            {mailExpanded && (
+              <div className="ml-7 mt-1 space-y-1">
+                <Link
+                  href="/admin/mail"
+                  className={cn(
+                    'block rounded-lg px-3 py-2 text-sm transition-colors',
+                    pathname === '/admin/mail'
+                      ? 'bg-accent text-accent-foreground'
+                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                  )}
+                >
+                  Create Email
+                </Link>
+                {emailAddresses.map((email) => (
+                  <Link
+                    key={email.uuid}
+                    href={`/admin/mail/${email.uuid}`}
+                    className={cn(
+                      'block rounded-lg px-3 py-2 text-sm transition-colors truncate',
+                      pathname === `/admin/mail/${email.uuid}`
+                        ? 'bg-accent text-accent-foreground'
+                        : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                    )}
+                    title={email.address}
+                  >
+                    {email.address.split('@')[0]}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
         </nav>
 
         <div className="border-t p-4">

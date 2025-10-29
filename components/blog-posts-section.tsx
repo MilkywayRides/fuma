@@ -22,16 +22,20 @@ export function BlogPostsSection() {
   useEffect(() => {
     const controller = new AbortController();
     const cached = sessionStorage.getItem('blog-posts');
-    if (cached) {
+    const cacheTime = sessionStorage.getItem('blog-posts-time');
+    const now = Date.now();
+    
+    if (cached && cacheTime && now - parseInt(cacheTime) < 30000) {
       setPosts(JSON.parse(cached));
       setLoading(false);
-      return;
     }
+    
     fetch('/api/blog/posts?limit=6', { signal: controller.signal })
       .then(res => res.json())
       .then(data => {
         setPosts(data);
         sessionStorage.setItem('blog-posts', JSON.stringify(data));
+        sessionStorage.setItem('blog-posts-time', now.toString());
         setLoading(false);
       })
       .catch((err) => {

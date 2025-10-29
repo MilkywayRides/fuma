@@ -1,8 +1,6 @@
 import { db } from './db';
 import { user, session } from './db/schema';
 import { eq } from 'drizzle-orm';
-import { headers } from 'next/headers';
-import { verify } from '@/lib/jwt';
 import { cookies } from 'next/headers';
 
 export interface SessionData {
@@ -20,15 +18,7 @@ export async function getSession(): Promise<SessionData | null> {
       return null;
     }
 
-    // Verify the token
-    const payload = await verify(token);
-    if (!payload || typeof payload !== 'object' || !('sid' in payload)) {
-      return null;
-    }
-
-    const sessionId = payload.sid;
-
-    // Get session from database
+    // Get session directly from database using token
     const [userSession] = await db
       .select({
         id: session.id,
@@ -36,7 +26,7 @@ export async function getSession(): Promise<SessionData | null> {
         expiresAt: session.expiresAt,
       })
       .from(session)
-      .where(eq(session.id, sessionId))
+      .where(eq(session.token, token))
       .limit(1);
 
     if (!userSession || new Date(userSession.expiresAt) < new Date()) {

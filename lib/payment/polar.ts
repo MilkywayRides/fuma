@@ -8,7 +8,7 @@ export class PolarProvider implements PaymentProvider {
     this.apiKey = apiKey
   }
 
-  async createCheckoutSession(userId: string, productId: string): Promise<string> {
+  async createCheckoutSession(userId: string, productId: string, email?: string): Promise<string> {
     const res = await fetch(`${this.baseUrl}/v1/checkouts`, {
       method: 'POST',
       headers: {
@@ -17,6 +17,7 @@ export class PolarProvider implements PaymentProvider {
       },
       body: JSON.stringify({
         product_id: productId,
+        customer_email: email,
         customer_metadata: { userId },
       }),
     })

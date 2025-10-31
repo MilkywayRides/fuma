@@ -66,6 +66,8 @@ export default function MailPage() {
   const [selectedEmail, setSelectedEmail] = useState<string>('');
   const [recipient, setRecipient] = useState('');
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
+  const [upgradeStep, setUpgradeStep] = useState(1);
+  const [selectedProvider, setSelectedProvider] = useState<'polar' | 'stripe'>('polar');
   const { toast } = useToast();
   const router = useRouter();
 
@@ -113,6 +115,7 @@ export default function MailPage() {
       } else {
         const error = await res.json();
         if (res.status === 403) {
+          setUpgradeStep(1);
           setShowUpgradeDialog(true);
         } else {
           toast({ title: 'Error', description: error.error, variant: 'destructive' });
@@ -125,7 +128,11 @@ export default function MailPage() {
   };
 
   const handleUpgrade = async () => {
-    const res = await fetch('/api/subscription/checkout', { method: 'POST' });
+    const res = await fetch('/api/subscription/checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ provider: selectedProvider }),
+    });
     const { url } = await res.json();
     window.location.href = url;
   };
@@ -341,40 +348,75 @@ export default function MailPage() {
         <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle>Upgrade Your Plan</DialogTitle>
-            <DialogDescription>You've reached your email limit. Choose a plan to continue.</DialogDescription>
+            <DialogDescription>
+              {upgradeStep === 1 ? 'Choose a plan to continue' : 'Select your payment method'}
+            </DialogDescription>
           </DialogHeader>
-          <div className="grid md:grid-cols-2 gap-6 mt-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Free</CardTitle>
-                <CardDescription>Current Plan</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold mb-4">$0<span className="text-sm font-normal">/month</span></div>
-                <ul className="space-y-2 mb-6">
-                  <li className="flex items-center gap-2"><Check className="h-4 w-4" /> 2 email addresses</li>
-                  <li className="flex items-center gap-2"><Check className="h-4 w-4" /> Basic features</li>
-                </ul>
-                <Button variant="outline" disabled>Current Plan</Button>
-              </CardContent>
-            </Card>
+          
+          {upgradeStep === 1 ? (
+            <div className="grid md:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Free</CardTitle>
+                  <CardDescription>Current Plan</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold mb-4">$0<span className="text-sm font-normal">/month</span></div>
+                  <ul className="space-y-2 mb-6">
+                    <li className="flex items-center gap-2"><Check className="h-4 w-4" /> 2 email addresses</li>
+                    <li className="flex items-center gap-2"><Check className="h-4 w-4" /> Basic features</li>
+                  </ul>
+                  <Button variant="outline" disabled>Current Plan</Button>
+                </CardContent>
+              </Card>
 
-            <Card className="border-primary">
-              <CardHeader>
-                <CardTitle>Pro</CardTitle>
-                <CardDescription>For power users</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold mb-4">$9<span className="text-sm font-normal">/month</span></div>
-                <ul className="space-y-2 mb-6">
-                  <li className="flex items-center gap-2"><Check className="h-4 w-4" /> 10 email addresses</li>
-                  <li className="flex items-center gap-2"><Check className="h-4 w-4" /> All features</li>
-                  <li className="flex items-center gap-2"><Check className="h-4 w-4" /> Priority support</li>
-                </ul>
-                <Button onClick={handleUpgrade}>Upgrade Now</Button>
-              </CardContent>
-            </Card>
-          </div>
+              <Card className="border-primary">
+                <CardHeader>
+                  <CardTitle>Pro</CardTitle>
+                  <CardDescription>For power users</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold mb-4">$9<span className="text-sm font-normal">/month</span></div>
+                  <ul className="space-y-2 mb-6">
+                    <li className="flex items-center gap-2"><Check className="h-4 w-4" /> 10 email addresses</li>
+                    <li className="flex items-center gap-2"><Check className="h-4 w-4" /> All features</li>
+                    <li className="flex items-center gap-2"><Check className="h-4 w-4" /> Priority support</li>
+                  </ul>
+                  <Button onClick={() => setUpgradeStep(2)} className="w-full">Select Pro Plan</Button>
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              <div>
+                <Label className="text-base font-semibold">Choose Payment Gateway</Label>
+                <div className="grid grid-cols-2 gap-4 mt-4">
+                  <Card 
+                    className={`cursor-pointer transition-all ${selectedProvider === 'polar' ? 'border-primary ring-2 ring-primary' : ''}`}
+                    onClick={() => setSelectedProvider('polar')}
+                  >
+                    <CardContent className="p-6 text-center">
+                      <div className="text-2xl font-bold mb-2">Polar</div>
+                      <p className="text-sm text-muted-foreground">Fast & secure checkout</p>
+                    </CardContent>
+                  </Card>
+                  <Card 
+                    className={`cursor-pointer transition-all ${selectedProvider === 'stripe' ? 'border-primary ring-2 ring-primary' : ''}`}
+                    onClick={() => setSelectedProvider('stripe')}
+                  >
+                    <CardContent className="p-6 text-center">
+                      <div className="text-2xl font-bold mb-2">Stripe</div>
+                      <p className="text-sm text-muted-foreground">Trusted worldwide</p>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setUpgradeStep(1)} className="flex-1">Back</Button>
+                <Button onClick={handleUpgrade} className="flex-1">Continue to Payment</Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

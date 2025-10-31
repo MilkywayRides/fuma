@@ -3,9 +3,11 @@
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 
-export function SubscriptionClient() {
+export function SubscriptionClient({ subscriptionId, showCancel }: { subscriptionId?: string; showCancel?: boolean }) {
   const [selectedProvider, setSelectedProvider] = useState<'polar' | 'stripe'>('polar')
+  const router = useRouter()
 
   const handleUpgrade = async () => {
     const res = await fetch('/api/subscription/checkout', {
@@ -15,6 +17,29 @@ export function SubscriptionClient() {
     })
     const { url } = await res.json()
     window.location.href = url
+  }
+
+  const handleCancel = async () => {
+    if (!confirm('Are you sure you want to cancel your subscription?')) return
+    
+    const res = await fetch('/api/subscription/cancel', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ subscriptionId }),
+    })
+    
+    if (res.ok) {
+      alert('Subscription cancelled successfully')
+      router.refresh()
+    }
+  }
+
+  if (showCancel) {
+    return (
+      <Button variant="destructive" onClick={handleCancel} className="w-full" size="sm">
+        Cancel Subscription
+      </Button>
+    )
   }
 
   return (

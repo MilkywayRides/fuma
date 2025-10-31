@@ -57,7 +57,10 @@ export default async function SubscriptionPage() {
               <li className="flex items-center gap-2"><Check className="h-4 w-4" /> Priority support</li>
             </ul>
             {currentPlan === 'pro' ? (
-              <Button variant="outline" disabled>Current Plan</Button>
+              <div className="space-y-2">
+                <Button variant="outline" disabled className="w-full">Current Plan</Button>
+                <SubscriptionClient subscriptionId={subscription[0]?.subscriptionId} showCancel />
+              </div>
             ) : (
               <SubscriptionClient />
             )}

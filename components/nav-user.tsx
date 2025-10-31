@@ -6,6 +6,7 @@ import {
   IconLogout,
   IconNotification,
   IconUserCircle,
+  IconCrown,
 } from "@tabler/icons-react"
 
 import {
@@ -31,12 +32,14 @@ import {
 
 export function NavUser({
   user,
+  isPro = false,
 }: {
   user: {
     name: string
     email: string
     avatar: string
   }
+  isPro?: boolean
 }) {
   const { isMobile } = useSidebar()
 
@@ -49,10 +52,17 @@ export function NavUser({
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
-              <Avatar className="h-8 w-8 rounded-lg grayscale">
-                <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg">CN</AvatarFallback>
-              </Avatar>
+              <div className="relative">
+                <Avatar className="h-8 w-8 rounded-lg grayscale">
+                  <AvatarImage src={user.avatar} alt={user.name} />
+                  <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                </Avatar>
+                {isPro && (
+                  <div className="absolute -top-2 -right-1 rotate-12">
+                    <IconCrown className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                  </div>
+                )}
+              </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{user.name}</span>
                 <span className="text-muted-foreground truncate text-xs">

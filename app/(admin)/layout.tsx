@@ -5,7 +5,7 @@ import { AdminAppSidebar } from '@/components/admin-app-sidebar';
 import { AdminBreadcrumb } from '@/components/admin-breadcrumb';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import { db } from '@/lib/db';
-import { user } from '@/lib/db/schema';
+import { user, subscriptions } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { Separator } from '@/components/ui/separator';
 import { EmailProvider } from '@/contexts/email-context';
@@ -39,12 +39,19 @@ export default async function AdminLayout({
     where: eq(user.id, session.user.id),
   });
 
+  const subscription = await db.select().from(subscriptions)
+    .where(eq(subscriptions.userId, session.user.id))
+    .limit(1);
+
+  const isPro = subscription[0]?.status === 'active' && 
+                new Date(subscription[0].currentPeriodEnd) > new Date();
+
   const routeBadges = getRouteBadges();
 
   return (
     <EmailProvider>
       <SidebarProvider>
-        <AdminAppSidebar userName={session.user.name} userEmail={session.user.email} developerMode={userRecord?.developerMode} routeBadges={routeBadges} />
+        <AdminAppSidebar userName={session.user.name} userEmail={session.user.email} developerMode={userRecord?.developerMode} routeBadges={routeBadges} isPro={isPro} />
         <SidebarInset>
           <div className="flex flex-1 flex-col bg-sidebar">
             <div className="min-h-[100vh] flex-1 rounded-xl bg-background border md:min-h-min m-2 ml-0">

@@ -24,16 +24,31 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { address } = await req.json();
-  const fullAddress = `${address}@blazeneuro.com`;
-  const uuid = generateUUID(10);
+  try {
+    const { address } = await req.json();
+    const fullAddress = `${address}@blazeneuro.com`;
+    
+    // Check if email already exists
+    const existing = await db.select().from(emailAddresses).where(eq(emailAddresses.address, fullAddress)).limit(1);
+    if (existing.length > 0) {
+      return NextResponse.json({ error: 'This email address already exists' }, { status: 400 });
+    }
+    
+    const uuid = generateUUID(10);
 
-  const [email] = await db.insert(emailAddresses).values({
-    id: Math.floor(Math.random() * 1_000_000_000),
-    uuid,
-    address: fullAddress,
-    userId: session.user.id,
-  }).returning();
+    const [email] = await db.insert(emailAddresses).values({
+      id: Math.floor(Math.random() * 1_000_000_000),
+      uuid,
+      address: fullAddress,
+      userId: session.user.id,
+    }).returning();
 
-  return NextResponse.json(email);
+    return NextResponse.json(email);
+  } catch (error: any) {
+    console.error('Email creation error:', error);
+    if (error.code === '23505') {
+      return NextResponse.json({ error: 'This email address already exists' }, { status: 400 });
+    }
+    return NextResponse.json({ error: 'Failed to create email address' }, { status: 500 });
+  }
 }

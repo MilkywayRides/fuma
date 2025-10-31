@@ -8,6 +8,18 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Mail, Copy, Check, Plus, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { useEmails } from '@/contexts/email-context';
 
 interface User {
   id: string;
@@ -39,7 +51,7 @@ export default function MailPage() {
   const [body, setBody] = useState('');
   const [generatedEmail, setGeneratedEmail] = useState('');
   const [copied, setCopied] = useState(false);
-  const [emailAddresses, setEmailAddresses] = useState<EmailAddress[]>([]);
+  const { emails: emailAddresses, refreshEmails } = useEmails();
   const [newEmail, setNewEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [inbox, setInbox] = useState<InboxEmail[]>([]);
@@ -50,21 +62,14 @@ export default function MailPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [userRes, emailsRes, inboxRes] = await Promise.all([
+        const [userRes, inboxRes] = await Promise.all([
           fetch('/api/user/me'),
-          fetch('/api/admin/emails'),
           fetch('/api/admin/emails/inbox')
         ]);
         
         if (userRes.ok) {
           const userData = await userRes.json();
           setUser(userData);
-        }
-        
-        if (emailsRes.ok) {
-          const emailsData = await emailsRes.json();
-          setEmailAddresses(emailsData);
-          if (emailsData.length > 0) setSelectedEmail(emailsData[0].address);
         }
         
         if (inboxRes.ok) {
@@ -77,7 +82,8 @@ export default function MailPage() {
     };
 
     fetchData();
-  }, []);
+    if (emailAddresses.length > 0 && !selectedEmail) setSelectedEmail(emailAddresses[0].address);
+  }, [emailAddresses, selectedEmail]);
 
   const createEmail = async () => {
     if (!newEmail) return;
@@ -90,7 +96,7 @@ export default function MailPage() {
       });
       if (res.ok) {
         const data = await res.json();
-        setEmailAddresses([...emailAddresses, data]);
+        await refreshEmails();
         setNewEmail('');
         if (!selectedEmail) setSelectedEmail(data.address);
         toast({ title: 'Email created', description: `${data.address} is ready to use` });
@@ -129,10 +135,12 @@ export default function MailPage() {
 
   const deleteEmail = async (id: number) => {
     try {
-      const res = await fetch(`/api/admin/emails/${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/admin/emails/${emailAddresses.find(e => e.id === id)?.uuid}`, { method: 'DELETE' });
       if (res.ok) {
-        setEmailAddresses(emailAddresses.filter(e => e.id !== id));
-        toast({ title: 'Email deleted' });
+        await refreshEmails();
+        toast({ title: 'Email deleted', description: 'Email address has been removed' });
+      } else {
+        toast({ title: 'Error', description: 'Failed to delete email', variant: 'destructive' });
       }
     } catch (error) {
       toast({ title: 'Error', description: 'Failed to delete email', variant: 'destructive' });
@@ -192,9 +200,27 @@ export default function MailPage() {
                     <p className="font-medium">{email.address}</p>
                     <p className="text-sm text-muted-foreground">Active</p>
                   </div>
-                  <Button variant="ghost" size="sm" onClick={() => deleteEmail(email.id)}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="sm">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Email Address</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to delete {email.address}? This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => deleteEmail(email.id)}>
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               ))}
             </div>

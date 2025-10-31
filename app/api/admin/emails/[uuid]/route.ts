@@ -29,3 +29,27 @@ export async function GET(
 
   return NextResponse.json(email);
 }
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: Promise<{ uuid: string }> }
+) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const { uuid } = await params;
+  const [email] = await db
+    .select()
+    .from(emailAddresses)
+    .where(eq(emailAddresses.uuid, uuid))
+    .limit(1);
+
+  if (!email || email.userId !== session.user.id) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
+  await db.delete(emailAddresses).where(eq(emailAddresses.uuid, uuid));
+  return NextResponse.json({ success: true });
+}

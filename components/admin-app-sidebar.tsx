@@ -21,12 +21,7 @@ import {
   SidebarMenuSubButton,
 } from "@/components/ui/sidebar"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-
-interface EmailAddress {
-  id: number
-  uuid: string
-  address: string
-}
+import { useEmails } from "@/contexts/email-context"
 
 export function AdminAppSidebar({ 
   userName, 
@@ -38,15 +33,8 @@ export function AdminAppSidebar({
   userEmail: string
   developerMode?: boolean
 } & React.ComponentProps<typeof Sidebar>) {
-  const [emailAddresses, setEmailAddresses] = React.useState<EmailAddress[]>([])
+  const { emails: emailAddresses } = useEmails()
   const pathname = usePathname()
-
-  React.useEffect(() => {
-    fetch('/api/admin/emails')
-      .then(res => res.json())
-      .then(data => setEmailAddresses(data))
-      .catch(() => {})
-  }, [])
 
   const navMain = [
     { href: '/', label: 'Home', icon: Home },
@@ -113,11 +101,11 @@ export function AdminAppSidebar({
                         <SidebarMenuSubButton asChild isActive={pathname === '/admin/mail'}>
                           <Link href="/admin/mail">
                             <Plus className="h-3 w-3" />
-                            <span>Create Email</span>
+                            <span>Manage Email</span>
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
-                      {emailAddresses.map((email) => (
+                      {emailAddresses?.map((email) => (
                         <SidebarMenuSubItem key={email.uuid}>
                           <SidebarMenuSubButton 
                             asChild 

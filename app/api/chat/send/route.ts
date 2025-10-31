@@ -17,6 +17,7 @@ export async function POST(request: Request) {
 
     return Response.json(message);
   } catch (error) {
+    console.error('Chat send error:', error);
     return Response.json({ error: 'Failed to send message' }, { status: 500 });
   }
 }

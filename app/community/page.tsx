@@ -393,12 +393,12 @@ export default function CommunityPage() {
         <div className="text-xs text-muted-foreground px-2 text-center">DMs</div>
         <ScrollArea className="flex-1 w-full">
           <div className="flex flex-col items-center gap-2 px-2">
-            {uniqueUsers.filter(u => u !== session?.user?.name).map((user) => {
+            {uniqueUsers.filter(u => u !== session?.user?.name).map((user, idx) => {
               const userMessages = messages.filter(m => m.userName === user);
               const latestMessage = userMessages[userMessages.length - 1];
               return (
                 <div
-                  key={user}
+                  key={`dm-${user}-${idx}`}
                   className={`w-12 h-12 rounded-2xl flex items-center justify-center hover:rounded-xl transition-all cursor-pointer relative group ${
                     selectedDM?.userName === user ? 'bg-primary' : 'bg-muted'
                   }`}
@@ -412,7 +412,7 @@ export default function CommunityPage() {
                 >
                   <Avatar className="w-10 h-10">
                     <AvatarImage src={latestMessage?.userImage || undefined} />
-                    <AvatarFallback className="text-xs">{user[0]}</AvatarFallback>
+                    <AvatarFallback className="text-xs">{user?.[0] || 'U'}</AvatarFallback>
                   </Avatar>
                 </div>
               );
@@ -495,7 +495,7 @@ export default function CommunityPage() {
               <>
                 <Avatar className="w-6 h-6 sm:w-8 sm:h-8">
                   <AvatarImage src={selectedDM.userImage || undefined} />
-                  <AvatarFallback className="text-xs">{selectedDM.userName[0]}</AvatarFallback>
+                  <AvatarFallback className="text-xs">{selectedDM.userName?.[0] || 'U'}</AvatarFallback>
                 </Avatar>
                 <span className="font-semibold text-sm sm:text-base">{selectedDM.userName}</span>
               </>
@@ -535,15 +535,15 @@ export default function CommunityPage() {
                         </div>
                         <span className="text-sm">{session?.user?.name}</span>
                       </div>
-                      {uniqueUsers.filter(u => u !== session?.user?.name).map((user) => {
+                      {uniqueUsers.filter(u => u !== session?.user?.name).map((user, idx) => {
                         const userMessages = messages.filter(m => m.userName === user);
                         const latestMessage = userMessages[userMessages.length - 1];
                         return (
-                          <div key={user} className="px-2 py-1.5 rounded flex items-center gap-2 hover:bg-muted cursor-pointer">
+                          <div key={`member-${user}-${idx}`} className="px-2 py-1.5 rounded flex items-center gap-2 hover:bg-muted cursor-pointer">
                             <div className="relative">
                               <Avatar className="w-8 h-8">
                                 <AvatarImage src={latestMessage?.userImage || undefined} />
-                                <AvatarFallback className="text-xs">{user[0]}</AvatarFallback>
+                                <AvatarFallback className="text-xs">{user?.[0] || 'U'}</AvatarFallback>
                               </Avatar>
                               <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-background" />
                             </div>
@@ -614,7 +614,7 @@ export default function CommunityPage() {
                   {showAvatar ? (
                     <Avatar className="w-8 h-8 sm:w-10 sm:h-10 mt-0.5">
                       <AvatarImage src={message.userImage || undefined} />
-                      <AvatarFallback className="text-xs">{message.userName[0]}</AvatarFallback>
+                      <AvatarFallback className="text-xs">{message.userName?.[0] || 'U'}</AvatarFallback>
                     </Avatar>
                   ) : (
                     <div className="w-8 sm:w-10 flex-shrink-0 flex items-center justify-center">
@@ -634,7 +634,7 @@ export default function CommunityPage() {
                             <div className="flex gap-3">
                               <Avatar className="w-12 h-12">
                                 <AvatarImage src={message.userImage || undefined} />
-                                <AvatarFallback>{message.userName[0]}</AvatarFallback>
+                                <AvatarFallback>{message.userName?.[0] || 'U'}</AvatarFallback>
                               </Avatar>
                               <div className="flex-1 space-y-2">
                                 <h4 className="font-semibold">{message.userName}</h4>
@@ -851,15 +851,15 @@ export default function CommunityPage() {
                 </div>
                 <span className="text-sm">{session?.user?.name}</span>
               </div>
-              {uniqueUsers.filter(u => u !== session?.user?.name).map((user) => {
+              {uniqueUsers.filter(u => u !== session?.user?.name).map((user, idx) => {
                 const userMessages = messages.filter(m => m.userName === user);
                 const latestMessage = userMessages[userMessages.length - 1];
                 return (
-                  <div key={user} className="px-2 py-1.5 rounded flex items-center gap-2 hover:bg-muted cursor-pointer">
+                  <div key={`sidebar-${user}-${idx}`} className="px-2 py-1.5 rounded flex items-center gap-2 hover:bg-muted cursor-pointer">
                     <div className="relative">
                       <Avatar className="w-8 h-8">
                         <AvatarImage src={latestMessage?.userImage || undefined} />
-                        <AvatarFallback className="text-xs">{user[0]}</AvatarFallback>
+                        <AvatarFallback className="text-xs">{user?.[0] || 'U'}</AvatarFallback>
                       </Avatar>
                       <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-background" />
                     </div>

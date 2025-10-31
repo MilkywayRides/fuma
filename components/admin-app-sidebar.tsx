@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation"
 import { LayoutDashboard, Workflow, Settings, MessageSquare, Users, FileText, Megaphone, Code, GitBranch, Mail, Home, Plus } from "lucide-react"
 import { APP_NAME } from "@/lib/config"
 import { NavUser } from "@/components/nav-user"
+import { Badge } from "@/components/ui/badge"
+import { AnimatedShinyText } from "@/components/ui/animated-shiny-text"
 import {
   Sidebar,
   SidebarContent,
@@ -27,25 +29,31 @@ export function AdminAppSidebar({
   userName, 
   userEmail, 
   developerMode,
+  routeBadges = {},
   ...props 
 }: { 
   userName: string
   userEmail: string
   developerMode?: boolean
+  routeBadges?: Record<string, string>
 } & React.ComponentProps<typeof Sidebar>) {
   const { emails: emailAddresses } = useEmails()
   const pathname = usePathname()
 
+  const getRouteBadge = (href: string) => {
+    return routeBadges[href] || null
+  }
+
   const navMain = [
     { href: '/', label: 'Home', icon: Home },
-    { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/admin/blogs', label: 'Blogs', icon: FileText },
-    { href: '/admin/flow', label: 'Flowcharts', icon: Workflow },
-    { href: '/admin/scripts', label: 'Flow Scripts', icon: GitBranch },
-    { href: '/admin/comments', label: 'Comments', icon: MessageSquare },
-    { href: '/admin/users', label: 'Users', icon: Users },
-    { href: '/admin/ads', label: 'Advertisements', icon: Megaphone },
-    ...(developerMode ? [{ href: '/admin/developer', label: 'Developer API', icon: Code }] : []),
+    { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, badge: getRouteBadge('/admin') },
+    { href: '/admin/blogs', label: 'Blogs', icon: FileText, badge: getRouteBadge('/admin/blogs') },
+    { href: '/admin/flow', label: 'Flowcharts', icon: Workflow, badge: getRouteBadge('/admin/flow') },
+    { href: '/admin/scripts', label: 'Flow Scripts', icon: GitBranch, badge: getRouteBadge('/admin/scripts') },
+    { href: '/admin/comments', label: 'Comments', icon: MessageSquare, badge: getRouteBadge('/admin/comments') },
+    { href: '/admin/users', label: 'Users', icon: Users, badge: getRouteBadge('/admin/users') },
+    { href: '/admin/ads', label: 'Advertisements', icon: Megaphone, badge: getRouteBadge('/admin/ads') },
+    ...(developerMode ? [{ href: '/admin/developer', label: 'Developer API', icon: Code, badge: getRouteBadge('/admin/developer') }] : []),
   ]
 
   return (
@@ -78,9 +86,25 @@ export function AdminAppSidebar({
                 return (
                   <SidebarMenuItem key={item.href}>
                     <SidebarMenuButton asChild isActive={isActive} tooltip={item.label}>
-                      <Link href={item.href}>
-                        <Icon />
-                        <span>{item.label}</span>
+                      <Link href={item.href} className="flex items-center justify-between w-full">
+                        <div className="flex items-center gap-2">
+                          <Icon className="h-4 w-4" />
+                          <span>{item.label}</span>
+                        </div>
+                        {item.badge && (
+                          <Badge variant="secondary" className="ml-auto px-1.5 py-0 h-5 relative overflow-hidden">
+                            <span className="text-[10px] font-medium relative z-10">
+                              {item.badge}
+                            </span>
+                            <span 
+                              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                              style={{
+                                backgroundSize: '200% 100%',
+                                animation: 'shimmer 2s infinite'
+                              }}
+                            />
+                          </Badge>
+                        )}
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

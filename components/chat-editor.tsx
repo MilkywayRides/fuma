@@ -97,7 +97,7 @@ export function ChatEditor({ value, onChange, onSend, disabled, placeholder, use
   };
 
   const filteredUsers = users.filter(user => 
-    user.toLowerCase().includes(mentionSearch.toLowerCase())
+    user && user.toLowerCase().includes(mentionSearch.toLowerCase())
   );
 
   const handleFileUpload = () => {

@@ -214,7 +214,6 @@ export const apiKeys = pgTable('apiKeys', {
 export const chatMessages = pgTable('chatMessages', {
   id: integer('id').notNull().primaryKey(),
   content: text('content').notNull(),
-  hypes: integer('hypes').default(0).notNull(),
   role: text('role').notNull(), // 'user' or 'assistant'
   userId: text('userId')
     .notNull()

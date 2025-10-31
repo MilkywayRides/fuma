@@ -13,7 +13,6 @@ export async function GET(request: Request) {
       id: chatMessages.id,
       content: chatMessages.content,
       userId: chatMessages.userId,
-      hypes: chatMessages.hypes,
       createdAt: chatMessages.createdAt,
     })
     .from(chatMessages)

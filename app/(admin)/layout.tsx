@@ -9,6 +9,7 @@ import { user } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { Separator } from '@/components/ui/separator';
 import { EmailProvider } from '@/contexts/email-context';
+import { getRouteBadges } from '@/lib/route-badges';
 
 export default async function AdminLayout({
   children,
@@ -38,10 +39,12 @@ export default async function AdminLayout({
     where: eq(user.id, session.user.id),
   });
 
+  const routeBadges = getRouteBadges();
+
   return (
     <EmailProvider>
       <SidebarProvider>
-        <AdminAppSidebar userName={session.user.name} userEmail={session.user.email} developerMode={userRecord?.developerMode} />
+        <AdminAppSidebar userName={session.user.name} userEmail={session.user.email} developerMode={userRecord?.developerMode} routeBadges={routeBadges} />
         <SidebarInset>
           <div className="flex flex-1 flex-col bg-sidebar">
             <div className="min-h-[100vh] flex-1 rounded-xl bg-background border md:min-h-min m-2 ml-0">

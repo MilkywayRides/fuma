@@ -274,3 +274,20 @@ export const emails = pgTable('emails', {
   folder: text('folder').default('inbox').notNull(),
   createdAt: timestamp('createdAt').defaultNow().notNull(),
 });
+
+export const subscriptions = pgTable('subscriptions', {
+  id: integer('id').notNull().primaryKey(),
+  userId: text('userId')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  provider: text('provider').notNull(), // 'polar', 'stripe', etc.
+  subscriptionId: text('subscriptionId').notNull().unique(),
+  productId: text('productId').notNull(),
+  status: text('status').notNull(), // 'active', 'canceled', 'expired'
+  currentPeriodStart: timestamp('currentPeriodStart').notNull(),
+  currentPeriodEnd: timestamp('currentPeriodEnd').notNull(),
+  cancelAtPeriodEnd: boolean('cancelAtPeriodEnd').default(false).notNull(),
+  emailLimit: integer('emailLimit').default(2).notNull(),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+  updatedAt: timestamp('updatedAt').defaultNow().notNull(),
+});

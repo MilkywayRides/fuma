@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Mail, Copy, Check, Plus, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,6 +20,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { useEmails } from '@/contexts/email-context';
 
 interface User {
@@ -57,7 +65,9 @@ export default function MailPage() {
   const [inbox, setInbox] = useState<InboxEmail[]>([]);
   const [selectedEmail, setSelectedEmail] = useState<string>('');
   const [recipient, setRecipient] = useState('');
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const { toast } = useToast();
+  const router = useRouter();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -102,12 +112,22 @@ export default function MailPage() {
         toast({ title: 'Email created', description: `${data.address} is ready to use` });
       } else {
         const error = await res.json();
-        toast({ title: 'Error', description: error.error, variant: 'destructive' });
+        if (res.status === 403) {
+          setShowUpgradeDialog(true);
+        } else {
+          toast({ title: 'Error', description: error.error, variant: 'destructive' });
+        }
       }
     } catch (error) {
       toast({ title: 'Error', description: 'Failed to create email', variant: 'destructive' });
     }
     setLoading(false);
+  };
+
+  const handleUpgrade = async () => {
+    const res = await fetch('/api/subscription/checkout', { method: 'POST' });
+    const { url } = await res.json();
+    window.location.href = url;
   };
 
   const sendEmail = async () => {
@@ -317,6 +337,46 @@ export default function MailPage() {
       )}
 
 
+      <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Upgrade Your Plan</DialogTitle>
+            <DialogDescription>You've reached your email limit. Choose a plan to continue.</DialogDescription>
+          </DialogHeader>
+          <div className="grid md:grid-cols-2 gap-6 mt-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Free</CardTitle>
+                <CardDescription>Current Plan</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold mb-4">$0<span className="text-sm font-normal">/month</span></div>
+                <ul className="space-y-2 mb-6">
+                  <li className="flex items-center gap-2"><Check className="h-4 w-4" /> 2 email addresses</li>
+                  <li className="flex items-center gap-2"><Check className="h-4 w-4" /> Basic features</li>
+                </ul>
+                <Button variant="outline" disabled>Current Plan</Button>
+              </CardContent>
+            </Card>
+
+            <Card className="border-primary">
+              <CardHeader>
+                <CardTitle>Pro</CardTitle>
+                <CardDescription>For power users</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold mb-4">$9<span className="text-sm font-normal">/month</span></div>
+                <ul className="space-y-2 mb-6">
+                  <li className="flex items-center gap-2"><Check className="h-4 w-4" /> 10 email addresses</li>
+                  <li className="flex items-center gap-2"><Check className="h-4 w-4" /> All features</li>
+                  <li className="flex items-center gap-2"><Check className="h-4 w-4" /> Priority support</li>
+                </ul>
+                <Button onClick={handleUpgrade}>Upgrade Now</Button>
+              </CardContent>
+            </Card>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

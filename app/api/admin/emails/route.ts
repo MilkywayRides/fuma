@@ -1,6 +1,6 @@
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { emailAddresses } from '@/lib/db/schema';
+import { emailAddresses, user } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
@@ -32,6 +32,15 @@ export async function POST(req: Request) {
     const existing = await db.select().from(emailAddresses).where(eq(emailAddresses.address, fullAddress)).limit(1);
     if (existing.length > 0) {
       return NextResponse.json({ error: 'This email address already exists' }, { status: 400 });
+    }
+    
+    // Check email limit
+    const userRecord = await db.select().from(user).where(eq(user.id, session.user.id)).limit(1);
+    const currentEmails = await db.select().from(emailAddresses).where(eq(emailAddresses.userId, session.user.id));
+    const emailLimit = userRecord[0]?.role === 'Admin' ? 2 : 10;
+    
+    if (currentEmails.length >= emailLimit) {
+      return NextResponse.json({ error: `You have reached your email limit (${emailLimit}). Upgrade to create more.` }, { status: 403 });
     }
     
     const uuid = generateUUID(10);

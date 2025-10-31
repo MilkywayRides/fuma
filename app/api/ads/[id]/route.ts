@@ -5,6 +5,24 @@ import { eq } from 'drizzle-orm';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const [ad] = await db
+    .select()
+    .from(advertisements)
+    .where(eq(advertisements.id, parseInt(id, 10)))
+    .limit(1);
+
+  if (!ad) {
+    return NextResponse.json({ error: 'Ad not found' }, { status: 404 });
+  }
+
+  return NextResponse.json(ad);
+}
+
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }

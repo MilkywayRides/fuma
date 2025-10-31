@@ -121,9 +121,9 @@ export function CustomMarkdownEditor({ value, onChange, placeholder }: CustomMar
         {/* Status Bar */}
         <div className="flex items-center justify-between px-3 py-2 text-xs text-muted-foreground border-x border-b rounded-b-lg bg-muted/30">
           <div className="flex gap-4">
-            <span>{value.length} characters</span>
-            <span>{value.split('\n').length} lines</span>
-            <span>{value.split(/\s+/).filter(w => w).length} words</span>
+            <span>{(value || '').length} characters</span>
+            <span>{(value || '').split('\n').length} lines</span>
+            <span>{(value || '').split(/\s+/).filter(w => w).length} words</span>
           </div>
           <div className="flex gap-2">
             <span className="hidden sm:inline">Markdown supported</span>

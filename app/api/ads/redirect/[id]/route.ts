@@ -3,8 +3,6 @@ import { advertisements, adClicks } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { NextRequest, NextResponse } from 'next/server';
 
-export const runtime = 'nodejs';
-
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -15,21 +13,16 @@ export async function GET(
     return NextResponse.redirect(new URL('/', request.url));
   }
 
-  try {
-    const [ad] = await db.select({ link: advertisements.link }).from(advertisements).where(eq(advertisements.id, adIdNum)).limit(1);
-    
-    if (!ad?.link) {
-      return NextResponse.redirect(new URL('/', request.url));
-    }
-
-    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
-    const userAgent = request.headers.get('user-agent') || 'unknown';
-
-    const clickId = Math.floor(Math.random() * 1_000_000_000);
-    db.insert(adClicks).values({ id: clickId, adId: adIdNum, ipAddress: ip, userAgent }).catch(() => {});
-
-    return NextResponse.redirect(ad.link, 302);
-  } catch {
+  const [ad] = await db.select({ link: advertisements.link }).from(advertisements).where(eq(advertisements.id, adIdNum)).limit(1);
+  
+  if (!ad?.link) {
     return NextResponse.redirect(new URL('/', request.url));
   }
+
+  const ip = request.headers.get('x-forwarded-for') || 'unknown';
+  const clickId = Math.floor(Math.random() * 1_000_000_000);
+  db.insert(adClicks).values({ id: clickId, adId: adIdNum, ipAddress: ip, userAgent: request.headers.get('user-agent') || '' }).catch(() => {});
+
+  const redirectUrl = ad.link.startsWith('http') ? ad.link : `https://${ad.link}`;
+  return NextResponse.redirect(redirectUrl, 302);
 }

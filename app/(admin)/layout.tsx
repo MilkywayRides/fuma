@@ -1,10 +1,13 @@
 import { auth, hasAdminAccess } from '@/lib/auth';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { AdminSidebar } from '@/components/admin-sidebar';
+import { AdminAppSidebar } from '@/components/admin-app-sidebar';
+import { AdminBreadcrumb } from '@/components/admin-breadcrumb';
+import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import { db } from '@/lib/db';
 import { user } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
+import { Separator } from '@/components/ui/separator';
 
 export default async function AdminLayout({
   children,
@@ -35,9 +38,22 @@ export default async function AdminLayout({
   });
 
   return (
-    <div className="flex min-h-screen">
-      <AdminSidebar userName={session.user.name} userEmail={session.user.email} developerMode={userRecord?.developerMode} />
-      <main className="lg:ml-64 flex-1 p-4 md:p-8">{children}</main>
-    </div>
+    <SidebarProvider>
+      <AdminAppSidebar userName={session.user.name} userEmail={session.user.email} developerMode={userRecord?.developerMode} />
+      <SidebarInset>
+        <div className="flex flex-1 flex-col bg-sidebar">
+          <div className="min-h-[100vh] flex-1 rounded-xl bg-background border md:min-h-min m-2 ml-0">
+            <header className="flex h-16 shrink-0 items-center gap-2 px-6 border-b">
+              <SidebarTrigger className="-ml-1" />
+              <Separator orientation="vertical" className="mr-2 h-4" />
+              <AdminBreadcrumb />
+            </header>
+            <div className="p-6">
+              {children}
+            </div>
+          </div>
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

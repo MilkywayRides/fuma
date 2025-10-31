@@ -1,159 +1,120 @@
 import { db } from '@/lib/db';
-import { user, blogPosts, comments, flowcharts, siteVisits, flowchartEmbeds } from '@/lib/db/schema';
-import { sql, count, desc } from 'drizzle-orm';
-import { DashboardStats } from '@/components/dashboard-stats';
+import { user, blogPosts, comments, flowcharts, siteVisits, chatMessages } from '@/lib/db/schema';
+import { count, sql, desc } from 'drizzle-orm';
+import { ChartAreaInteractive } from '@/components/chart-area-interactive';
+import { SectionCards } from '@/components/section-cards';
+import { RecentPostsTable } from '@/components/recent-posts-table';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Dashboard - Admin',
 };
 
-// Force dynamic rendering so Next.js doesn't try to prerender this page at build
-// time and run database queries against an unavailable dev database.
 export const dynamic = 'force-dynamic';
 
 export default async function AdminPage() {
-  const [[totalUsers], [totalPosts], [totalComments], [totalFlowcharts]] = await Promise.all([
-    db.select({ count: count() }).from(user),
-    db.select({ count: count() }).from(blogPosts),
-    db.select({ count: count() }).from(comments),
-    db.select({ count: count() }).from(flowcharts),
-  ]);
+  let totalUsers, totalPosts, totalComments, totalFlowcharts, postStats, trafficData, recentPosts, recentComments, hypedMessages;
 
-  const [userStats] = await db.select({
-    admins: sql<number>`count(*) filter (where ${user.role} = 'Admin')`,
-    superAdmins: sql<number>`count(*) filter (where ${user.role} = 'SuperAdmin')`,
-    banned: sql<number>`count(*) filter (where ${user.banned} = true)`,
-    active: sql<number>`count(*) filter (where ${user.banned} = false)`,
-  }).from(user);
+  try {
+    [[totalUsers], [totalPosts], [totalComments], [totalFlowcharts]] = await Promise.all([
+      db.select({ count: count() }).from(user),
+      db.select({ count: count() }).from(blogPosts),
+      db.select({ count: count() }).from(comments),
+      db.select({ count: count() }).from(flowcharts),
+    ]);
+  } catch (error) {
+    totalUsers = { count: 0 };
+    totalPosts = { count: 0 };
+    totalComments = { count: 0 };
+    totalFlowcharts = { count: 0 };
+  }
 
-  const [postStats] = await db.select({
-    published: sql<number>`count(*) filter (where ${blogPosts.published} = true)`,
-    drafts: sql<number>`count(*) filter (where ${blogPosts.published} = false)`,
-  }).from(blogPosts);
+  try {
+    const postStatsResult = await db.select({
+      published: sql<number>`count(*) filter (where ${blogPosts.published} = true)`,
+      drafts: sql<number>`count(*) filter (where ${blogPosts.published} = false)`,
+    }).from(blogPosts);
+    postStats = postStatsResult[0] || { published: 0, drafts: 0 };
+  } catch (error) {
+    postStats = { published: 0, drafts: 0 };
+  }
 
-  const [flowStats] = await db.select({
-    published: sql<number>`count(*) filter (where ${flowcharts.published} = true)`,
-    drafts: sql<number>`count(*) filter (where ${flowcharts.published} = false)`,
-  }).from(flowcharts);
+  try {
+    trafficData = await db.select({
+      date: sql<string>`date_trunc('day', ${siteVisits.createdAt})`,
+      visits: sql<number>`count(*)`,
+      uniqueVisitors: sql<number>`count(distinct ${siteVisits.ipAddress})`,
+    }).from(siteVisits)
+      .groupBy(sql`date_trunc('day', ${siteVisits.createdAt})`)
+      .orderBy(sql`date_trunc('day', ${siteVisits.createdAt}) desc`)
+      .limit(90);
+  } catch (error) {
+    trafficData = [];
+  }
 
-  const topPosts = await db.select({
-    id: blogPosts.id,
-    title: blogPosts.title,
-    commentCount: sql<number>`count(${comments.id})`,
-  }).from(blogPosts)
-    .leftJoin(comments, sql`${comments.postId} = ${blogPosts.id}`)
-    .groupBy(blogPosts.id, blogPosts.title)
-    .orderBy(sql`count(${comments.id}) desc`)
-    .limit(5);
+  try {
+    recentPosts = await db.select({
+      id: blogPosts.id,
+      title: blogPosts.title,
+      published: blogPosts.published,
+      createdAt: blogPosts.createdAt,
+      authorName: user.name,
+    }).from(blogPosts)
+      .leftJoin(user, sql`${blogPosts.authorId} = ${user.id}`)
+      .orderBy(desc(blogPosts.createdAt))
+      .limit(10);
+  } catch (error) {
+    recentPosts = [];
+  }
 
-  const recentActivity = await db.select({
-    id: blogPosts.id,
-    title: blogPosts.title,
-    published: blogPosts.published,
-    createdAt: blogPosts.createdAt,
-    authorName: user.name,
-  }).from(blogPosts)
-    .leftJoin(user, sql`${blogPosts.authorId} = ${user.id}`)
-    .orderBy(desc(blogPosts.createdAt))
-    .limit(8);
+  try {
+    recentComments = await db.select({
+      id: comments.id,
+      content: comments.content,
+      authorName: user.name,
+      postTitle: blogPosts.title,
+      createdAt: comments.createdAt,
+      likes: comments.likes,
+    }).from(comments)
+      .leftJoin(user, sql`${comments.authorId} = ${user.id}`)
+      .leftJoin(blogPosts, sql`${comments.postId} = ${blogPosts.id}`)
+      .orderBy(desc(comments.createdAt))
+      .limit(10);
+  } catch (error) {
+    recentComments = [];
+  }
 
-  const activeUsers = await db.select({
-    id: user.id,
-    name: user.name,
-    postCount: sql<number>`count(${blogPosts.id})`,
-  }).from(user)
-    .leftJoin(blogPosts, sql`${blogPosts.authorId} = ${user.id}`)
-    .groupBy(user.id, user.name)
-    .orderBy(sql`count(${blogPosts.id}) desc`)
-    .limit(5);
-
-  const commentActivity = await db.select({
-    userId: user.id,
-    userName: user.name,
-    commentCount: sql<number>`count(${comments.id})`,
-  }).from(user)
-    .leftJoin(comments, sql`${comments.authorId} = ${user.id}`)
-    .groupBy(user.id, user.name)
-    .orderBy(sql`count(${comments.id}) desc`)
-    .limit(5);
-
-  const postEngagement = await db.select({
-    postId: blogPosts.id,
-    title: blogPosts.title,
-    likes: sql<number>`sum(${comments.likes})`,
-    dislikes: sql<number>`sum(${comments.dislikes})`,
-  }).from(blogPosts)
-    .leftJoin(comments, sql`${comments.postId} = ${blogPosts.id}`)
-    .groupBy(blogPosts.id, blogPosts.title)
-    .orderBy(sql`sum(${comments.likes}) desc`)
-    .limit(5);
-
-  const recentComments = await db.select({
-    id: comments.id,
-    content: comments.content,
-    authorName: user.name,
-    postTitle: blogPosts.title,
-    createdAt: comments.createdAt,
-  }).from(comments)
-    .leftJoin(user, sql`${comments.authorId} = ${user.id}`)
-    .leftJoin(blogPosts, sql`${comments.postId} = ${blogPosts.id}`)
-    .orderBy(desc(comments.createdAt))
-    .limit(6);
-
-  const growthData = await db.select({
-    date: sql<string>`date_trunc('day', ${user.createdAt})`,
-    userCount: sql<number>`count(*)`,
-  }).from(user)
-    .groupBy(sql`date_trunc('day', ${user.createdAt})`)
-    .orderBy(sql`date_trunc('day', ${user.createdAt}) desc`)
-    .limit(7);
-
-  const trafficData = await db.select({
-    date: sql<string>`date_trunc('day', ${siteVisits.createdAt})`,
-    visits: sql<number>`count(*)`,
-    uniqueVisitors: sql<number>`count(distinct ${siteVisits.ipAddress})`,
-  }).from(siteVisits)
-    .groupBy(sql`date_trunc('day', ${siteVisits.createdAt})`)
-    .orderBy(sql`date_trunc('day', ${siteVisits.createdAt}) desc`)
-    .limit(30);
-
-  const embedStats = await db.select({
-    flowchartId: flowcharts.id,
-    flowchartTitle: flowcharts.title,
-    userName: user.name,
-    embedCount: sql<number>`count(${flowchartEmbeds.id})`,
-  }).from(flowchartEmbeds)
-    .leftJoin(flowcharts, sql`${flowchartEmbeds.flowchartId} = ${flowcharts.id}`)
-    .leftJoin(user, sql`${flowchartEmbeds.userId} = ${user.id}`)
-    .groupBy(flowcharts.id, flowcharts.title, user.name)
-    .orderBy(sql`count(${flowchartEmbeds.id}) desc`)
-    .limit(10);
+  try {
+    hypedMessages = await db.select({
+      id: chatMessages.id,
+      message: chatMessages.message,
+      userName: user.name,
+      createdAt: chatMessages.createdAt,
+      hypes: chatMessages.hypes,
+    }).from(chatMessages)
+      .leftJoin(user, sql`${chatMessages.userId} = ${user.id}`)
+      .orderBy(desc(chatMessages.hypes))
+      .limit(10);
+  } catch (error) {
+    hypedMessages = [];
+  }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <p className="text-muted-foreground">Overview of your application</p>
+    <div className="@container/main flex flex-1 flex-col gap-2">
+      <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+        <SectionCards 
+          totalUsers={totalUsers?.count || 0}
+          totalPosts={totalPosts?.count || 0}
+          totalComments={totalComments?.count || 0}
+          totalFlowcharts={totalFlowcharts?.count || 0}
+          publishedPosts={postStats?.published || 0}
+          draftPosts={postStats?.drafts || 0}
+        />
+        <div className="px-4 lg:px-6">
+          <ChartAreaInteractive data={trafficData || []} />
+        </div>
+        <RecentPostsTable posts={recentPosts || []} comments={recentComments || []} hypedMessages={hypedMessages || []} />
       </div>
-      <DashboardStats 
-        totalUsers={totalUsers.count}
-        totalPosts={totalPosts.count}
-        totalComments={totalComments.count}
-        totalFlowcharts={totalFlowcharts.count}
-        userStats={userStats}
-        postStats={postStats}
-        flowStats={flowStats}
-        topPosts={topPosts}
-        recentActivity={recentActivity}
-        activeUsers={activeUsers}
-        commentActivity={commentActivity}
-        postEngagement={postEngagement}
-        recentComments={recentComments}
-        growthData={growthData}
-        trafficData={trafficData}
-        embedStats={embedStats}
-      />
     </div>
   );
 }

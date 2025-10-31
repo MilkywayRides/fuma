@@ -4,9 +4,12 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { LayoutDashboard, Workflow, Settings, MessageSquare, Users, FileText, Megaphone, Menu, X, Code, GitBranch, Mail, ChevronDown, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, Workflow, Settings, MessageSquare, Users, FileText, Megaphone, Menu, X, Code, GitBranch, Mail, ChevronDown, Plus, Home } from 'lucide-react';
 import { APP_NAME } from '@/lib/config';
 import { UserButton } from './user-button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface EmailAddress {
   id: number;
@@ -17,6 +20,9 @@ interface EmailAddress {
 export function AdminSidebar({ userName, userEmail, developerMode }: { userName: string; userEmail: string; developerMode?: boolean }) {
   const [emailAddresses, setEmailAddresses] = useState<EmailAddress[]>([]);
   const [mailExpanded, setMailExpanded] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  const pathname = usePathname();
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     fetch('/api/admin/emails')
@@ -24,6 +30,7 @@ export function AdminSidebar({ userName, userEmail, developerMode }: { userName:
       .then(data => setEmailAddresses(data))
       .catch(() => {});
   }, []);
+
   const navItems = [
     { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/admin/blogs', label: 'Blogs', icon: FileText },
@@ -33,10 +40,7 @@ export function AdminSidebar({ userName, userEmail, developerMode }: { userName:
     { href: '/admin/users', label: 'Users', icon: Users },
     { href: '/admin/ads', label: 'Advertisements', icon: Megaphone },
     ...(developerMode ? [{ href: '/admin/developer', label: 'Developer API', icon: Code }] : []),
-    { href: '/admin/settings', label: 'Settings', icon: Settings },
   ];
-  const pathname = usePathname();
-  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <>
@@ -48,89 +52,143 @@ export function AdminSidebar({ userName, userEmail, developerMode }: { userName:
       </button>
 
       <aside className={cn(
-        "fixed left-0 top-0 z-40 h-screen w-64 border-r bg-background transition-transform",
+        "fixed left-0 top-0 z-40 h-screen border-r bg-background transition-all",
+        collapsed ? "w-16" : "w-64",
         isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       )}>
       <div className="flex h-full flex-col">
-        <div className="flex h-16 items-center border-b px-6">
-          <Link href="/" className="flex items-center gap-2 font-semibold">
-            <svg width="24" height="24" xmlns="http://www.w3.org/2000/svg" aria-label="Logo">
-              <circle cx={12} cy={12} r={12} fill="currentColor" />
-            </svg>
-            {APP_NAME}
-          </Link>
+        <div className="flex h-14 items-center border-b px-4">
+          {collapsed ? (
+            <Link href="/" className="flex items-center justify-center w-full">
+              <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
+                <span className="text-primary-foreground font-bold text-sm">B</span>
+              </div>
+            </Link>
+          ) : (
+            <Link href="/" className="flex items-center gap-2 font-semibold">
+              <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
+                <span className="text-primary-foreground font-bold text-sm">B</span>
+              </div>
+              <span className="text-sm">{APP_NAME}</span>
+            </Link>
+          )}
         </div>
 
-        <nav className="flex-1 space-y-1 p-4">
+        <ScrollArea className="flex-1 px-3 py-4">
+        <TooltipProvider>
+        <nav className="space-y-1">
+          <Link
+            href="/"
+            className={cn(
+              'flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors',
+              'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+            )}
+          >
+            <Home className="h-4 w-4" />
+            {!collapsed && <span>Home</span>}
+          </Link>
+          
+          <Separator className="my-3" />
+          
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
-            return (
+            const link = (
               <Link
                 key={item.href}
                 href={item.href}
                 className={cn(
                   'flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors',
                   isActive
-                    ? 'bg-primary text-primary-foreground'
+                    ? 'bg-secondary text-secondary-foreground'
                     : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                 )}
               >
                 <Icon className="h-4 w-4" />
-                {item.label}
+                {!collapsed && <span>{item.label}</span>}
               </Link>
             );
+            return collapsed ? (
+              <Tooltip key={item.href}>
+                <TooltipTrigger asChild>{link}</TooltipTrigger>
+                <TooltipContent side="right">{item.label}</TooltipContent>
+              </Tooltip>
+            ) : link;
           })}
           
-          <div>
+          <Separator className="my-3" />
+          
+          <div className="space-y-1">
             <button
               onClick={() => setMailExpanded(!mailExpanded)}
               className={cn(
                 'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors',
                 pathname.startsWith('/admin/mail')
-                  ? 'bg-primary text-primary-foreground'
+                  ? 'bg-secondary text-secondary-foreground'
                   : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
               )}
             >
               <Mail className="h-4 w-4" />
-              <span className="flex-1 text-left">Mail</span>
-              {mailExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+              {!collapsed && (
+                <>
+                  <span className="flex-1 text-left">Mail</span>
+                  <ChevronDown className={cn('h-4 w-4 transition-transform', !mailExpanded && '-rotate-90')} />
+                </>
+              )}
             </button>
-            {mailExpanded && (
-              <div className="ml-7 mt-1 space-y-1">
+            {mailExpanded && !collapsed && (
+              <div className="ml-7 mt-1 space-y-0.5 border-l pl-3">
                 <Link
                   href="/admin/mail"
                   className={cn(
-                    'block rounded-lg px-3 py-2 text-sm transition-colors',
+                    'flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm transition-colors',
                     pathname === '/admin/mail'
-                      ? 'bg-accent text-accent-foreground'
+                      ? 'bg-secondary text-secondary-foreground'
                       : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                   )}
                 >
-                  Create Email
+                  <Plus className="h-3 w-3" />
+                  <span>Create</span>
                 </Link>
                 {emailAddresses.map((email) => (
                   <Link
                     key={email.uuid}
                     href={`/admin/mail/${email.uuid}`}
                     className={cn(
-                      'block rounded-lg px-3 py-2 text-sm transition-colors truncate',
+                      'flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm transition-colors',
                       pathname === `/admin/mail/${email.uuid}`
-                        ? 'bg-accent text-accent-foreground'
+                        ? 'bg-secondary text-secondary-foreground'
                         : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                     )}
                     title={email.address}
                   >
-                    {email.address.split('@')[0]}
+                    <span className="truncate text-xs">{email.address.split('@')[0]}</span>
                   </Link>
                 ))}
               </div>
             )}
           </div>
+          
+          <Separator className="my-3" />
+          
+          <Link
+            href="/admin/settings"
+            className={cn(
+              'flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors',
+              pathname === '/admin/settings'
+                ? 'bg-secondary text-secondary-foreground'
+                : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+            )}
+          >
+            <Settings className="h-4 w-4" />
+            {!collapsed && <span>Settings</span>}
+          </Link>
         </nav>
+        </TooltipProvider>
+        </ScrollArea>
 
-        <div className="border-t p-4">
-          <UserButton name={userName} email={userEmail} variant="wide" />
+        <div className="border-t p-3">
+          <UserButton name={userName} email={userEmail} variant={collapsed ? "icon" : "wide"} />
         </div>
       </div>
     </aside>

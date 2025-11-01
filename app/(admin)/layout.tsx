@@ -9,6 +9,7 @@ import { user, subscriptions } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { Separator } from '@/components/ui/separator';
 import { EmailProvider } from '@/contexts/email-context';
+import { DeveloperModeProvider } from '@/contexts/developer-mode-context';
 import { getRouteBadges } from '@/lib/route-badges';
 
 export default async function AdminLayout({
@@ -49,9 +50,10 @@ export default async function AdminLayout({
   const routeBadges = getRouteBadges();
 
   return (
-    <EmailProvider>
-      <SidebarProvider>
-        <AdminAppSidebar userName={session.user.name} userEmail={session.user.email} developerMode={userRecord?.developerMode} routeBadges={routeBadges} isPro={isPro} />
+    <DeveloperModeProvider initialMode={userRecord?.developerMode || false}>
+      <EmailProvider>
+        <SidebarProvider>
+          <AdminAppSidebar userName={session.user.name} userEmail={session.user.email} routeBadges={routeBadges} isPro={isPro} />
         <SidebarInset>
           <div className="flex flex-1 flex-col bg-sidebar">
             <div className="min-h-[100vh] flex-1 rounded-xl bg-background border md:min-h-min m-2 ml-0">
@@ -66,7 +68,8 @@ export default async function AdminLayout({
             </div>
           </div>
         </SidebarInset>
-      </SidebarProvider>
-    </EmailProvider>
+        </SidebarProvider>
+      </EmailProvider>
+    </DeveloperModeProvider>
   );
 }

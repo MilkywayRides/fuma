@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, Workflow, Settings, MessageSquare, Users, FileText, Megaphone, Code, GitBranch, Mail, Home, Plus } from "lucide-react"
+import { LayoutDashboard, Workflow, Settings, MessageSquare, Users, FileText, Megaphone, Code, GitBranch, Mail, Home, Plus, CreditCard } from "lucide-react"
 import { APP_NAME } from "@/lib/config"
 import { NavUser } from "@/components/nav-user"
 import { Badge } from "@/components/ui/badge"
@@ -24,22 +24,22 @@ import {
 } from "@/components/ui/sidebar"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { useEmails } from "@/contexts/email-context"
+import { useDeveloperMode } from "@/contexts/developer-mode-context"
 
 export function AdminAppSidebar({ 
   userName, 
   userEmail, 
-  developerMode,
   routeBadges = {},
   isPro = false,
   ...props 
 }: { 
   userName: string
   userEmail: string
-  developerMode?: boolean
   routeBadges?: Record<string, string>
   isPro?: boolean
 } & React.ComponentProps<typeof Sidebar>) {
   const { emails: emailAddresses } = useEmails()
+  const { developerMode } = useDeveloperMode()
   const pathname = usePathname()
 
   const getRouteBadge = (href: string) => {
@@ -55,6 +55,7 @@ export function AdminAppSidebar({
     { href: '/admin/comments', label: 'Comments', icon: MessageSquare, badge: getRouteBadge('/admin/comments') },
     { href: '/admin/users', label: 'Users', icon: Users, badge: getRouteBadge('/admin/users') },
     { href: '/admin/ads', label: 'Advertisements', icon: Megaphone, badge: getRouteBadge('/admin/ads') },
+    { href: '/admin/subscription', label: 'Subscription', icon: CreditCard, badge: getRouteBadge('/admin/subscription') },
     ...(developerMode ? [{ href: '/admin/developer', label: 'Developer API', icon: Code, badge: getRouteBadge('/admin/developer') }] : []),
   ]
 

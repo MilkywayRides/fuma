@@ -21,7 +21,15 @@ export async function GET() {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    return NextResponse.json(userProfile);
+    const sessions = await auth.api.listSessions({
+      headers: await headers(),
+    });
+
+    return NextResponse.json({
+      user: userProfile,
+      provider: session.user.email?.includes('@') ? 'email' : 'unknown',
+      sessionsCount: sessions?.length || 1,
+    });
   } catch (error) {
     console.error('Failed to fetch user profile:', error);
     return NextResponse.json(
@@ -42,17 +50,13 @@ export async function PATCH(request: Request) {
     }
 
     const body = await request.json();
-    const { interests, phoneNumber, onboardingCompleted } = body;
-
-    // Log before update
-    console.log('Updating user profile:', { interests, phoneNumber, onboardingCompleted });
+    const { interests, phoneNumber, onboardingCompleted, name, developerMode } = body;
 
     // Create an update object with only defined values
     const updateData: any = {
-      updatedAt: new Date(), // Always update the timestamp
+      updatedAt: new Date(),
     };
 
-    // Only include fields that are defined
     if (interests) {
       updateData.userType = interests.join(',');
     }
@@ -61,6 +65,12 @@ export async function PATCH(request: Request) {
     }
     if (onboardingCompleted !== undefined) {
       updateData.onboardingCompleted = onboardingCompleted;
+    }
+    if (name !== undefined) {
+      updateData.name = name;
+    }
+    if (developerMode !== undefined) {
+      updateData.developerMode = developerMode;
     }
 
     await db

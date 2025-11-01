@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import {
   IconCreditCard,
   IconDotsVertical,
@@ -29,6 +30,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { SettingsDialog } from "@/components/settings-dialog"
 
 export function NavUser({
   user,
@@ -42,6 +44,7 @@ export function NavUser({
   isPro?: boolean
 }) {
   const { isMobile } = useSidebar()
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   return (
     <SidebarMenu>
@@ -94,11 +97,11 @@ export function NavUser({
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setSettingsOpen(true)}>
                 <IconUserCircle />
                 Account
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setSettingsOpen(true)}>
                 <IconCreditCard />
                 Billing
               </DropdownMenuItem>
@@ -117,6 +120,13 @@ export function NavUser({
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>
+      <SettingsDialog 
+        open={settingsOpen} 
+        onOpenChange={setSettingsOpen} 
+        name={user.name}
+        email={user.email}
+        image={user.avatar}
+      />
     </SidebarMenu>
   )
 }

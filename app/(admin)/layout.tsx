@@ -5,8 +5,8 @@ import { AdminAppSidebar } from '@/components/admin-app-sidebar';
 import { AdminBreadcrumb } from '@/components/admin-breadcrumb';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import { db } from '@/lib/db';
-import { user, subscriptions } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { user, subscriptions, sentEmails, emailAddresses } from '@/lib/db/schema';
+import { eq, count, inArray } from 'drizzle-orm';
 import { Separator } from '@/components/ui/separator';
 import { EmailProvider } from '@/contexts/email-context';
 import { DeveloperModeProvider } from '@/contexts/developer-mode-context';
@@ -49,11 +49,27 @@ export default async function AdminLayout({
 
   const routeBadges = getRouteBadges();
 
+  const userEmailAddresses = await db.select({ id: emailAddresses.id })
+    .from(emailAddresses)
+    .where(eq(emailAddresses.userId, session.user.id));
+  
+  const emailAddressIds = userEmailAddresses.map(e => e.id);
+  
+  let emailCount = 0;
+  if (emailAddressIds.length > 0) {
+    const emailCountResult = await db.select({ count: count() })
+      .from(sentEmails)
+      .where(inArray(sentEmails.emailAddressId, emailAddressIds));
+    emailCount = emailCountResult[0]?.count || 0;
+  }
+  
+  const emailLimit = subscription[0]?.emailLimit || 2;
+
   return (
     <DeveloperModeProvider initialMode={userRecord?.developerMode || false}>
       <EmailProvider>
         <SidebarProvider>
-          <AdminAppSidebar userName={session.user.name} userEmail={session.user.email} routeBadges={routeBadges} isPro={isPro} />
+          <AdminAppSidebar userName={session.user.name} userEmail={session.user.email} routeBadges={routeBadges} isPro={isPro} userRole={userRecord?.role} emailCount={emailCount} emailLimit={emailLimit} />
         <SidebarInset>
           <div className="flex flex-1 flex-col bg-sidebar">
             <div className="min-h-[100vh] flex-1 rounded-xl bg-background border md:min-h-min m-2 ml-0">

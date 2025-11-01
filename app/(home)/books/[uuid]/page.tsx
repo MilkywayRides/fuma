@@ -16,29 +16,33 @@ export default async function BookViewerPage({ params }: { params: Promise<{ uui
 
   // Check if user has access to premium book
   if (book.premium && session) {
-    const [purchase] = await db.select()
-      .from(bookPurchases)
-      .where(and(
-        eq(bookPurchases.userId, session.user.id),
-        eq(bookPurchases.bookId, book.id)
-      ))
-      .limit(1)
-
-    const [sub] = await db.select()
-      .from(subscriptions)
-      .where(and(
-        eq(subscriptions.userId, session.user.id),
-        eq(subscriptions.status, 'active')
-      ))
-      .limit(1)
-
-    const now = new Date()
-    const hasUnlimitedAccess = sub && 
-      sub.productId === 'unlimited_plan' && 
-      new Date(sub.currentPeriodEnd) > now
+    const isAuthor = book.authorId === session.user.id
     
-    if (!purchase && !hasUnlimitedAccess) {
-      redirect(`/books/${uuid}/purchase`)
+    if (!isAuthor) {
+      const [purchase] = await db.select()
+        .from(bookPurchases)
+        .where(and(
+          eq(bookPurchases.userId, session.user.id),
+          eq(bookPurchases.bookId, book.id)
+        ))
+        .limit(1)
+
+      const [sub] = await db.select()
+        .from(subscriptions)
+        .where(and(
+          eq(subscriptions.userId, session.user.id),
+          eq(subscriptions.status, 'active')
+        ))
+        .limit(1)
+
+      const now = new Date()
+      const hasUnlimitedAccess = sub && 
+        sub.productId === 'unlimited_plan' && 
+        new Date(sub.currentPeriodEnd) > now
+      
+      if (!purchase && !hasUnlimitedAccess) {
+        redirect(`/books/${uuid}/purchase`)
+      }
     }
   } else if (book.premium && !session) {
     redirect(`/books/${uuid}/purchase`)

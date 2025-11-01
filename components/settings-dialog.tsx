@@ -61,6 +61,7 @@ export function SettingsDialog(props: SettingsDialogProps) {
   const [newKeyName, setNewKeyName] = React.useState('');
   const [generatedKey, setGeneratedKey] = React.useState('');
   const [subscriptionData, setSubscriptionData] = React.useState<any>(null);
+  const [userRole, setUserRole] = React.useState<string>('User');
   
   const { toast } = useToast();
   
@@ -112,6 +113,7 @@ export function SettingsDialog(props: SettingsDialogProps) {
       setSessionsCount(data?.sessionsCount || 1);
       setProfileName(data?.user?.name || safeName);
       setLocalDeveloperMode(data?.user?.developerMode || false);
+      setUserRole(data?.user?.role || 'User');
       if (data?.user?.developerMode) {
         fetchApiKeys();
       }
@@ -467,68 +469,155 @@ export function SettingsDialog(props: SettingsDialogProps) {
                     <h3 className="text-lg font-semibold">Current Plan</h3>
                     <p className="text-sm text-muted-foreground">Choose the plan that works best for you</p>
                   </div>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <Card className={cn("relative", !isPro && "border-primary")}>
-                      {!isPro && <Badge className="absolute top-4 right-4">Current</Badge>}
-                      <CardHeader>
-                        <CardTitle>Free</CardTitle>
-                        <CardDescription>For getting started</CardDescription>
-                        <div className="mt-4">
-                          <span className="text-3xl font-bold">$0</span>
-                          <span className="text-muted-foreground">/month</span>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <Check className="h-4 w-4" />
-                          <span className="text-sm">2 email addresses</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Check className="h-4 w-4" />
-                          <span className="text-sm">Basic features</span>
-                        </div>
-                      </CardContent>
-                      <CardFooter>
-                        <Button variant="outline" className="w-full" disabled={!isPro}>Current Plan</Button>
-                      </CardFooter>
-                    </Card>
-                    <Card className={cn("relative", isPro && "border-primary")}>
-                      {isPro && <Badge className="absolute top-4 right-4">Current</Badge>}
-                      <CardHeader>
-                        <CardTitle>Pro</CardTitle>
-                        <CardDescription>For power users</CardDescription>
-                        <div className="mt-4">
-                          <span className="text-3xl font-bold">$9</span>
-                          <span className="text-muted-foreground">/month</span>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <Check className="h-4 w-4" />
-                          <span className="text-sm">10 email addresses</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Check className="h-4 w-4" />
-                          <span className="text-sm">All features</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Check className="h-4 w-4" />
-                          <span className="text-sm">Priority support</span>
-                        </div>
-                      </CardContent>
-                      <CardFooter>
-                        {isPro ? (
-                          <Button variant="outline" className="w-full" asChild>
-                            <a href="/admin/subscription">Manage</a>
-                          </Button>
-                        ) : (
-                          <Button className="w-full" asChild>
-                            <a href="/admin/subscription">Upgrade</a>
-                          </Button>
-                        )}
-                      </CardFooter>
-                    </Card>
-                  </div>
+                  {userRole === 'User' ? (
+                    <div className="grid gap-4 md:grid-cols-3">
+                      <Card className={cn("relative", !isPro && "border-primary")}>
+                        {!isPro && <Badge className="absolute top-4 right-4">Current</Badge>}
+                        <CardHeader>
+                          <CardTitle>Free</CardTitle>
+                          <CardDescription>Basic access</CardDescription>
+                          <div className="mt-4">
+                            <span className="text-3xl font-bold">$0</span>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <Check className="h-4 w-4" />
+                            <span className="text-sm">Access to free books</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Check className="h-4 w-4" />
+                            <span className="text-sm">0 credits</span>
+                          </div>
+                        </CardContent>
+                        <CardFooter>
+                          <Button variant="outline" className="w-full" disabled>Current Plan</Button>
+                        </CardFooter>
+                      </Card>
+                      <Card className="relative border-primary">
+                        <Badge className="absolute top-4 right-4">Popular</Badge>
+                        <CardHeader>
+                          <CardTitle>Credits</CardTitle>
+                          <CardDescription>Pay per book</CardDescription>
+                          <div className="mt-4">
+                            <span className="text-3xl font-bold">$10</span>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <Check className="h-4 w-4" />
+                            <span className="text-sm">250 credits</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Check className="h-4 w-4" />
+                            <span className="text-sm">Buy individual books</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Check className="h-4 w-4" />
+                            <span className="text-sm">No expiration</span>
+                          </div>
+                        </CardContent>
+                        <CardFooter>
+                          <Button className="w-full">Buy Credits</Button>
+                        </CardFooter>
+                      </Card>
+                      <Card className={cn("relative", isPro && "border-primary")}>
+                        {isPro && <Badge className="absolute top-4 right-4">Current</Badge>}
+                        <CardHeader>
+                          <CardTitle>Premium</CardTitle>
+                          <CardDescription>Unlimited access</CardDescription>
+                          <div className="mt-4">
+                            <span className="text-3xl font-bold">$12</span>
+                            <span className="text-muted-foreground">/month</span>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <Check className="h-4 w-4" />
+                            <span className="text-sm">Unlimited books</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Check className="h-4 w-4" />
+                            <span className="text-sm">All premium content</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Check className="h-4 w-4" />
+                            <span className="text-sm">Cancel anytime</span>
+                          </div>
+                        </CardContent>
+                        <CardFooter>
+                          {isPro ? (
+                            <Button variant="outline" className="w-full">Manage</Button>
+                          ) : (
+                            <Button className="w-full">Subscribe</Button>
+                          )}
+                        </CardFooter>
+                      </Card>
+                    </div>
+                  ) : (
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <Card className={cn("relative", !isPro && "border-primary")}>
+                        {!isPro && <Badge className="absolute top-4 right-4">Current</Badge>}
+                        <CardHeader>
+                          <CardTitle>Free</CardTitle>
+                          <CardDescription>For getting started</CardDescription>
+                          <div className="mt-4">
+                            <span className="text-3xl font-bold">$0</span>
+                            <span className="text-muted-foreground">/month</span>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <Check className="h-4 w-4" />
+                            <span className="text-sm">2 email addresses</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Check className="h-4 w-4" />
+                            <span className="text-sm">Basic features</span>
+                          </div>
+                        </CardContent>
+                        <CardFooter>
+                          <Button variant="outline" className="w-full" disabled={!isPro}>Current Plan</Button>
+                        </CardFooter>
+                      </Card>
+                      <Card className={cn("relative", isPro && "border-primary")}>
+                        {isPro && <Badge className="absolute top-4 right-4">Current</Badge>}
+                        <CardHeader>
+                          <CardTitle>Pro</CardTitle>
+                          <CardDescription>For power users</CardDescription>
+                          <div className="mt-4">
+                            <span className="text-3xl font-bold">$9</span>
+                            <span className="text-muted-foreground">/month</span>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <Check className="h-4 w-4" />
+                            <span className="text-sm">10 email addresses</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Check className="h-4 w-4" />
+                            <span className="text-sm">All features</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Check className="h-4 w-4" />
+                            <span className="text-sm">Priority support</span>
+                          </div>
+                        </CardContent>
+                        <CardFooter>
+                          {isPro ? (
+                            <Button variant="outline" className="w-full" asChild>
+                              <a href="/admin/subscription">Manage</a>
+                            </Button>
+                          ) : (
+                            <Button className="w-full" asChild>
+                              <a href="/admin/subscription">Upgrade</a>
+                            </Button>
+                          )}
+                        </CardFooter>
+                      </Card>
+                    </div>
+                  )}
                 </TabsContent>
 
                 <TabsContent value="developer" className="space-y-6 mt-0">

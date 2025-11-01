@@ -31,12 +31,18 @@ export function AdminAppSidebar({
   userEmail, 
   routeBadges = {},
   isPro = false,
+  userRole,
+  emailCount,
+  emailLimit,
   ...props 
 }: { 
   userName: string
   userEmail: string
   routeBadges?: Record<string, string>
   isPro?: boolean
+  userRole?: string
+  emailCount?: number
+  emailLimit?: number
 } & React.ComponentProps<typeof Sidebar>) {
   const { emails: emailAddresses } = useEmails()
   const { developerMode } = useDeveloperMode()
@@ -164,7 +170,7 @@ export function AdminAppSidebar({
       </SidebarContent>
       
       <SidebarFooter>
-        <NavUser user={{ name: userName, email: userEmail, avatar: "" }} isPro={isPro} />
+        <NavUser user={{ name: userName, email: userEmail, avatar: "" }} isPro={isPro} userRole={userRole} emailCount={emailCount} emailLimit={emailLimit} />
       </SidebarFooter>
     </Sidebar>
   )

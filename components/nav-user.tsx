@@ -18,6 +18,7 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@/components/ui/avatar"
+import { Progress } from "@/components/ui/progress"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,6 +39,10 @@ import { SettingsDialog } from "@/components/settings-dialog"
 export function NavUser({
   user,
   isPro = false,
+  userRole,
+  credits,
+  emailCount,
+  emailLimit,
 }: {
   user: {
     name: string
@@ -45,6 +50,10 @@ export function NavUser({
     avatar: string
   }
   isPro?: boolean
+  userRole?: string
+  credits?: number
+  emailCount?: number
+  emailLimit?: number
 }) {
   const { isMobile } = useSidebar()
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -113,6 +122,12 @@ export function NavUser({
                   <span className="text-muted-foreground truncate text-xs">
                     {user.email}
                   </span>
+                  {userRole === 'User' && credits !== undefined && (
+                    <Progress value={Math.min(((250 - credits) / 250) * 100, 100)} className="h-1 mt-1" />
+                  )}
+                  {userRole === 'Admin' && !isPro && emailCount !== undefined && emailLimit !== undefined && (
+                    <Progress value={Math.min((emailCount / emailLimit) * 100, 100)} className="h-1 mt-1" />
+                  )}
                 </div>
               </div>
             </DropdownMenuLabel>

@@ -1,0 +1,6 @@
+export { HomeIcon } from './home'
+export { DashboardIcon } from './dashboard'
+export { BookIcon } from './book'
+export { SettingsIcon } from './settings'
+export { CoinsIcon } from './coins'
+export { CrownIcon } from './crown'

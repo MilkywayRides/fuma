@@ -1,7 +1,9 @@
 import { db } from '@/lib/db';
-import { user, blogPosts, comments, flowcharts, siteVisits, chatMessages } from '@/lib/db/schema';
-import { count, sql, desc } from 'drizzle-orm';
+import { user, blogPosts, comments, flowcharts, siteVisits, chatMessages, bookPurchases, sentEmails } from '@/lib/db/schema';
+import { count, sql, desc, sum } from 'drizzle-orm';
 import { ChartAreaInteractive } from '@/components/chart-area-interactive';
+import { EarningsChart } from '@/components/earnings-chart';
+import { EmailsChart } from '@/components/emails-chart';
 import { SectionCards } from '@/components/section-cards';
 import { RecentPostsTable } from '@/components/recent-posts-table';
 import { Metadata } from 'next';
@@ -13,20 +15,22 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic';
 
 export default async function AdminPage() {
-  let totalUsers: any, totalPosts: any, totalComments: any, totalFlowcharts: any, postStats: any, trafficData: any[] = [], recentPosts: any[] = [], recentComments: any[] = [], hypedMessages: any[] = [];
+  let totalUsers: any, totalPosts: any, totalComments: any, totalFlowcharts: any, totalEarnings: any, postStats: any, trafficData: any[] = [], earningsData: any[] = [], emailsData: any[] = [], recentPosts: any[] = [], recentComments: any[] = [], hypedMessages: any[] = [];
 
   try {
-    [[totalUsers], [totalPosts], [totalComments], [totalFlowcharts]] = await Promise.all([
+    [[totalUsers], [totalPosts], [totalComments], [totalFlowcharts], [totalEarnings]] = await Promise.all([
       db.select({ count: count() }).from(user),
       db.select({ count: count() }).from(blogPosts),
       db.select({ count: count() }).from(comments),
       db.select({ count: count() }).from(flowcharts),
+      db.select({ total: sql<number>`COALESCE(SUM(${bookPurchases.creditsSpent}), 0)` }).from(bookPurchases),
     ]);
   } catch (error) {
     totalUsers = { count: 0 };
     totalPosts = { count: 0 };
     totalComments = { count: 0 };
     totalFlowcharts = { count: 0 };
+    totalEarnings = { total: 0 };
   }
 
   try {
@@ -50,6 +54,30 @@ export default async function AdminPage() {
       .limit(90);
   } catch (error) {
     trafficData = [];
+  }
+
+  try {
+    earningsData = await db.select({
+      date: sql<string>`date_trunc('day', ${bookPurchases.createdAt})`,
+      earnings: sql<number>`SUM(${bookPurchases.creditsSpent})`,
+    }).from(bookPurchases)
+      .groupBy(sql`date_trunc('day', ${bookPurchases.createdAt})`)
+      .orderBy(sql`date_trunc('day', ${bookPurchases.createdAt}) desc`)
+      .limit(90);
+  } catch (error) {
+    earningsData = [];
+  }
+
+  try {
+    emailsData = await db.select({
+      date: sql<string>`date_trunc('day', ${sentEmails.createdAt})`,
+      emails: sql<number>`count(*)`,
+    }).from(sentEmails)
+      .groupBy(sql`date_trunc('day', ${sentEmails.createdAt})`)
+      .orderBy(sql`date_trunc('day', ${sentEmails.createdAt}) desc`)
+      .limit(90);
+  } catch (error) {
+    emailsData = [];
   }
 
   try {
@@ -108,9 +136,14 @@ export default async function AdminPage() {
           totalFlowcharts={totalFlowcharts?.count || 0}
           publishedPosts={postStats?.published || 0}
           draftPosts={postStats?.drafts || 0}
+          totalEarnings={totalEarnings?.total || 0}
         />
-        <div className="px-4 lg:px-6">
+        <div className="px-4 lg:px-6 space-y-4">
           <ChartAreaInteractive data={trafficData || []} />
+          <div className="grid gap-4 md:grid-cols-2">
+            <EarningsChart data={earningsData || []} />
+            <EmailsChart data={emailsData || []} />
+          </div>
         </div>
         <RecentPostsTable posts={recentPosts || []} comments={recentComments || []} hypedMessages={hypedMessages || []} />
       </div>

@@ -13,6 +13,7 @@ export const user = pgTable('user', {
   userType: text('userType'),
   phoneNumber: text('phoneNumber'),
   phoneVerified: boolean('phoneVerified').default(false).notNull(),
+  credits: integer('credits').default(0).notNull(),
   createdAt: timestamp('createdAt').notNull(),
   updatedAt: timestamp('updatedAt').notNull(),
 });
@@ -283,6 +284,7 @@ export const subscriptions = pgTable('subscriptions', {
   provider: text('provider').notNull(), // 'polar', 'stripe', etc.
   subscriptionId: text('subscriptionId').notNull().unique(),
   productId: text('productId').notNull(),
+  planId: integer('planId').references(() => subscriptionPlans.id),
   status: text('status').notNull(), // 'active', 'canceled', 'expired'
   currentPeriodStart: timestamp('currentPeriodStart').notNull(),
   currentPeriodEnd: timestamp('currentPeriodEnd').notNull(),
@@ -298,6 +300,8 @@ export const books = pgTable('books', {
   title: text('title').notNull(),
   description: text('description'),
   published: boolean('published').default(false).notNull(),
+  premium: boolean('premium').default(false).notNull(),
+  price: integer('price').default(0).notNull(),
   authorId: text('authorId')
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
@@ -316,4 +320,26 @@ export const bookPages = pgTable('bookPages', {
   order: integer('order').default(0).notNull(),
   createdAt: timestamp('createdAt').defaultNow().notNull(),
   updatedAt: timestamp('updatedAt').defaultNow().notNull(),
+});
+
+export const bookPurchases = pgTable('bookPurchases', {
+  id: integer('id').notNull().primaryKey(),
+  userId: text('userId')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  bookId: integer('bookId')
+    .notNull()
+    .references(() => books.id, { onDelete: 'cascade' }),
+  creditsSpent: integer('creditsSpent').notNull(),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+});
+
+export const subscriptionPlans = pgTable('subscriptionPlans', {
+  id: integer('id').notNull().primaryKey(),
+  name: text('name').notNull(),
+  price: integer('price').notNull(),
+  credits: integer('credits').default(0).notNull(),
+  unlimitedBooks: boolean('unlimitedBooks').default(false).notNull(),
+  active: boolean('active').default(true).notNull(),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
 });

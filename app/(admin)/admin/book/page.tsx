@@ -3,7 +3,9 @@
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Plus, Book as BookIcon } from 'lucide-react'
+import { Plus, Book as BookIcon, Crown } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { Switch } from '@/components/ui/switch'
 import Link from 'next/link'
 import {
   Dialog,
@@ -26,6 +28,8 @@ export default function BookPage() {
   const [books, setBooks] = useState<any[]>([])
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState('')
+  const [premium, setPremium] = useState(false)
+  const [price, setPrice] = useState(0)
   const [loading, setLoading] = useState(false)
   const { toast } = useToast()
   const router = useRouter()
@@ -43,7 +47,7 @@ export default function BookPage() {
       const res = await fetch('/api/books', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ uuid, title }),
+        body: JSON.stringify({ uuid, title, premium, price: premium ? price : 0 }),
       })
       if (res.ok) {
         const newBook = await res.json()
@@ -51,6 +55,8 @@ export default function BookPage() {
         toast({ title: 'Success', description: 'Book created successfully' })
         setOpen(false)
         setTitle('')
+        setPremium(false)
+        setPrice(0)
         router.push(`/admin/book/${uuid}`)
       } else {
         throw new Error('Failed to create book')
@@ -92,6 +98,23 @@ export default function BookPage() {
                   required
                 />
               </div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="premium">Premium Book</Label>
+                <Switch id="premium" checked={premium} onCheckedChange={setPremium} />
+              </div>
+              {premium && (
+                <div className="space-y-2">
+                  <Label htmlFor="price">Price (Credits)</Label>
+                  <Input
+                    id="price"
+                    type="number"
+                    value={price}
+                    onChange={(e) => setPrice(Number(e.target.value))}
+                    min="0"
+                    placeholder="Enter price in credits"
+                  />
+                </div>
+              )}
               <Button type="submit" disabled={loading} className="w-full">
                 {loading ? 'Creating...' : 'Create Book'}
               </Button>
@@ -112,9 +135,17 @@ export default function BookPage() {
             <Link key={book.uuid} href={`/admin/book/${book.uuid}`}>
               <Card className="hover:border-primary transition-colors cursor-pointer">
                 <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <BookIcon className="h-5 w-5" />
-                    <CardTitle className="text-lg">{book.title}</CardTitle>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <BookIcon className="h-5 w-5" />
+                      <CardTitle className="text-lg">{book.title}</CardTitle>
+                    </div>
+                    {book.premium && (
+                      <Badge variant="secondary" className="flex items-center gap-1">
+                        <Crown className="h-3 w-3" />
+                        {book.price}
+                      </Badge>
+                    )}
                   </div>
                   <CardDescription>
                     Created {new Date(book.createdAt).toLocaleDateString()}

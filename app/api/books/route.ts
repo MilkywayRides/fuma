@@ -11,7 +11,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { uuid, title, description } = await request.json()
+  const { uuid, title, description, premium, price } = await request.json()
 
   const [maxId] = await db.select({ max: sql<number>`COALESCE(MAX(id), 0)` }).from(books)
   const newId = (maxId.max || 0) + 1
@@ -21,6 +21,8 @@ export async function POST(request: Request) {
     uuid,
     title,
     description: description || '',
+    premium: premium || false,
+    price: price || 0,
     authorId: session.user.id,
   }).returning()
 

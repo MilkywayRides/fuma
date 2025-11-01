@@ -6,7 +6,7 @@ import { db } from '@/lib/db'
 import { user, bookPurchases, books } from '@/lib/db/schema'
 import { eq, sql } from 'drizzle-orm'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2024-11-20.acacia' })
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2025-10-29.clover' })
 
 export async function POST(request: Request) {
   const session = await auth.api.getSession({ headers: await headers() })

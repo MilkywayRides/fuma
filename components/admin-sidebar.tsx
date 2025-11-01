@@ -188,7 +188,7 @@ export function AdminSidebar({ userName, userEmail, developerMode }: { userName:
         </ScrollArea>
 
         <div className="border-t p-3">
-          <UserButton name={userName} email={userEmail} variant={collapsed ? "icon" : "wide"} />
+          <UserButton name={userName} email={userEmail} variant={collapsed ? "compact" : "wide"} />
         </div>
       </div>
     </aside>

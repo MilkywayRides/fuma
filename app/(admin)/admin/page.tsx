@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic';
 
 export default async function AdminPage() {
-  let totalUsers, totalPosts, totalComments, totalFlowcharts, postStats, trafficData, recentPosts, recentComments, hypedMessages;
+  let totalUsers: any, totalPosts: any, totalComments: any, totalFlowcharts: any, postStats: any, trafficData: any[] = [], recentPosts: any[] = [], recentComments: any[] = [], hypedMessages: any[] = [];
 
   try {
     [[totalUsers], [totalPosts], [totalComments], [totalFlowcharts]] = await Promise.all([
@@ -87,13 +87,12 @@ export default async function AdminPage() {
   try {
     hypedMessages = await db.select({
       id: chatMessages.id,
-      message: chatMessages.message,
+      content: chatMessages.content,
       userName: user.name,
       createdAt: chatMessages.createdAt,
-      hypes: chatMessages.hypes,
     }).from(chatMessages)
       .leftJoin(user, sql`${chatMessages.userId} = ${user.id}`)
-      .orderBy(desc(chatMessages.hypes))
+      .orderBy(desc(chatMessages.createdAt))
       .limit(10);
   } catch (error) {
     hypedMessages = [];

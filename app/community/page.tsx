@@ -447,7 +447,7 @@ export default function CommunityPage() {
             name={session?.user?.name || 'User'}
             email={session?.user?.email || ''}
             image={session?.user?.image}
-            variant="wide"
+            variant="compact"
           />
         </div>
       </div>

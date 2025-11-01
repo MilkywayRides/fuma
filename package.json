@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "build": "next build",
-    "dev": "node --max-old-space-size=4096 server.mjs",
+    "dev": "node scripts/banner.js && node --max-old-space-size=4096 server.mjs",
     "start": "NODE_ENV=production node --max-old-space-size=4096 server.mjs",
     "postinstall": "fumadocs-mdx",
     "db:generate": "drizzle-kit generate",

@@ -291,3 +291,29 @@ export const subscriptions = pgTable('subscriptions', {
   createdAt: timestamp('createdAt').defaultNow().notNull(),
   updatedAt: timestamp('updatedAt').defaultNow().notNull(),
 });
+
+export const books = pgTable('books', {
+  id: integer('id').notNull().primaryKey(),
+  uuid: text('uuid').notNull().unique(),
+  title: text('title').notNull(),
+  description: text('description'),
+  published: boolean('published').default(false).notNull(),
+  authorId: text('authorId')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+  updatedAt: timestamp('updatedAt').defaultNow().notNull(),
+});
+
+export const bookPages = pgTable('bookPages', {
+  id: integer('id').notNull().primaryKey(),
+  bookId: integer('bookId')
+    .notNull()
+    .references(() => books.id, { onDelete: 'cascade' }),
+  slug: text('slug').notNull(),
+  title: text('title').notNull(),
+  content: text('content').notNull(),
+  order: integer('order').default(0).notNull(),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+  updatedAt: timestamp('updatedAt').defaultNow().notNull(),
+});

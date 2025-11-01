@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -53,6 +54,9 @@ export function SettingsDialog(props: SettingsDialogProps) {
   const [confirmPassword, setConfirmPassword] = React.useState('');
   const { developerMode, setDeveloperMode: setGlobalDeveloperMode } = useDeveloperMode();
   const [localDeveloperMode, setLocalDeveloperMode] = React.useState(developerMode);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [activeTab, setActiveTab] = React.useState('profile');
   const [apiKeys, setApiKeys] = React.useState<any[]>([]);
   const [newKeyName, setNewKeyName] = React.useState('');
   const [generatedKey, setGeneratedKey] = React.useState('');
@@ -71,11 +75,22 @@ export function SettingsDialog(props: SettingsDialogProps) {
 
   React.useEffect(() => {
     if (open) {
+      const tab = searchParams.get('tab');
+      if (tab && ['profile', 'security', 'subscription', 'developer'].includes(tab)) {
+        setActiveTab(tab);
+      }
       fetchUserData();
       fetchSubscription();
       detectDevice();
     }
   }, [open]);
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    const params = new URLSearchParams(window.location.search);
+    params.set('tab', value);
+    window.history.replaceState({}, '', `?${params.toString()}`);
+  };
 
   const detectDevice = () => {
     const ua = navigator.userAgent;
@@ -297,7 +312,7 @@ export function SettingsDialog(props: SettingsDialogProps) {
               </Button>
             </DialogPrimitive.Close>
           </div>
-        <Tabs defaultValue="profile" className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="flex-1 flex flex-col lg:flex-row overflow-hidden">
           <div className="lg:w-48 border-b lg:border-b-0 lg:border-r">
             <TabsList className="flex lg:flex-col h-auto w-full bg-transparent p-2 gap-1">
               <TabsTrigger value="profile" className="w-full justify-start gap-2">

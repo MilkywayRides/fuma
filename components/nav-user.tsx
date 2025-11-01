@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useTheme } from "next-themes"
 import {
   IconCreditCard,
   IconDotsVertical,
@@ -8,6 +9,8 @@ import {
   IconNotification,
   IconUserCircle,
   IconCrown,
+  IconMoon,
+  IconSun,
 } from "@tabler/icons-react"
 
 import {
@@ -45,6 +48,24 @@ export function NavUser({
 }) {
   const { isMobile } = useSidebar()
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const { theme, setTheme } = useTheme()
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'a') {
+        e.preventDefault()
+        window.history.replaceState({}, '', '?tab=profile')
+        setSettingsOpen(true)
+      }
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'S') {
+        e.preventDefault()
+        window.history.replaceState({}, '', '?tab=subscription')
+        setSettingsOpen(true)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
 
   return (
     <SidebarMenu>
@@ -97,17 +118,29 @@ export function NavUser({
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem onClick={() => setSettingsOpen(true)}>
+              <DropdownMenuItem onClick={() => {
+                window.history.replaceState({}, '', '?tab=profile')
+                setSettingsOpen(true)
+              }}>
                 <IconUserCircle />
                 Account
+                <span className="ml-auto text-xs text-muted-foreground">⌘A</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setSettingsOpen(true)}>
+              <DropdownMenuItem onClick={() => {
+                window.history.replaceState({}, '', '?tab=subscription')
+                setSettingsOpen(true)
+              }}>
                 <IconCreditCard />
                 Billing
+                <span className="ml-auto text-xs text-muted-foreground">⌘⇧S</span>
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <IconNotification />
                 Notifications
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+                {theme === 'dark' ? <IconSun /> : <IconMoon />}
+                {theme === 'dark' ? 'Light' : 'Dark'} Mode
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />

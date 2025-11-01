@@ -22,7 +22,7 @@ export function DeveloperModeProvider({ children, initialMode }: { children: Rea
 export function useDeveloperMode() {
   const context = useContext(DeveloperModeContext)
   if (context === undefined) {
-    throw new Error('useDeveloperMode must be used within a DeveloperModeProvider')
+    return { developerMode: false, setDeveloperMode: () => {} }
   }
   return context
 }

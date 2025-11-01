@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, Workflow, Settings, MessageSquare, Users, FileText, Megaphone, Code, GitBranch, Mail, Home, Plus, CreditCard } from "lucide-react"
+import { LayoutDashboard, Workflow, Settings, MessageSquare, Users, FileText, Megaphone, Code, GitBranch, Mail, Home, Plus, CreditCard, Book } from "lucide-react"
 import { APP_NAME } from "@/lib/config"
 import { NavUser } from "@/components/nav-user"
 import { Badge } from "@/components/ui/badge"
@@ -50,6 +50,7 @@ export function AdminAppSidebar({
     { href: '/', label: 'Home', icon: Home },
     { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, badge: getRouteBadge('/admin') },
     { href: '/admin/blogs', label: 'Blogs', icon: FileText, badge: getRouteBadge('/admin/blogs') },
+    { href: '/admin/book', label: 'Books', icon: Book, badge: getRouteBadge('/admin/book') },
     { href: '/admin/flow', label: 'Flowcharts', icon: Workflow, badge: getRouteBadge('/admin/flow') },
     { href: '/admin/scripts', label: 'Flow Scripts', icon: GitBranch, badge: getRouteBadge('/admin/scripts') },
     { href: '/admin/comments', label: 'Comments', icon: MessageSquare, badge: getRouteBadge('/admin/comments') },

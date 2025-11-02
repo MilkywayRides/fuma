@@ -64,13 +64,28 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
+    const scopes = tokenRecord.scope.split(',').map(s => s.trim()).filter(Boolean);
+    const userData: any = { id: userRecord.id };
+    
+    if (scopes.includes('profile') || scopes.includes('all') || scopes.includes('read')) {
+      userData.name = userRecord.name;
+    }
+    if (scopes.includes('email') || scopes.includes('all') || scopes.includes('read')) {
+      userData.email = userRecord.email;
+    }
+    if (scopes.includes('phone') || scopes.includes('all')) {
+      userData.phoneNumber = userRecord.phoneNumber;
+      userData.phoneVerified = userRecord.phoneVerified;
+    }
+    if (scopes.includes('role') || scopes.includes('all') || scopes.includes('read')) {
+      userData.role = userRecord.role;
+    }
+    if (scopes.includes('credits') || scopes.includes('all')) {
+      userData.credits = userRecord.credits;
+    }
+    
     return NextResponse.json({
-      user: {
-        id: userRecord.id,
-        name: userRecord.name,
-        email: userRecord.email,
-        role: userRecord.role,
-      },
+      user: userData,
       scope: tokenRecord.scope,
     }, {
       headers: {

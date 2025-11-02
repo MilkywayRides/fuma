@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth, hasAdminAccess } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { oauthApplications } from '@/lib/db/schema';
-import { generateClientId, generateClientSecret, hashSecret } from '@/lib/oauth';
+import { generateAppUuid, generateClientId, generateClientSecret, hashSecret } from '@/lib/oauth';
 
 export async function POST(req: NextRequest) {
   try {
@@ -26,11 +26,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
+    const uuid = generateAppUuid();
     const clientId = generateClientId();
     const clientSecret = generateClientSecret();
     const hashedSecret = hashSecret(clientSecret);
 
     const result = await db.insert(oauthApplications).values({
+      uuid,
       clientId,
       clientSecret: hashedSecret,
       name,

@@ -1,5 +1,9 @@
 import crypto from 'crypto';
 
+export function generateAppUuid(): string {
+  return crypto.randomBytes(5).toString('hex');
+}
+
 export function generateClientId(): string {
   return `bn_${crypto.randomBytes(16).toString('hex')}`;
 }

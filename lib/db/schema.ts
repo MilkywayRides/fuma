@@ -361,6 +361,7 @@ export const bookReviews = pgTable('bookReviews', {
 
 export const oauthApplications = pgTable('oauthApplications', {
   id: serial('id').primaryKey(),
+  uuid: text('uuid').notNull().unique(),
   clientId: text('clientId').notNull().unique(),
   clientSecret: text('clientSecret').notNull(),
   name: text('name').notNull(),
@@ -371,6 +372,7 @@ export const oauthApplications = pgTable('oauthApplications', {
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
   active: boolean('active').default(true).notNull(),
+  allowedScopes: text('allowedScopes').default('profile,email').notNull(),
   createdAt: timestamp('createdAt').defaultNow().notNull(),
   updatedAt: timestamp('updatedAt').defaultNow().notNull(),
 });

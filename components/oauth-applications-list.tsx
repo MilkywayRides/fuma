@@ -89,6 +89,9 @@ export function OAuthApplicationsList({ applications }: { applications: Applicat
                 )}
               </div>
               <div className="flex gap-2">
+                <Button variant="outline" size="sm" asChild>
+                  <a href={`/admin/oauth/${app.uuid}`}>Settings</a>
+                </Button>
                 <EditOAuthAppDialog app={app} />
                 <AlertDialog>
                   <AlertDialogTrigger asChild>

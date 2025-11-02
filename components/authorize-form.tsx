@@ -6,6 +6,16 @@ import { Badge } from '@/components/ui/badge';
 import { Shield, Globe, CheckCircle2 } from 'lucide-react';
 import { useState } from 'react';
 
+const SCOPE_INFO: Record<string, { label: string; description: string }> = {
+  profile: { label: 'Profile Information', description: 'Name and user ID' },
+  email: { label: 'Email Address', description: 'Your email address' },
+  phone: { label: 'Phone Number', description: 'Your phone number' },
+  role: { label: 'Account Role', description: 'Your account role and permissions' },
+  credits: { label: 'Credits Balance', description: 'Your credits and balance' },
+  subscription: { label: 'Subscription Status', description: 'Your subscription details' },
+  all: { label: 'Full Access', description: 'Access to all your data' },
+};
+
 export function AuthorizeForm({
   app,
   user,
@@ -22,6 +32,8 @@ export function AuthorizeForm({
   state?: string;
 }) {
   const [loading, setLoading] = useState(false);
+  const allowedScopes = app.allowedScopes ? app.allowedScopes.split(',').map((s: string) => s.trim()).filter(Boolean) : ['profile', 'email'];
+  const requestedScopes = allowedScopes.length > 0 ? allowedScopes : ['profile', 'email'];
 
   async function handleAuthorize() {
     setLoading(true);
@@ -71,18 +83,23 @@ export function AuthorizeForm({
 
             <div className="flex items-start gap-3 p-4 border rounded-lg">
               <CheckCircle2 className="h-5 w-5 text-muted-foreground mt-0.5" />
-              <div className="flex-1 space-y-2">
+              <div className="flex-1 space-y-3">
                 <p className="text-sm font-medium">This app will be able to:</p>
-                <ul className="space-y-1 text-sm text-muted-foreground">
-                  <li className="flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground" />
-                    Read your profile information
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground" />
-                    Access your email address
-                  </li>
-                </ul>
+                <div className="space-y-2">
+                  {requestedScopes.map((s) => {
+                    const info = SCOPE_INFO[s];
+                    if (!info) return null;
+                    return (
+                      <div key={s} className="flex items-start gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium">{info.label}</p>
+                          <p className="text-xs text-muted-foreground">{info.description}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
 

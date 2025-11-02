@@ -7,6 +7,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Shield, Trash2, ExternalLink, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
+import { ManageAppPermissionsDialog } from '@/components/manage-app-permissions-dialog';
 
 type AuthorizedApp = {
   id: number;
@@ -108,25 +109,41 @@ export function AuthorizedAppsList({ tokens }: { tokens: AuthorizedApp[] }) {
             <div className="space-y-2">
               <p className="text-sm font-medium">Permissions</p>
               <ul className="space-y-1 text-sm text-muted-foreground">
-                <li className="flex items-center gap-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground" />
-                  Read your profile information
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground" />
-                  Access your email address
-                </li>
+                {token.scope.split(',').map((s) => {
+                  const scopeMap: Record<string, string> = {
+                    profile: 'Read your profile information',
+                    email: 'Access your email address',
+                    phone: 'Access your phone number',
+                    role: 'View your account role',
+                    credits: 'View your credits balance',
+                    subscription: 'View your subscription status',
+                    all: 'Access all your data',
+                  };
+                  return (
+                    <li key={s} className="flex items-center gap-2">
+                      <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground" />
+                      {scopeMap[s.trim()] || s}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
 
-            <div className="flex items-center gap-4 text-xs text-muted-foreground pt-2 border-t">
-              <div className="flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                Authorized {new Date(token.createdAt).toLocaleDateString()}
+            <div className="flex items-center justify-between pt-2 border-t">
+              <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                <div className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  Authorized {new Date(token.createdAt).toLocaleDateString()}
+                </div>
+                <div>
+                  Expires {new Date(token.expiresAt).toLocaleDateString()}
+                </div>
               </div>
-              <div>
-                Expires {new Date(token.expiresAt).toLocaleDateString()}
-              </div>
+              <ManageAppPermissionsDialog
+                tokenId={token.id}
+                appName={token.app.name}
+                currentScope={token.scope}
+              />
             </div>
           </CardContent>
         </Card>

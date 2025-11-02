@@ -12,6 +12,7 @@ import { EditOAuthAppDialog } from '@/components/edit-oauth-app-dialog';
 
 type Application = {
   id: number;
+  uuid: string;
   clientId: string;
   clientSecret: string;
   name: string;

@@ -86,7 +86,7 @@ export function AuthorizeForm({
               <div className="flex-1 space-y-3">
                 <p className="text-sm font-medium">This app will be able to:</p>
                 <div className="space-y-2">
-                  {requestedScopes.map((s) => {
+                  {requestedScopes.map((s: string) => {
                     const info = SCOPE_INFO[s];
                     if (!info) return null;
                     return (

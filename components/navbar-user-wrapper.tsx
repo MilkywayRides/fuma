@@ -25,7 +25,7 @@ export async function NavbarUserWrapper() {
     <NavbarUserDropdown 
       user={user} 
       userRole={session.user.role || 'User'}
-      credits={session.user.credits}
+      credits={session.user.credits ?? undefined}
     />
   )
 }

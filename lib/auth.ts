@@ -34,6 +34,11 @@ export const auth = betterAuth({
         defaultValue: false,
         required: false,
       },
+      credits: {
+        type: 'number',
+        defaultValue: 0,
+        required: false,
+      },
     },
   },
   plugins: [

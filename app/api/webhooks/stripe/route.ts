@@ -50,7 +50,7 @@ export async function POST(req: Request) {
         await db.update(subscriptions)
           .set({
             status: subscription.status,
-            currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+            currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
           })
           .where(eq(subscriptions.subscriptionId, subscription.id))
         break

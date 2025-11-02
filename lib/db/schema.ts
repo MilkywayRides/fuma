@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean, integer } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, boolean, integer, serial } from 'drizzle-orm/pg-core';
 
 export const user = pgTable('user', {
   id: text('id').primaryKey(),
@@ -220,6 +220,7 @@ export const chatMessages = pgTable('chatMessages', {
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
   metadata: text('metadata'), // JSON string for additional data
+  hypes: integer('hypes').default(0).notNull(),
   createdAt: timestamp('createdAt').defaultNow().notNull(),
 });
 
@@ -342,4 +343,18 @@ export const subscriptionPlans = pgTable('subscriptionPlans', {
   unlimitedBooks: boolean('unlimitedBooks').default(false).notNull(),
   active: boolean('active').default(true).notNull(),
   createdAt: timestamp('createdAt').defaultNow().notNull(),
+});
+
+export const bookReviews = pgTable('bookReviews', {
+  id: integer('id').notNull().primaryKey(),
+  bookId: integer('bookId')
+    .notNull()
+    .references(() => books.id, { onDelete: 'cascade' }),
+  userId: text('userId')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  rating: integer('rating').notNull(),
+  review: text('review'),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+  updatedAt: timestamp('updatedAt').defaultNow().notNull(),
 });

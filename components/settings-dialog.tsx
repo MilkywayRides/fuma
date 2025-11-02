@@ -296,7 +296,7 @@ export function SettingsDialog(props: SettingsDialogProps) {
         <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
         <DialogPrimitive.Content className={cn(
           "fixed top-[50%] left-[50%] z-50 translate-x-[-50%] translate-y-[-50%]",
-          "w-[90vw] max-w-[1100px] h-[75vh]",
+          "w-[95vw] sm:w-[90vw] max-w-[1100px] h-[85vh] sm:h-[75vh]",
           "bg-background rounded-lg border shadow-lg",
           "data-[state=open]:animate-in data-[state=closed]:animate-out",
           "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
@@ -319,20 +319,22 @@ export function SettingsDialog(props: SettingsDialogProps) {
             <TabsList className="flex lg:flex-col h-auto w-full bg-transparent p-2 gap-1">
               <TabsTrigger value="profile" className="w-full justify-start gap-2">
                 <UserIcon className="h-4 w-4" />
-                Profile
+                <span className="hidden sm:inline">Profile</span>
               </TabsTrigger>
               <TabsTrigger value="security" className="w-full justify-start gap-2">
                 <ShieldIcon className="h-4 w-4" />
-                Security
+                <span className="hidden sm:inline">Security</span>
               </TabsTrigger>
               <TabsTrigger value="subscription" className="w-full justify-start gap-2">
                 <CreditCard className="h-4 w-4" />
-                Subscription
+                <span className="hidden sm:inline">Subscription</span>
               </TabsTrigger>
-              <TabsTrigger value="developer" className="w-full justify-start gap-2">
-                <Code2 className="h-4 w-4" />
-                Developer
-              </TabsTrigger>
+              {(userRole === 'Admin' || userRole === 'SuperAdmin') && (
+                <TabsTrigger value="developer" className="w-full justify-start gap-2">
+                  <Code2 className="h-4 w-4" />
+                  <span className="hidden sm:inline">Developer</span>
+                </TabsTrigger>
+              )}
             </TabsList>
           </div>
           <ScrollArea className="flex-1">

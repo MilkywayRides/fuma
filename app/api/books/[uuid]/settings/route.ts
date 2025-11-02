@@ -12,10 +12,18 @@ export async function POST(request: Request, { params }: { params: Promise<{ uui
   }
 
   const { uuid } = await params
-  const { premium, price } = await request.json()
+  const { premium, price, description, title } = await request.json()
+
+  const updateData: any = { premium, price: premium ? price : 0 }
+  if (description !== undefined) {
+    updateData.description = description
+  }
+  if (title !== undefined) {
+    updateData.title = title
+  }
 
   await db.update(books)
-    .set({ premium, price: premium ? price : 0 })
+    .set(updateData)
     .where(eq(books.uuid, uuid))
 
   return NextResponse.json({ success: true })

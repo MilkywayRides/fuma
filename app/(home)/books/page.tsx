@@ -67,7 +67,7 @@ export default async function BooksPage() {
               const hasAccess = !isPremium || hasUnlimitedAccess || userPurchases.includes(book.id)
               
               return (
-                <Link key={book.uuid} href={hasAccess ? `/books/${book.uuid}` : `/books/${book.uuid}/purchase`}>
+                <Link key={book.uuid} href={`/books/${book.uuid}`}>
                   <Card className="hover:border-primary transition-colors cursor-pointer h-full">
                     <CardHeader>
                       <div className="flex items-center justify-between gap-3 mb-2">

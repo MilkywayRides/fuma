@@ -40,7 +40,7 @@ interface Comment {
 
 interface HypedMessage {
   id: number
-  message: string
+  content: string
   userName: string | null
   createdAt: Date
   hypes: number
@@ -178,7 +178,7 @@ export function RecentPostsTable({ posts, comments, hypedMessages }: { posts: Po
                     ) : (
                       hypedMessages.map((msg) => (
                         <TableRow key={msg.id}>
-                          <TableCell className="max-w-md">{msg.message}</TableCell>
+                          <TableCell className="max-w-md">{msg.content}</TableCell>
                           <TableCell>{msg.userName || "Unknown"}</TableCell>
                           <TableCell>
                             <Badge variant="default" className="gap-1">

@@ -13,7 +13,7 @@ const BlogPostsSection = dynamic(() => import('@/components/blog-posts-section')
 const Footer = dynamic(() => import('@/components/footer').then(mod => ({ default: mod.Footer })), { ssr: false });
 
 export default function HomePage() {
-  const { theme } = useTheme();
+  const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -22,7 +22,7 @@ export default function HomePage() {
 
   if (!mounted) return <LoadingSpinner fullScreen />;
 
-  const isDark = theme === 'dark';
+  const isDark = resolvedTheme === 'dark';
 
   return (
     <>

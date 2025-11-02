@@ -7,11 +7,10 @@ import { headers } from 'next/headers'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { BookOpen, Lock, Star, ArrowLeft } from 'lucide-react'
+import { BookOpen, Lock, Star } from 'lucide-react'
 import Link from 'next/link'
-import { PurchaseButton } from './product/purchase-button'
-import { ReviewForm } from './product/review-form'
-import { MarkdownContent } from '@/components/markdown-content'
+import { PurchaseButton } from './purchase-button'
+import { ReviewForm } from './review-form'
 
 export const dynamic = 'force-dynamic'
 
@@ -95,15 +94,7 @@ export default async function BookProductPage({ params }: { params: Promise<{ uu
 
   return (
     <div className="container mx-auto py-12 px-4">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <Button variant="ghost" size="sm" asChild>
-          <Link href="/books">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Books
-          </Link>
-        </Button>
-        <div>
-        </div>
+      <div className="max-w-7xl mx-auto">
         <div className="grid lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-8">
             <div className={`relative h-96 rounded-lg bg-gradient-to-br ${gradient} shadow-2xl overflow-hidden`}>
@@ -130,11 +121,9 @@ export default async function BookProductPage({ params }: { params: Promise<{ uu
                 <CardTitle>About this Book</CardTitle>
               </CardHeader>
               <CardContent>
-                {bookData.description ? (
-                  <MarkdownContent content={bookData.description} />
-                ) : (
-                  <p className="text-muted-foreground">No description available.</p>
-                )}
+                <p className="text-muted-foreground leading-relaxed">
+                  {bookData.description || 'No description available.'}
+                </p>
               </CardContent>
             </Card>
 
@@ -155,8 +144,8 @@ export default async function BookProductPage({ params }: { params: Promise<{ uu
                 </div>
               </CardHeader>
               <CardContent className="space-y-6">
-                {hasPurchased && (
-                  <ReviewForm bookId={bookData.id} existingReview={userReview ? { id: userReview.id, rating: userReview.rating, review: userReview.review } : undefined} />
+                {hasPurchased && !userReview && (
+                  <ReviewForm bookId={bookData.id} />
                 )}
                 
                 {reviews.length === 0 ? (
@@ -199,7 +188,7 @@ export default async function BookProductPage({ params }: { params: Promise<{ uu
               <CardHeader>
                 <CardTitle>{bookData.title}</CardTitle>
                 <CardDescription>
-                  Published {new Date(bookData.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  Published {new Date(bookData.createdAt).toLocaleDateString()}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -207,7 +196,7 @@ export default async function BookProductPage({ params }: { params: Promise<{ uu
                   <>
                     <div className="text-3xl font-bold text-green-600">Free</div>
                     <Button asChild className="w-full" size="lg">
-                      <Link href={`/books/${uuid}/read`}>
+                      <Link href={`/books/${uuid}`}>
                         <BookOpen className="mr-2 h-5 w-5" />
                         Start Reading
                       </Link>
@@ -220,7 +209,7 @@ export default async function BookProductPage({ params }: { params: Promise<{ uu
                       <span className="text-sm text-muted-foreground">{bookData.price} credits</span>
                     </div>
                     <Button asChild className="w-full" size="lg">
-                      <Link href={`/books/${uuid}/read`}>
+                      <Link href={`/books/${uuid}`}>
                         <BookOpen className="mr-2 h-5 w-5" />
                         Continue Reading
                       </Link>

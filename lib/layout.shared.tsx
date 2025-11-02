@@ -1,6 +1,7 @@
 import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
 import { APP_NAME } from './config';
 import { NavbarUser } from '@/components/navbar-user';
+import type { ReactNode } from 'react';
 
 /**
  * Shared layout configurations
@@ -29,9 +30,19 @@ export function baseOptions(): BaseLayoutProps {
     // see https://fumadocs.dev/docs/ui/navigation/links
     links: [
       {
-        type: 'custom',
-        children: <NavbarUser variant="compact" />,
+        text: 'Books',
+        url: '/books',
+      },
+      {
+        text: 'Docs',
+        url: '/docs',
+      },
+      {
+        text: 'Blog',
+        url: '/blog',
       },
     ],
+    githubUrl: undefined,
+    children: <NavbarUser variant="compact" />,
   };
 }

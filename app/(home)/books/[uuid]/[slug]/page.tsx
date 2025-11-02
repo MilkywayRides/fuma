@@ -5,7 +5,7 @@ import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import ReactMarkdown from 'react-markdown'
+import { MarkdownContent } from '@/components/markdown-content'
 import { auth } from '@/lib/auth'
 import { headers } from 'next/headers'
 
@@ -84,9 +84,7 @@ export default async function BookPageViewer({ params }: { params: Promise<{ uui
 
         <div className="border-t pt-8">
           <h2 className="text-2xl font-semibold mb-4">{currentPage.title}</h2>
-          <div className="prose prose-neutral dark:prose-invert max-w-none">
-            <ReactMarkdown>{currentPage.content}</ReactMarkdown>
-          </div>
+          <MarkdownContent content={currentPage.content} />
         </div>
 
         <div className="flex items-center justify-between border-t pt-6">

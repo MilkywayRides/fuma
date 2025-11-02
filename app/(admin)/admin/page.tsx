@@ -118,6 +118,7 @@ export default async function AdminPage() {
       content: chatMessages.content,
       userName: user.name,
       createdAt: chatMessages.createdAt,
+      hypes: chatMessages.hypes,
     }).from(chatMessages)
       .leftJoin(user, sql`${chatMessages.userId} = ${user.id}`)
       .orderBy(desc(chatMessages.createdAt))

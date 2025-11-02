@@ -200,7 +200,7 @@ export const BackgroundGradientAnimation = ({
         onClick={toggleAnimation}
         size="icon"
         variant="secondary"
-        className="absolute bottom-4 right-4 z-[100] pointer-events-auto"
+        className="absolute bottom-4 right-4 z-30 pointer-events-auto"
         aria-label={isPaused ? 'Play animation' : 'Pause animation'}
       >
         {isPaused ? <Play className="h-4 w-4" aria-hidden="true" /> : <Pause className="h-4 w-4" aria-hidden="true" />}

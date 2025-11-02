@@ -59,10 +59,7 @@ export default function BookDetailPage() {
   const [pages, setPages] = useState<any[]>([])
   const [book, setBook] = useState<any>(null)
   const [open, setOpen] = useState(false)
-  const [settingsOpen, setSettingsOpen] = useState(false)
   const [pageTitle, setPageTitle] = useState('')
-  const [premium, setPremium] = useState(false)
-  const [price, setPrice] = useState(0)
   const [loading, setLoading] = useState(false)
   const { toast } = useToast()
   const router = useRouter()
@@ -74,29 +71,8 @@ export default function BookDetailPage() {
 
   useEffect(() => {
     fetch(`/api/books/${uuid}/pages`).then(res => res.json()).then(setPages)
-    fetch(`/api/books/${uuid}/info`).then(res => res.json()).then(data => {
-      setBook(data.book)
-      setPremium(data.book.premium)
-      setPrice(data.book.price)
-    })
+    fetch(`/api/books/${uuid}/info`).then(res => res.json()).then(setBook)
   }, [uuid])
-
-  const handleSaveSettings = async () => {
-    setLoading(true)
-    try {
-      await fetch(`/api/books/${uuid}/settings`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ premium, price }),
-      })
-      toast({ title: 'Success', description: 'Settings saved' })
-      setSettingsOpen(false)
-    } catch (error) {
-      toast({ title: 'Error', description: 'Failed to save settings', variant: 'destructive' })
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event
@@ -150,41 +126,12 @@ export default function BookDetailPage() {
           <p className="text-muted-foreground">Manage pages for this book</p>
         </div>
         <div className="flex gap-2">
-          <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline">
-                <Settings className="h-4 w-4 mr-2" />
-                Settings
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Book Settings</DialogTitle>
-                <DialogDescription>Configure premium access and pricing</DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="premium">Premium Book</Label>
-                  <Switch id="premium" checked={premium} onCheckedChange={setPremium} />
-                </div>
-                {premium && (
-                  <div className="space-y-2">
-                    <Label htmlFor="price">Price (Credits)</Label>
-                    <Input
-                      id="price"
-                      type="number"
-                      value={price}
-                      onChange={(e) => setPrice(Number(e.target.value))}
-                      min="0"
-                    />
-                  </div>
-                )}
-                <Button onClick={handleSaveSettings} disabled={loading} className="w-full">
-                  {loading ? 'Saving...' : 'Save Settings'}
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <Button variant="outline" asChild>
+            <Link href={`/admin/book/${uuid}/edit`}>
+              <Settings className="h-4 w-4 mr-2" />
+              Settings
+            </Link>
+          </Button>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
             <Button>

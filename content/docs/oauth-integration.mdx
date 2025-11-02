@@ -1,0 +1,422 @@
+---
+title: OAuth Integration
+description: Complete guide to integrating with our OAuth 2.0 system
+---
+
+# OAuth 2.0 Integration Guide
+
+Our OAuth 2.0 implementation allows third-party applications to securely access user data with their permission. This guide covers everything you need to integrate with our OAuth system.
+
+## Overview
+
+OAuth 2.0 is an authorization framework that enables applications to obtain limited access to user accounts. Our implementation follows the OAuth 2.0 specification with support for:
+
+- Authorization Code Grant
+- Refresh Token Grant
+- Secure token management
+- Scope-based permissions
+
+## Getting Started
+
+### 1. Register Your Application
+
+Navigate to `/admin/oauth` and create a new OAuth application:
+
+- **Application Name**: A descriptive name for your app
+- **Homepage URL**: Your application's main URL
+- **Description**: What your application does
+- **Authorization Callback URL**: Where users are redirected after authorization
+
+After registration, you'll receive:
+- **Client ID**: Public identifier for your application
+- **Client Secret**: Secret key (keep this secure!)
+
+<Callout type="warn">
+Never expose your Client Secret in client-side code or public repositories.
+</Callout>
+
+## Authorization Flow
+
+### Step 1: Request Authorization
+
+Redirect users to the authorization endpoint:
+
+```
+GET /api/oauth/authorize?client_id=YOUR_CLIENT_ID&redirect_uri=YOUR_CALLBACK_URL&scope=read&state=RANDOM_STATE
+```
+
+**Parameters:**
+- `client_id` (required): Your application's client ID
+- `redirect_uri` (required): Must match your registered callback URL
+- `scope` (optional): Requested permissions (default: `read`)
+- `state` (recommended): Random string to prevent CSRF attacks
+
+### Step 2: User Authorization
+
+The user will be prompted to authorize your application. If they approve, they'll be redirected to your callback URL with an authorization code:
+
+```
+https://your-callback-url.com?code=AUTHORIZATION_CODE&state=RANDOM_STATE
+```
+
+### Step 3: Exchange Code for Token
+
+Make a POST request to exchange the authorization code for an access token:
+
+```bash
+curl -X POST https://your-domain.com/api/oauth/token \
+  -H "Content-Type: application/json" \
+  -d '{
+    "grant_type": "authorization_code",
+    "code": "AUTHORIZATION_CODE",
+    "client_id": "YOUR_CLIENT_ID",
+    "client_secret": "YOUR_CLIENT_SECRET",
+    "redirect_uri": "YOUR_CALLBACK_URL"
+  }'
+```
+
+**Response:**
+
+```json
+{
+  "access_token": "at_...",
+  "token_type": "Bearer",
+  "expires_in": 3600,
+  "refresh_token": "rt_...",
+  "scope": "read"
+}
+```
+
+## Using Access Tokens
+
+Include the access token in the Authorization header for API requests:
+
+```bash
+curl https://your-domain.com/api/oauth/verify \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+**Response:**
+
+```json
+{
+  "user": {
+    "id": "user_123",
+    "name": "John Doe",
+    "email": "john@example.com",
+    "role": "User"
+  },
+  "scope": "read"
+}
+```
+
+## Refreshing Tokens
+
+Access tokens expire after 1 hour. Use the refresh token to obtain a new access token:
+
+```bash
+curl -X POST https://your-domain.com/api/oauth/token \
+  -H "Content-Type: application/json" \
+  -d '{
+    "grant_type": "refresh_token",
+    "refresh_token": "YOUR_REFRESH_TOKEN",
+    "client_id": "YOUR_CLIENT_ID",
+    "client_secret": "YOUR_CLIENT_SECRET"
+  }'
+```
+
+**Response:**
+
+```json
+{
+  "access_token": "at_new...",
+  "token_type": "Bearer",
+  "expires_in": 3600,
+  "refresh_token": "rt_new...",
+  "scope": "read"
+}
+```
+
+<Callout type="info">
+Refresh tokens expire after 30 days. The old refresh token is invalidated when a new one is issued.
+</Callout>
+
+## Security Best Practices
+
+### 1. Protect Your Client Secret
+
+- Never commit secrets to version control
+- Use environment variables
+- Rotate secrets if compromised
+
+### 2. Validate State Parameter
+
+Always verify the `state` parameter matches what you sent to prevent CSRF attacks:
+
+```javascript
+const state = generateRandomString();
+sessionStorage.setItem('oauth_state', state);
+
+// After redirect
+const returnedState = new URLSearchParams(window.location.search).get('state');
+if (returnedState !== sessionStorage.getItem('oauth_state')) {
+  throw new Error('Invalid state parameter');
+}
+```
+
+### 3. Use HTTPS
+
+Always use HTTPS in production to protect tokens in transit.
+
+### 4. Store Tokens Securely
+
+- Use secure, httpOnly cookies for web applications
+- Use secure storage mechanisms in mobile apps
+- Never store tokens in localStorage
+
+### 5. Handle Token Expiration
+
+Implement automatic token refresh before expiration:
+
+```javascript
+async function makeAuthenticatedRequest(url) {
+  let token = getStoredToken();
+  
+  if (isTokenExpired(token)) {
+    token = await refreshAccessToken();
+  }
+  
+  return fetch(url, {
+    headers: {
+      'Authorization': `Bearer ${token.access_token}`
+    }
+  });
+}
+```
+
+## Code Examples
+
+### Node.js Example
+
+```javascript
+const express = require('express');
+const axios = require('axios');
+
+const app = express();
+const CLIENT_ID = process.env.CLIENT_ID;
+const CLIENT_SECRET = process.env.CLIENT_SECRET;
+const REDIRECT_URI = 'http://localhost:3000/callback';
+
+// Step 1: Redirect to authorization
+app.get('/auth', (req, res) => {
+  const state = Math.random().toString(36).substring(7);
+  req.session.state = state;
+  
+  const authUrl = `https://your-domain.com/api/oauth/authorize?` +
+    `client_id=${CLIENT_ID}&` +
+    `redirect_uri=${REDIRECT_URI}&` +
+    `scope=read&` +
+    `state=${state}`;
+  
+  res.redirect(authUrl);
+});
+
+// Step 2: Handle callback
+app.get('/callback', async (req, res) => {
+  const { code, state } = req.query;
+  
+  if (state !== req.session.state) {
+    return res.status(400).send('Invalid state');
+  }
+  
+  try {
+    // Step 3: Exchange code for token
+    const response = await axios.post('https://your-domain.com/api/oauth/token', {
+      grant_type: 'authorization_code',
+      code,
+      client_id: CLIENT_ID,
+      client_secret: CLIENT_SECRET,
+      redirect_uri: REDIRECT_URI
+    });
+    
+    const { access_token, refresh_token } = response.data;
+    
+    // Store tokens securely
+    req.session.access_token = access_token;
+    req.session.refresh_token = refresh_token;
+    
+    res.redirect('/dashboard');
+  } catch (error) {
+    res.status(500).send('Authentication failed');
+  }
+});
+
+// Make authenticated requests
+app.get('/api/user', async (req, res) => {
+  try {
+    const response = await axios.get('https://your-domain.com/api/oauth/verify', {
+      headers: {
+        'Authorization': `Bearer ${req.session.access_token}`
+      }
+    });
+    
+    res.json(response.data);
+  } catch (error) {
+    res.status(401).send('Unauthorized');
+  }
+});
+```
+
+### Python Example
+
+```python
+import requests
+from flask import Flask, redirect, request, session
+import secrets
+
+app = Flask(__name__)
+app.secret_key = 'your-secret-key'
+
+CLIENT_ID = 'your_client_id'
+CLIENT_SECRET = 'your_client_secret'
+REDIRECT_URI = 'http://localhost:5000/callback'
+BASE_URL = 'https://your-domain.com'
+
+@app.route('/auth')
+def auth():
+    state = secrets.token_urlsafe(16)
+    session['state'] = state
+    
+    auth_url = f"{BASE_URL}/api/oauth/authorize?" \
+               f"client_id={CLIENT_ID}&" \
+               f"redirect_uri={REDIRECT_URI}&" \
+               f"scope=read&" \
+               f"state={state}"
+    
+    return redirect(auth_url)
+
+@app.route('/callback')
+def callback():
+    code = request.args.get('code')
+    state = request.args.get('state')
+    
+    if state != session.get('state'):
+        return 'Invalid state', 400
+    
+    # Exchange code for token
+    response = requests.post(f"{BASE_URL}/api/oauth/token", json={
+        'grant_type': 'authorization_code',
+        'code': code,
+        'client_id': CLIENT_ID,
+        'client_secret': CLIENT_SECRET,
+        'redirect_uri': REDIRECT_URI
+    })
+    
+    if response.status_code == 200:
+        tokens = response.json()
+        session['access_token'] = tokens['access_token']
+        session['refresh_token'] = tokens['refresh_token']
+        return redirect('/dashboard')
+    
+    return 'Authentication failed', 500
+
+@app.route('/api/user')
+def get_user():
+    access_token = session.get('access_token')
+    
+    response = requests.get(f"{BASE_URL}/api/oauth/verify", 
+                          headers={'Authorization': f'Bearer {access_token}'})
+    
+    if response.status_code == 200:
+        return response.json()
+    
+    return 'Unauthorized', 401
+```
+
+## API Endpoints Reference
+
+### Authorization Endpoint
+
+```
+GET /api/oauth/authorize
+```
+
+Initiates the OAuth flow by redirecting users to authorize your application.
+
+### Token Endpoint
+
+```
+POST /api/oauth/token
+```
+
+Exchanges authorization codes for access tokens or refreshes existing tokens.
+
+### Verification Endpoint
+
+```
+GET /api/oauth/verify
+```
+
+Verifies an access token and returns user information.
+
+## Scopes
+
+Currently supported scopes:
+
+- `read`: Read access to user profile information
+
+<Callout type="info">
+Additional scopes will be added in future updates for granular permission control.
+</Callout>
+
+## Rate Limiting
+
+API requests are rate-limited to prevent abuse:
+
+- 100 requests per minute per access token
+- 10 token requests per minute per client
+
+## Error Handling
+
+All endpoints return standard OAuth 2.0 error responses:
+
+```json
+{
+  "error": "invalid_request",
+  "error_description": "Missing required parameter: client_id"
+}
+```
+
+**Common Error Codes:**
+
+- `invalid_request`: Missing or invalid parameters
+- `invalid_client`: Invalid client credentials
+- `invalid_grant`: Invalid or expired authorization code
+- `unauthorized_client`: Client not authorized for this grant type
+- `unsupported_grant_type`: Grant type not supported
+
+## Testing Your Integration
+
+Use these test credentials in development:
+
+1. Create a test application in `/admin/oauth`
+2. Use `http://localhost:3000/callback` as callback URL
+3. Test the full authorization flow
+4. Verify token refresh works correctly
+
+## Support
+
+For questions or issues:
+
+- Check the [GitHub repository](https://github.com/your-repo)
+- Open an issue for bugs
+- Contact support for security concerns
+
+## Changelog
+
+### v1.0.0 (Current)
+
+- Initial OAuth 2.0 implementation
+- Authorization Code Grant support
+- Refresh Token Grant support
+- Token verification endpoint

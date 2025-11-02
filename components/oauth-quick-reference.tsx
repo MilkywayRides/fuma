@@ -1,0 +1,50 @@
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Code } from 'lucide-react';
+import Link from 'next/link';
+
+export function OAuthQuickReference() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Code className="h-5 w-5" />
+          Quick Reference
+        </CardTitle>
+        <CardDescription>
+          Essential OAuth 2.0 endpoints and documentation
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div>
+          <h4 className="font-semibold mb-2">Authorization Endpoint</h4>
+          <code className="block p-2 bg-muted rounded text-xs break-all">
+            GET /api/oauth/authorize
+          </code>
+        </div>
+        
+        <div>
+          <h4 className="font-semibold mb-2">Token Endpoint</h4>
+          <code className="block p-2 bg-muted rounded text-xs break-all">
+            POST /api/oauth/token
+          </code>
+        </div>
+        
+        <div>
+          <h4 className="font-semibold mb-2">Verification Endpoint</h4>
+          <code className="block p-2 bg-muted rounded text-xs break-all">
+            GET /api/oauth/verify
+          </code>
+        </div>
+
+        <div className="pt-4 border-t">
+          <Link 
+            href="/docs/oauth-integration" 
+            className="text-sm text-blue-600 hover:underline"
+          >
+            View Full Documentation →
+          </Link>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}

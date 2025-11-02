@@ -82,13 +82,26 @@ npm run set-admin <email> <role>
 ## Database Scripts
 
 - `npm run db:generate` - Generate migrations
-- `npm run db:push` - Push schema to database
+- `npm run db:push` - Push schema to database (includes OAuth tables)
 - `npm run db:migrate` - Run migrations
 - `npm run db:studio` - Open Drizzle Studio
 
 ## Flow Scripts
 
 Visual workflow automation system for creating backend flows. See [FLOW_SCRIPTS_SETUP.md](FLOW_SCRIPTS_SETUP.md) for detailed setup instructions.
+
+## OAuth 2.0 System
+
+Secure OAuth 2.0 implementation for third-party integrations:
+
+- **Authorization Code Grant**: Standard OAuth flow
+- **Refresh Token Support**: Long-lived access
+- **Rate Limiting**: 100 API requests/min, 10 token requests/min
+- **Secure Token Management**: SHA-256 hashed secrets
+- **Admin Interface**: Manage apps at `/admin/oauth`
+- **Full Documentation**: Available at `/docs/oauth-integration`
+
+See [OAUTH_SETUP.md](OAUTH_SETUP.md) for setup instructions.
 
 ## Tech Stack
 

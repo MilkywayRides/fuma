@@ -86,7 +86,8 @@ export default function CommunityPage() {
 
   useEffect(() => {
     if (!isPending && !session) {
-      redirect('/sign-in');
+      const currentUrl = window.location.pathname + window.location.search;
+      window.location.href = `/sign-in?redirectTo=${encodeURIComponent(currentUrl)}`;
     }
   }, [session, isPending]);
 

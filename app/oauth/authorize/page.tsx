@@ -1,6 +1,7 @@
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { redirectToSignIn } from '@/lib/redirect-to-signin';
 import { db } from '@/lib/db';
 import { oauthApplications } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
@@ -15,11 +16,17 @@ export default async function AuthorizePage({
     headers: await headers(),
   });
 
-  if (!session) {
-    redirect('/sign-in');
-  }
-
   const { client_id, redirect_uri, scope, state } = await searchParams;
+
+  if (!session) {
+    const params = new URLSearchParams();
+    if (client_id) params.set('client_id', client_id);
+    if (redirect_uri) params.set('redirect_uri', redirect_uri);
+    if (scope) params.set('scope', scope);
+    if (state) params.set('state', state);
+    const currentUrl = `/oauth/authorize?${params.toString()}`;
+    redirectToSignIn(currentUrl);
+  }
 
   if (!client_id || !redirect_uri) {
     return (

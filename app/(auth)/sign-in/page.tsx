@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import { authClient } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,10 +11,17 @@ import { FaGoogle, FaGithub } from 'react-icons/fa';
 
 export default function SignInPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [redirectTo, setRedirectTo] = useState('/');
+
+  useEffect(() => {
+    const from = searchParams.get('redirectTo') || '/';
+    setRedirectTo(from);
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,7 +33,7 @@ export default function SignInPage() {
       if (result.error) {
         setError(result.error.message || 'Failed to sign in');
       } else {
-        router.push('/');
+        router.push(redirectTo);
         router.refresh();
       }
     } catch (err) {
@@ -90,14 +97,14 @@ export default function SignInPage() {
           <div className="grid grid-cols-2 gap-4">
             <Button
               variant="outline"
-              onClick={() => authClient.signIn.social({ provider: 'google', callbackURL: '/' })}
+              onClick={() => authClient.signIn.social({ provider: 'google', callbackURL: redirectTo })}
             >
               <FaGoogle className="mr-2 h-4 w-4" />
               Google
             </Button>
             <Button
               variant="outline"
-              onClick={() => authClient.signIn.social({ provider: 'github', callbackURL: '/' })}
+              onClick={() => authClient.signIn.social({ provider: 'github', callbackURL: redirectTo })}
             >
               <FaGithub className="mr-2 h-4 w-4" />
               GitHub
@@ -105,7 +112,7 @@ export default function SignInPage() {
           </div>
           <p className="text-center text-sm text-muted-foreground">
             Don't have an account?{' '}
-            <Link href="/sign-up" className="font-medium underline underline-offset-4 hover:text-primary">
+            <Link href={`/sign-up${redirectTo !== '/' ? `?redirectTo=${encodeURIComponent(redirectTo)}` : ''}`} className="font-medium underline underline-offset-4 hover:text-primary">
               Sign up
             </Link>
           </p>

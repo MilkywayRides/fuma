@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useTheme } from "next-themes"
+import { signOut } from "@/lib/auth-client"
 import {
   IconCreditCard,
   IconDotsVertical,
@@ -159,11 +160,13 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <a href="/api/auth/sign-out">
-                <IconLogout />
-                Log out
-              </a>
+            <DropdownMenuItem onClick={async () => {
+              const currentUrl = window.location.pathname + window.location.search;
+              await signOut();
+              window.location.href = `/sign-in?redirectTo=${encodeURIComponent(currentUrl)}`;
+            }}>
+              <IconLogout />
+              Log out
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

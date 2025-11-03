@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { signOut } from '@/lib/auth-client'
 import {
   IconCreditCard,
   IconLogout,
@@ -97,7 +98,11 @@ export function NavbarUserDropdown({
             </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => window.location.href = '/api/auth/sign-out'}>
+          <DropdownMenuItem onClick={async () => {
+            const currentUrl = window.location.pathname + window.location.search;
+            await signOut();
+            window.location.href = `/sign-in?redirectTo=${encodeURIComponent(currentUrl)}`;
+          }}>
             <IconLogout className="mr-2 h-4 w-4" />
             Log out
           </DropdownMenuItem>

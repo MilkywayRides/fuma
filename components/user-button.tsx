@@ -88,8 +88,9 @@ export function UserButton({ name, email, image, variant = 'compact' }: UserButt
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={async () => {
+            const currentUrl = window.location.pathname + window.location.search;
             await signOut();
-            window.location.href = '/sign-in';
+            window.location.href = `/sign-in?redirectTo=${encodeURIComponent(currentUrl)}`;
           }} className="flex items-center gap-2 text-destructive">
             <LogOut className="h-4 w-4" />
             Sign Out
@@ -142,8 +143,9 @@ export function UserButton({ name, email, image, variant = 'compact' }: UserButt
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={async () => {
+          const currentUrl = window.location.pathname + window.location.search;
           await signOut();
-          window.location.href = '/sign-in';
+          window.location.href = `/sign-in?redirectTo=${encodeURIComponent(currentUrl)}`;
         }} className="flex items-center gap-2 text-destructive">
           <LogOut className="h-4 w-4" />
           Sign Out

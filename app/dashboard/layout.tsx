@@ -3,14 +3,14 @@ import { UserDashboardSidebar } from '@/components/user-dashboard-sidebar'
 import { Separator } from '@/components/ui/separator'
 import { auth } from '@/lib/auth'
 import { headers } from 'next/headers'
-import { redirect } from 'next/navigation'
+import { redirectToSignIn } from '@/lib/redirect-to-signin'
 import { db } from '@/lib/db'
 import { user, subscriptions, sentEmails, emailAddresses } from '@/lib/db/schema'
 import { eq, and, count, inArray } from 'drizzle-orm'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth.api.getSession({ headers: await headers() })
-  if (!session) redirect('/sign-in')
+  if (!session) redirectToSignIn('/dashboard')
 
   const [userData] = await db.select().from(user).where(eq(user.id, session.user.id)).limit(1)
   

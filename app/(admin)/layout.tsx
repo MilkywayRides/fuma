@@ -1,6 +1,6 @@
 import { auth, hasAdminAccess } from '@/lib/auth';
 import { headers } from 'next/headers';
-import { redirect } from 'next/navigation';
+import { redirectToSignIn } from '@/lib/redirect-to-signin';
 import { AdminAppSidebar } from '@/components/admin-app-sidebar';
 import { AdminBreadcrumb } from '@/components/admin-breadcrumb';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
@@ -24,11 +24,11 @@ export default async function AdminLayout({
     });
   } catch (error) {
     console.error('Session error:', error);
-    redirect('/sign-in');
+    redirectToSignIn('/admin');
   }
 
   if (!session) {
-    redirect('/sign-in');
+    redirectToSignIn('/admin');
   }
 
   const isAdmin = await hasAdminAccess(session.user.id);

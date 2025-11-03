@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { authClient } from '@/lib/auth-client';
+import { EmailVerification } from '@/components/email-verification';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,6 +18,8 @@ export default function SignInPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [redirectTo, setRedirectTo] = useState('/');
+  const [needsVerification, setNeedsVerification] = useState(false);
+  const [userEmail, setUserEmail] = useState('');
 
   useEffect(() => {
     const from = searchParams.get('redirectTo') || '/';
@@ -33,8 +36,14 @@ export default function SignInPage() {
       if (result.error) {
         setError(result.error.message || 'Failed to sign in');
       } else {
-        router.push(redirectTo);
-        router.refresh();
+        const session = await authClient.getSession();
+        if (session.data?.user && !session.data.user.emailVerified) {
+          setUserEmail(email);
+          setNeedsVerification(true);
+        } else {
+          router.push(redirectTo);
+          router.refresh();
+        }
       }
     } catch (err) {
       setError('An error occurred. Please try again.');
@@ -46,6 +55,15 @@ export default function SignInPage() {
   return (
     <div className="flex min-h-screen">
       <div className="flex flex-1 items-center justify-center p-8">
+        {needsVerification ? (
+          <EmailVerification
+            email={userEmail}
+            onVerified={() => {
+              router.push(redirectTo);
+              router.refresh();
+            }}
+          />
+        ) : (
         <div className="w-full max-w-md space-y-6">
           <div className="space-y-2 text-center">
             <h1 className="text-3xl font-bold">Welcome back</h1>
@@ -117,6 +135,7 @@ export default function SignInPage() {
             </Link>
           </p>
         </div>
+        )}
       </div>
       <div className="hidden lg:flex lg:flex-1 bg-muted items-center justify-center p-8">
         <div className="max-w-md space-y-4">

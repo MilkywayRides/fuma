@@ -1,5 +1,6 @@
 import { auth, hasAdminAccess } from '@/lib/auth';
 import { headers } from 'next/headers';
+import { redirect } from 'next/navigation';
 import { redirectToSignIn } from '@/lib/redirect-to-signin';
 import { AdminAppSidebar } from '@/components/admin-app-sidebar';
 import { AdminBreadcrumb } from '@/components/admin-breadcrumb';
@@ -29,6 +30,7 @@ export default async function AdminLayout({
 
   if (!session) {
     redirectToSignIn('/admin');
+    return;
   }
 
   const isAdmin = await hasAdminAccess(session.user.id);

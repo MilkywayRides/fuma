@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { oauthTokens, user } from '@/lib/db/schema';
+import { oauthTokens, user, oauthApiLogs } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { rateLimitAPI } from '@/lib/oauth-middleware';
 
@@ -51,6 +51,14 @@ export async function GET(req: NextRequest) {
     if (!tokenRecord) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
+
+    await db.insert(oauthApiLogs).values({
+      applicationId: tokenRecord.applicationId,
+      endpoint: '/api/oauth/verify',
+      method: 'GET',
+      statusCode: 200,
+      ipAddress: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown',
+    }).catch(() => {});
 
     if (new Date() > tokenRecord.expiresAt) {
       return NextResponse.json({ error: 'Token expired' }, { status: 401 });

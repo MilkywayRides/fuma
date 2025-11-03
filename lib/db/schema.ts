@@ -408,3 +408,15 @@ export const oauthAuthorizationCodes = pgTable('oauthAuthorizationCodes', {
   used: boolean('used').default(false).notNull(),
   createdAt: timestamp('createdAt').defaultNow().notNull(),
 });
+
+export const oauthApiLogs = pgTable('oauthApiLogs', {
+  id: serial('id').primaryKey(),
+  applicationId: integer('applicationId')
+    .notNull()
+    .references(() => oauthApplications.id, { onDelete: 'cascade' }),
+  endpoint: text('endpoint').notNull(),
+  method: text('method').notNull(),
+  statusCode: integer('statusCode').notNull(),
+  ipAddress: text('ipAddress'),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+});

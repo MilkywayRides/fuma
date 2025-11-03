@@ -2,9 +2,10 @@ import { auth, hasAdminAccess } from '@/lib/auth';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { db } from '@/lib/db';
-import { oauthApplications } from '@/lib/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { oauthApplications, oauthApiLogs } from '@/lib/db/schema';
+import { eq, and, sql } from 'drizzle-orm';
 import { OAuthAppSettings } from '@/components/oauth-app-settings';
+import { OAuthApiChart } from '@/components/oauth-api-chart';
 
 export default async function OAuthAppPage({
   params,
@@ -37,6 +38,20 @@ export default async function OAuthAppPage({
     redirect('/admin/oauth');
   }
 
+  let apiLogsData: any[] = [];
+  try {
+    apiLogsData = await db.select({
+      date: sql<string>`date_trunc('day', ${oauthApiLogs.createdAt})`,
+      requests: sql<number>`count(*)`,
+    }).from(oauthApiLogs)
+      .where(eq(oauthApiLogs.applicationId, app.id))
+      .groupBy(sql`date_trunc('day', ${oauthApiLogs.createdAt})`)
+      .orderBy(sql`date_trunc('day', ${oauthApiLogs.createdAt}) desc`)
+      .limit(30);
+  } catch (error) {
+    apiLogsData = [];
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -45,6 +60,8 @@ export default async function OAuthAppPage({
           Manage application settings and permissions
         </p>
       </div>
+
+      <OAuthApiChart data={apiLogsData} appId={app.uuid} />
 
       <OAuthAppSettings app={app} />
     </div>

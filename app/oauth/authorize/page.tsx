@@ -26,6 +26,7 @@ export default async function AuthorizePage({
     if (state) params.set('state', state);
     const currentUrl = `/oauth/authorize?${params.toString()}`;
     redirectToSignIn(currentUrl);
+    return;
   }
 
   if (!client_id || !redirect_uri) {

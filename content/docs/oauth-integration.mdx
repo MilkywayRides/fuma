@@ -49,7 +49,7 @@ Never expose your Client Secret in client-side code or public repositories.
 Redirect users to the authorization endpoint:
 
 ```
-GET /api/oauth/authorize?client_id=YOUR_CLIENT_ID&redirect_uri=YOUR_CALLBACK_URL&scope=read&state=RANDOM_STATE
+GET https://blazeneuro.com/oauth/authorize?client_id=YOUR_CLIENT_ID&redirect_uri=YOUR_CALLBACK_URL&scope=read&state=RANDOM_STATE
 ```
 
 **Parameters:**
@@ -71,7 +71,7 @@ https://your-callback-url.com?code=AUTHORIZATION_CODE&state=RANDOM_STATE
 Make a POST request to exchange the authorization code for an access token:
 
 ```bash
-curl -X POST https://your-domain.com/api/oauth/token \
+curl -X POST https://blazeneuro.com/api/oauth/token \
   -H "Content-Type: application/json" \
   -d '{
     "grant_type": "authorization_code",
@@ -99,7 +99,7 @@ curl -X POST https://your-domain.com/api/oauth/token \
 Include the access token in the Authorization header for API requests:
 
 ```bash
-curl https://your-domain.com/api/oauth/verify \
+curl https://blazeneuro.com/api/oauth/verify \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
 ```
 
@@ -122,7 +122,7 @@ curl https://your-domain.com/api/oauth/verify \
 Access tokens expire after 1 hour. Use the refresh token to obtain a new access token:
 
 ```bash
-curl -X POST https://your-domain.com/api/oauth/token \
+curl -X POST https://blazeneuro.com/api/oauth/token \
   -H "Content-Type: application/json" \
   -d '{
     "grant_type": "refresh_token",
@@ -219,7 +219,7 @@ app.get('/auth', (req, res) => {
   const state = Math.random().toString(36).substring(7);
   req.session.state = state;
   
-  const authUrl = `https://your-domain.com/api/oauth/authorize?` +
+  const authUrl = `https://blazeneuro.com/oauth/authorize?` +
     `client_id=${CLIENT_ID}&` +
     `redirect_uri=${REDIRECT_URI}&` +
     `scope=read&` +
@@ -238,7 +238,7 @@ app.get('/callback', async (req, res) => {
   
   try {
     // Step 3: Exchange code for token
-    const response = await axios.post('https://your-domain.com/api/oauth/token', {
+    const response = await axios.post('https://blazeneuro.com/api/oauth/token', {
       grant_type: 'authorization_code',
       code,
       client_id: CLIENT_ID,
@@ -261,7 +261,7 @@ app.get('/callback', async (req, res) => {
 // Make authenticated requests
 app.get('/api/user', async (req, res) => {
   try {
-    const response = await axios.get('https://your-domain.com/api/oauth/verify', {
+    const response = await axios.get('https://blazeneuro.com/api/oauth/verify', {
       headers: {
         'Authorization': `Bearer ${req.session.access_token}`
       }
@@ -287,14 +287,14 @@ app.secret_key = 'your-secret-key'
 CLIENT_ID = 'your_client_id'
 CLIENT_SECRET = 'your_client_secret'
 REDIRECT_URI = 'http://localhost:5000/callback'
-BASE_URL = 'https://your-domain.com'
+BASE_URL = 'https://blazeneuro.com'
 
 @app.route('/auth')
 def auth():
     state = secrets.token_urlsafe(16)
     session['state'] = state
     
-    auth_url = f"{BASE_URL}/api/oauth/authorize?" \
+    auth_url = f"{BASE_URL}/oauth/authorize?" \
                f"client_id={CLIENT_ID}&" \
                f"redirect_uri={REDIRECT_URI}&" \
                f"scope=read&" \

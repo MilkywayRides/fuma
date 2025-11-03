@@ -10,7 +10,10 @@ import { eq, and, count, inArray } from 'drizzle-orm'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth.api.getSession({ headers: await headers() })
-  if (!session) redirectToSignIn('/dashboard')
+  if (!session) {
+    redirectToSignIn('/dashboard')
+    return
+  }
 
   const [userData] = await db.select().from(user).where(eq(user.id, session.user.id)).limit(1)
   

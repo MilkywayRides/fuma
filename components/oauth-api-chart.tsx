@@ -17,7 +17,26 @@ export function OAuthApiChart({ data: initialData, appId }: { data: any[]; appId
     requests: Number(item.requests),
   }));
 
-  const fetchData = async () => {
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await fetch(`/api/admin/oauth/${appId}/stats`);
+        if (res.ok) {
+          const newData = await res.json();
+          setData(newData);
+        }
+      } catch (error) {
+        console.error('Failed to fetch stats:', error);
+      }
+    };
+
+    if (!isLive) return;
+    const interval = setInterval(fetchData, 1500);
+    return () => clearInterval(interval);
+  }, [isLive, appId]);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
     try {
       const res = await fetch(`/api/admin/oauth/${appId}/stats`);
       if (res.ok) {
@@ -27,17 +46,6 @@ export function OAuthApiChart({ data: initialData, appId }: { data: any[]; appId
     } catch (error) {
       console.error('Failed to fetch stats:', error);
     }
-  };
-
-  useEffect(() => {
-    if (!isLive) return;
-    const interval = setInterval(fetchData, 1500);
-    return () => clearInterval(interval);
-  }, [isLive, appId]);
-
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    await fetchData();
     setIsRefreshing(false);
   };
 

@@ -337,8 +337,8 @@ export function SettingsDialog(props: SettingsDialogProps) {
               )}
             </TabsList>
           </div>
-          <ScrollArea className="flex-1">
-            <div className="px-6 py-4">
+          <ScrollArea className="flex-1 h-full">
+            <div className="px-6 py-4 h-full">
             {loading ? (
               <div className="flex items-center justify-center h-64">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />

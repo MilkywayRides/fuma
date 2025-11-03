@@ -62,7 +62,7 @@ export function NavUser({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'a') {
+      if (e.altKey && e.key === 's') {
         e.preventDefault()
         window.history.replaceState({}, '', '?tab=profile')
         setSettingsOpen(true)
@@ -140,7 +140,7 @@ export function NavUser({
               }}>
                 <IconUserCircle />
                 Account
-                <span className="ml-auto text-xs text-muted-foreground">⌘A</span>
+                <span className="ml-auto text-xs text-muted-foreground">Alt+S</span>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => {
                 window.history.replaceState({}, '', '?tab=subscription')

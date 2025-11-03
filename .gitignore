@@ -1,7 +1,11 @@
-# deps
+# dependencies
 /node_modules
 /test-auth
 
+# AI server
+ai-server/__pycache__/
+ai-server/venv/
+ai-server/*.pyc
 
 # generated content
 .contentlayer
@@ -25,10 +29,8 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# others
+# environment
+.env
 .env*.local
-.env
 .vercel
-next-env.d.ts.env
-.env
-.env
+next-env.d.ts

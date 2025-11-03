@@ -5,6 +5,8 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { User } from '@/lib/auth';
 import { Monitor, Smartphone } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 
 interface Session {
   id: string;
@@ -16,6 +18,8 @@ interface Session {
 export function AccountSettings({ user, sessions, currentSessionId }: { user: User; sessions: Session[]; currentSessionId: string }) {
   const [name, setName] = useState(user.name);
   const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+  const router = useRouter();
 
   const handleUpdateName = async () => {
     setLoading(true);
@@ -97,7 +101,26 @@ export function AccountSettings({ user, sessions, currentSessionId }: { user: Us
                 {isCurrent ? (
                   <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Active</span>
                 ) : (
-                  <button className="text-sm text-destructive hover:underline">Revoke</button>
+                  <button 
+                    onClick={async () => {
+                      try {
+                        const res = await fetch('/api/user/sessions/revoke', {
+                          method: 'DELETE',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ sessionId: session.id }),
+                        });
+                        if (res.ok) {
+                          toast({ title: 'Session revoked' });
+                          router.refresh();
+                        }
+                      } catch {
+                        toast({ title: 'Error', description: 'Failed to revoke session', variant: 'destructive' });
+                      }
+                    }}
+                    className="text-sm text-destructive hover:underline"
+                  >
+                    Revoke
+                  </button>
                 )}
               </div>
             );

@@ -17,7 +17,7 @@ import ReactFlow, {
   useReactFlow,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { ArrowLeft, Save, Loader2, Code, Send, Sparkles, Copy, Check } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, Code, Send, Sparkles, Copy, Check, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { DefaultNode, InputNode, OutputNode } from '@/components/flow-nodes';
@@ -34,6 +34,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const customNodeTypes = {
   default: DefaultNode,
@@ -177,10 +178,12 @@ export default function FlowchartEditor() {
   const [isCodeEditing, setIsCodeEditing] = useState(false);
   const [aiPrompt, setAiPrompt] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
-  const [aiModel, setAiModel] = useState('gpt-4');
+  const [aiModel, setAiModel] = useState('blazeai-beta');
   const [editorTheme, setEditorTheme] = useState('vs-dark');
   const editorRef = useRef<any>(null);
   const [copied, setCopied] = useState(false);
+  const [copiedChat, setCopiedChat] = useState<number | null>(null);
+  const [feedback, setFeedback] = useState<{[key: number]: 'up' | 'down' | null}>({});
   const [scriptCode, setScriptCode] = useState(`// Declarative Flowchart Definition
 // Define your flowchart structure - running multiple times produces same result
 
@@ -195,6 +198,10 @@ return {
     { from: 'process', to: 'end' }
   ]
 };`);
+  const [chatMessages, setChatMessages] = useState<Array<{role: 'user' | 'assistant', content: string}>>([]);
+  const [chatInput, setChatInput] = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -307,27 +314,31 @@ return {
       const newCode = data.code;
       setScriptCode(newCode);
       
-      if (editorRef.current) {
-        const editor = editorRef.current;
-        const model = editor.getModel();
-        if (model) {
-          const oldLines = originalCode.split('\n');
-          const newLines = newCode.split('\n');
-          const decorations: any[] = [];
-          
-          newLines.forEach((line: string, i: number) => {
-            if (i >= oldLines.length || line !== oldLines[i]) {
-              decorations.push({
-                range: { startLineNumber: i + 1, startColumn: 1, endLineNumber: i + 1, endColumn: 1 },
-                options: { isWholeLine: true, className: 'line-insert' }
-              });
+      setTimeout(() => {
+        if (editorRef.current) {
+          const editor = editorRef.current;
+          const model = editor.getModel();
+          if (model) {
+            const oldLines = originalCode.split('\n');
+            const newLines = newCode.split('\n');
+            const decorations: any[] = [];
+            const lineCount = model.getLineCount();
+            
+            // Find changed lines (green for new/modified)
+            for (let i = 0; i < Math.min(newLines.length, lineCount); i++) {
+              if (i >= oldLines.length || newLines[i] !== oldLines[i]) {
+                decorations.push({
+                  range: { startLineNumber: i + 1, startColumn: 1, endLineNumber: i + 1, endColumn: model.getLineMaxColumn(i + 1) },
+                  options: { isWholeLine: true, className: 'line-insert' }
+                });
+              }
             }
-          });
-          
-          editor.deltaDecorations([], decorations);
-          setTimeout(() => editor.deltaDecorations(decorations.map((d: any) => d.id), []), 3000);
+            
+            const decorationIds = editor.deltaDecorations([], decorations);
+            setTimeout(() => editor.deltaDecorations(decorationIds, []), 5000);
+          }
         }
-      }
+      }, 100);
       
       toast.success('AI generated code! Review and click Apply Script');
       setAiPrompt('');
@@ -335,6 +346,85 @@ return {
       toast.error(error.message);
     } finally {
       setAiLoading(false);
+    }
+  };
+
+  const handleChatSend = async () => {
+    if (!chatInput.trim() || chatLoading) return;
+    
+    const userMessage = chatInput.trim();
+    setChatInput('');
+    setChatMessages(prev => [...prev, { role: 'user', content: userMessage }]);
+    setChatLoading(true);
+    
+    // Add empty assistant message for streaming
+    const assistantIndex = chatMessages.length + 1;
+    setChatMessages(prev => [...prev, { role: 'assistant', content: '' }]);
+    
+    try {
+      const response = await fetch('/api/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          messages: [...chatMessages, { role: 'user', content: userMessage }],
+          model: aiModel,
+          stream: true
+        }),
+      });
+      
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to get response');
+      }
+      
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let accumulatedContent = '';
+      
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n');
+          
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              if (data === '[DONE]') break;
+              
+              try {
+                const parsed = JSON.parse(data);
+                if (parsed.content) {
+                  accumulatedContent += parsed.content;
+                  setChatMessages(prev => {
+                    const newMessages = [...prev];
+                    newMessages[assistantIndex] = { role: 'assistant', content: accumulatedContent };
+                    return newMessages;
+                  });
+                  setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }), 0);
+                }
+              } catch (e) {
+                // Skip invalid JSON
+              }
+            }
+          }
+        }
+      }
+      
+      if (!accumulatedContent) {
+        throw new Error('No response from AI');
+      }
+    } catch (error: any) {
+      setChatMessages(prev => {
+        const newMessages = [...prev];
+        newMessages[assistantIndex] = { role: 'assistant', content: `Error: ${error.message}` };
+        return newMessages;
+      });
+      toast.error(error.message);
+    } finally {
+      setChatLoading(false);
     }
   };
 
@@ -433,11 +523,12 @@ return {
       {codeEditorOpen && (
         <>
           <div className="h-full flex flex-col border-r" style={{ width: `${editorWidth}%` }}>
-            <Tabs defaultValue="scripting" className="h-full flex flex-col">
+            <Tabs defaultValue="scripting" className="h-full flex flex-col overflow-hidden">
               <div className="p-4 border-b">
                 <TabsList>
                   <TabsTrigger value="scripting">Scripting</TabsTrigger>
                   <TabsTrigger value="json">JSON</TabsTrigger>
+                  <TabsTrigger value="chat">Chat</TabsTrigger>
                 </TabsList>
               </div>
               <TabsContent value="scripting" className="flex-1 m-0 flex flex-col">
@@ -516,6 +607,7 @@ Modify or extend this flowchart based on requirements.`;
                         renderLineHighlight: 'all',
                       }}
                       onMount={(editor, monaco) => {
+                        editorRef.current = editor;
                         editor.onDidChangeModelContent(() => {
                           const model = editor.getModel();
                           if (!model) return;
@@ -537,20 +629,22 @@ Modify or extend this flowchart based on requirements.`;
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
+                          <SelectItem value="blazeai">BlazeAI</SelectItem>
+                          <SelectItem value="blazeai-beta">BlazeAI Beta</SelectItem>
                           <SelectItem value="gpt-4">GPT-4</SelectItem>
                           <SelectItem value="gpt-3.5">GPT-3.5</SelectItem>
                           <SelectItem value="claude-3">Claude 3</SelectItem>
-
                           <SelectItem value="grok">Grok</SelectItem>
                         </SelectContent>
                       </Select>
                       <Input
-                        placeholder="Describe flowchart... (Ctrl+Enter)"
+                        placeholder="Describe flowchart... (Enter to send)"
                         value={aiPrompt}
                         onChange={(e) => setAiPrompt(e.target.value)}
                         onKeyDown={(e) => {
                           e.stopPropagation();
-                          if (e.key === 'Enter' && e.ctrlKey) {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
                             handleAiGenerate();
                           }
                         }}
@@ -589,6 +683,108 @@ Modify or extend this flowchart based on requirements.`;
                   />
                 </div>
               </TabsContent>
+              <TabsContent value="chat" className="flex-1 m-0 flex flex-col overflow-hidden">
+                <div className="p-3 border-b flex items-center gap-2 bg-muted/50 shrink-0">
+                  <Sparkles className="w-4 h-4 text-primary" />
+                  <span className="text-xs text-muted-foreground">Model:</span>
+                  <Select value={aiModel} onValueChange={setAiModel}>
+                    <SelectTrigger className="w-32 h-7 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="blazeai">BlazeAI</SelectItem>
+                      <SelectItem value="blazeai-beta">BlazeAI Beta</SelectItem>
+                      <SelectItem value="gpt-4">GPT-4</SelectItem>
+                      <SelectItem value="gpt-3.5">GPT-3.5</SelectItem>
+                      <SelectItem value="claude-3">Claude 3</SelectItem>
+                      <SelectItem value="grok">Grok</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <ScrollArea className="flex-1 min-h-0">
+                  <div className="p-4 space-y-4 min-h-full">
+                    {chatMessages.length === 0 && (
+                      <div className="text-center text-muted-foreground py-8">
+                        <Sparkles className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                        <p>Ask BlazeAI about your flowchart</p>
+                      </div>
+                    )}
+                    {chatMessages.map((msg, i) => (
+                      <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                        <div className={`max-w-[80%] rounded-lg p-3 ${msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                          <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                          {msg.role === 'assistant' && (
+                            <div className="flex gap-1 mt-2 pt-2 border-t border-border/50">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-6 px-2"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(msg.content);
+                                  setCopiedChat(i);
+                                  setTimeout(() => setCopiedChat(null), 2000);
+                                }}
+                              >
+                                {copiedChat === i ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-6 px-2"
+                                onClick={() => {
+                                  setFeedback(prev => ({...prev, [i]: prev[i] === 'up' ? null : 'up'}));
+                                  toast.success('Thanks for your feedback!');
+                                }}
+                              >
+                                <ThumbsUp className={`w-3 h-3 ${feedback[i] === 'up' ? 'fill-current' : ''}`} />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-6 px-2"
+                                onClick={() => {
+                                  setFeedback(prev => ({...prev, [i]: prev[i] === 'down' ? null : 'down'}));
+                                  toast.success('Thanks for your feedback!');
+                                }}
+                              >
+                                <ThumbsDown className={`w-3 h-3 ${feedback[i] === 'down' ? 'fill-current' : ''}`} />
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                    {chatLoading && (
+                      <div className="flex justify-start">
+                        <div className="bg-muted rounded-lg p-3">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        </div>
+                      </div>
+                    )}
+                    <div ref={chatEndRef} />
+                  </div>
+                </ScrollArea>
+                <div className="p-4 border-t shrink-0">
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Ask about the flowchart..."
+                      value={chatInput}
+                      onChange={(e) => setChatInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        e.stopPropagation();
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleChatSend();
+                        }
+                      }}
+                      disabled={chatLoading}
+                    />
+                    <Button onClick={handleChatSend} disabled={chatLoading || !chatInput.trim()}>
+                      {chatLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                    </Button>
+                  </div>
+                </div>
+              </TabsContent>
             </Tabs>
           </div>
           <div
@@ -625,10 +821,29 @@ Modify or extend this flowchart based on requirements.`;
       
       <style jsx global>{`
         .monaco-editor .line-insert {
-          background: rgba(34, 197, 94, 0.2) !important;
+          background: rgba(34, 197, 94, 0.25) !important;
+          border-left: 3px solid rgb(34, 197, 94) !important;
         }
         .monaco-editor .line-delete {
-          background: rgba(239, 68, 68, 0.2) !important;
+          background: rgba(239, 68, 68, 0.25) !important;
+          border-left: 3px solid rgb(239, 68, 68) !important;
+        }
+        [data-radix-scroll-area-viewport] {
+          scrollbar-width: thin;
+          scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
+        }
+        [data-radix-scroll-area-viewport]::-webkit-scrollbar {
+          width: 8px;
+        }
+        [data-radix-scroll-area-viewport]::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        [data-radix-scroll-area-viewport]::-webkit-scrollbar-thumb {
+          background: hsl(var(--muted-foreground) / 0.3);
+          border-radius: 4px;
+        }
+        [data-radix-scroll-area-viewport]::-webkit-scrollbar-thumb:hover {
+          background: hsl(var(--muted-foreground) / 0.5);
         }
         .react-flow__node {
           background: transparent !important;

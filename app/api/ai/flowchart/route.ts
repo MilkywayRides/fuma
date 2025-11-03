@@ -8,29 +8,32 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
     }
 
-    const systemPrompt = `You are a flowchart code generator. Generate JavaScript code that returns a flowchart definition object.
-The code must follow this declarative format:
+    const systemPrompt = `You are a flowchart code generator. Convert ANY user request into a flowchart.
+
+IMPORTANT: Whatever the user asks (coffee recipe, login flow, algorithm, etc.), you MUST respond with ONLY a flowchart code in this EXACT format:
 
 return {
   nodes: [
-    { id: 'unique-id', type: 'input'|'default'|'output', x: number, y: number, title: 'string', content: 'string' }
+    { id: 'start', type: 'input', x: 100, y: 100, title: 'Start', content: 'Begin' },
+    { id: 'step1', type: 'default', x: 300, y: 100, title: 'Step 1', content: 'Description' },
+    { id: 'end', type: 'output', x: 500, y: 100, title: 'End', content: 'Done' }
   ],
   edges: [
-    { from: 'source-id', to: 'target-id' }
+    { from: 'start', to: 'step1' },
+    { from: 'step1', to: 'end' }
   ]
 };
 
-Rules:
-- Use descriptive IDs (e.g., 'start', 'process1', 'decision', 'end')
-- Position nodes with good spacing (150-200px apart)
-- Use 'input' type for start nodes, 'output' for end nodes, 'default' for others
-- Keep titles short (1-3 words)
-- For content with formulas: use template literals with backticks and escape properly
-- Example: content: \`Formula: \\\\(x^2\\\\)\` or use single-line strings only
-- CRITICAL: All strings must be valid JavaScript - no unescaped newlines in quotes
-- Return ONLY valid JavaScript code, no explanations
+RULES:
+- ALWAYS respond with flowchart code, NEVER plain text
+- Start with 'return {' and end with '};'
+- Break down the process into logical steps as nodes
+- Use descriptive titles and content for each step
+- Space nodes 150-200px apart horizontally or vertically
+- Types: 'input' (start), 'default' (process/step), 'output' (end)
+- NO explanations, NO text, ONLY the return statement
 
-Current code context:
+Current flowchart:
 ${currentCode}`;
 
     let apiKey: string | undefined;
@@ -38,6 +41,32 @@ ${currentCode}`;
     let requestBody: any;
 
     switch (model) {
+      case 'blazeai':
+        apiKey = process.env.AI_API_SECRET;
+        apiUrl = `${process.env.AI_MODEL_URL}/v1/chat/completions`;
+        requestBody = {
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: prompt }
+          ],
+          max_tokens: 2000,
+          temperature: 0.7,
+        };
+        break;
+
+      case 'blazeai-beta':
+        apiKey = process.env.AI_API_SECRET;
+        apiUrl = `${process.env.AI_MODEL_URL_V2 || process.env.AI_MODEL_URL}/v1/chat/completions`;
+        requestBody = {
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: prompt }
+          ],
+          max_tokens: 1500,
+          temperature: 0.3,
+        };
+        break;
+
       case 'gpt-4':
       case 'gpt-3.5':
         apiKey = process.env.OPENAI_API_KEY;
@@ -101,7 +130,9 @@ ${currentCode}`;
       'Content-Type': 'application/json',
     };
 
-    if (model === 'claude-3') {
+    if (model === 'blazeai' || model === 'blazeai-beta') {
+      headers['Authorization'] = `Bearer ${apiKey}`;
+    } else if (model === 'claude-3') {
       headers['x-api-key'] = apiKey;
       headers['anthropic-version'] = '2023-06-01';
     } else if (model !== 'gemini') {
@@ -120,9 +151,14 @@ ${currentCode}`;
     }
 
     const data = await response.json();
+    console.log('AI Response:', model, data);
     let generatedCode: string;
 
     switch (model) {
+      case 'blazeai':
+      case 'blazeai-beta':
+        generatedCode = data.content || data.response || data.choices?.[0]?.message?.content || '';
+        break;
       case 'gpt-4':
       case 'gpt-3.5':
       case 'grok':
@@ -138,11 +174,13 @@ ${currentCode}`;
         generatedCode = '';
     }
 
+    // Extract code from markdown blocks
     const codeMatch = generatedCode.match(/```(?:javascript|js)?\n([\s\S]*?)\n```/);
     if (codeMatch) {
       generatedCode = codeMatch[1];
     }
 
+    // Clean HTML entities
     generatedCode = generatedCode
       .replace(/&#39;/g, "'")
       .replace(/&quot;/g, '"')
@@ -151,12 +189,44 @@ ${currentCode}`;
       .replace(/&amp;/g, '&')
       .trim();
 
+    // Extract nodes and edges arrays if present
+    const nodesMatch = generatedCode.match(/const\s+nodes\s*=\s*\[([\s\S]*?)\];/);
+    const edgesMatch = generatedCode.match(/const\s+edges\s*=\s*\[([\s\S]*?)\];/);
+    
+    if (nodesMatch && edgesMatch) {
+      // Reconstruct as return statement
+      generatedCode = `return {\n  nodes: [${nodesMatch[1]}],\n  edges: [${edgesMatch[1]}]\n};`;
+    } else {
+      // Extract only the return statement if there's extra text
+      const returnMatch = generatedCode.match(/return\s*\{[\s\S]*?\};?/);
+      if (returnMatch) {
+        generatedCode = returnMatch[0];
+      } else if (!generatedCode.includes('return')) {
+        // If no return statement found, wrap in return if it looks like an object
+        if (generatedCode.trim().startsWith('{') && generatedCode.trim().endsWith('}')) {
+          generatedCode = `return ${generatedCode}`;
+        }
+      }
+    }
+
+    // Remove any trailing notes or text after the return statement
+    generatedCode = generatedCode.replace(/;?\s*```[\s\S]*$/, '');
+    generatedCode = generatedCode.replace(/;?\s*Note:?[\s\S]*$/i, '');
+    generatedCode = generatedCode.trim();
+
+    if (!generatedCode || generatedCode.trim() === '') {
+      return NextResponse.json({ 
+        error: 'No code generated by AI. Please try again.' 
+      }, { status: 400 });
+    }
+
+    // Try to validate syntax, but don't fail if it's just incomplete
     try {
       new Function(generatedCode);
     } catch (syntaxError: any) {
-      return NextResponse.json({ 
-        error: `Generated code has syntax error: ${syntaxError.message}. Please try again with simpler prompt.` 
-      }, { status: 400 });
+      console.warn('Generated code may have syntax issues:', syntaxError.message);
+      console.log('Generated code:', generatedCode);
+      // Still return the code - let user fix it
     }
 
     return NextResponse.json({ code: generatedCode });

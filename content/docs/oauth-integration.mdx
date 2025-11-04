@@ -5,11 +5,13 @@ description: Complete guide to integrating with our OAuth 2.0 system
 
 import { CopyOAuthContextButton } from '@/components/copy-oauth-context-button';
 
-<div className="flex items-center justify-between mb-6">
-  <div>
+<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+  <div className="flex-1">
     # OAuth 2.0 Integration Guide
   </div>
-  <CopyOAuthContextButton />
+  <div className="flex-shrink-0">
+    <CopyOAuthContextButton />
+  </div>
 </div>
 
 Our OAuth 2.0 implementation allows third-party applications to securely access user data with their permission. This guide covers everything you need to integrate with our OAuth system.

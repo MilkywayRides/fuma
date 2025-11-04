@@ -1,9 +1,15 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 const OAUTH_CONTEXT = `# OAuth 2.0 API Integration Guide
 
@@ -230,6 +236,12 @@ app.get('/api/user', async (req, res) => {
 - Admin Panel: /admin/oauth
 - User Settings: /settings/applications`;
 
+const AI_MODELS = [
+  { name: 'ChatGPT', url: 'https://chatgpt.com/?q=' },
+  { name: 'Claude', url: 'https://claude.ai/new?q=' },
+  { name: 'Gemini', url: 'https://gemini.google.com/app?q=' },
+];
+
 export function CopyOAuthContextButton() {
   const [copied, setCopied] = useState(false);
 
@@ -240,19 +252,43 @@ export function CopyOAuthContextButton() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleOpenInAI = (modelUrl: string) => {
+    const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
+    const prompt = `I want to integrate OAuth 2.0 from this documentation: ${currentUrl}`;
+    window.open(`${modelUrl}${encodeURIComponent(prompt)}`, '_blank');
+  };
+
   return (
-    <Button onClick={handleCopy} variant="outline" size="sm">
-      {copied ? (
-        <>
-          <Check className="h-4 w-4 mr-2" />
-          Copied!
-        </>
-      ) : (
-        <>
-          <Copy className="h-4 w-4 mr-2" />
-          Copy Full API Context for AI
-        </>
-      )}
-    </Button>
+    <div className="flex flex-wrap gap-2">
+      <Button onClick={handleCopy} variant="outline" size="sm" className="flex-shrink-0">
+        {copied ? (
+          <>
+            <Check className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Copied!</span>
+          </>
+        ) : (
+          <>
+            <Copy className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Copy Context</span>
+          </>
+        )}
+      </Button>
+      
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="default" size="sm" className="flex-shrink-0">
+            <Sparkles className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Open in AI</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          {AI_MODELS.map((model) => (
+            <DropdownMenuItem key={model.name} onClick={() => handleOpenInAI(model.url)}>
+              {model.name}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   );
 }

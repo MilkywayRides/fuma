@@ -99,18 +99,38 @@ export default function AdsPage() {
 
   const handleDelete = async (id: number) => {
     if (!confirm('Delete this ad?')) return;
-    await fetch(`/api/ads/${id}`, { method: 'DELETE' });
-    fetchAds();
-    fetchStats();
+    try {
+      const res = await fetch(`/api/ads/${id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const error = await res.json();
+        alert(`Failed to delete ad: ${error.error || 'Unknown error'}`);
+        return;
+      }
+      fetchAds();
+      fetchStats();
+    } catch (error) {
+      console.error('Delete error:', error);
+      alert('Failed to delete ad');
+    }
   };
 
   const toggleActive = async (ad: Ad) => {
-    await fetch(`/api/ads/${ad.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...ad, active: !ad.active }),
-    });
-    fetchAds();
+    try {
+      const res = await fetch(`/api/ads/${ad.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...ad, active: !ad.active }),
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        alert(`Failed to update ad: ${error.error || 'Unknown error'}`);
+        return;
+      }
+      fetchAds();
+    } catch (error) {
+      console.error('Toggle active error:', error);
+      alert('Failed to update ad');
+    }
   };
 
   return (

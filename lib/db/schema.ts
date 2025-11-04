@@ -420,3 +420,109 @@ export const oauthApiLogs = pgTable('oauthApiLogs', {
   ipAddress: text('ipAddress'),
   createdAt: timestamp('createdAt').defaultNow().notNull(),
 });
+
+// Payment Management Tables
+export const paymentGateways = pgTable('paymentGateways', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  provider: text('provider').notNull(), // 'stripe', 'polar', 'razorpay', etc.
+  apiKey: text('apiKey').notNull(),
+  webhookSecret: text('webhookSecret'),
+  active: boolean('active').default(true).notNull(),
+  config: text('config'), // JSON for additional config
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+  updatedAt: timestamp('updatedAt').defaultNow().notNull(),
+});
+
+export const paymentPlans = pgTable('paymentPlans', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  description: text('description'),
+  amount: integer('amount').notNull(), // in cents
+  currency: text('currency').default('usd').notNull(),
+  interval: text('interval').notNull(), // 'one_time', 'monthly', 'yearly'
+  features: text('features'), // JSON array
+  gatewayId: integer('gatewayId').references(() => paymentGateways.id),
+  externalId: text('externalId'), // ID from payment gateway
+  active: boolean('active').default(true).notNull(),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+  updatedAt: timestamp('updatedAt').defaultNow().notNull(),
+});
+
+export const paymentPages = pgTable('paymentPages', {
+  id: serial('id').primaryKey(),
+  uuid: text('uuid').notNull().unique(),
+  title: text('title').notNull(),
+  description: text('description'),
+  planId: integer('planId').references(() => paymentPlans.id),
+  customAmount: boolean('customAmount').default(false).notNull(),
+  minAmount: integer('minAmount'),
+  maxAmount: integer('maxAmount'),
+  successUrl: text('successUrl'),
+  cancelUrl: text('cancelUrl'),
+  active: boolean('active').default(true).notNull(),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+  updatedAt: timestamp('updatedAt').defaultNow().notNull(),
+});
+
+export const paymentButtons = pgTable('paymentButtons', {
+  id: serial('id').primaryKey(),
+  uuid: text('uuid').notNull().unique(),
+  name: text('name').notNull(),
+  planId: integer('planId').references(() => paymentPlans.id),
+  buttonText: text('buttonText').default('Pay Now').notNull(),
+  buttonStyle: text('buttonStyle'), // JSON for styling
+  active: boolean('active').default(true).notNull(),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+});
+
+export const paymentLinks = pgTable('paymentLinks', {
+  id: serial('id').primaryKey(),
+  uuid: text('uuid').notNull().unique(),
+  name: text('name').notNull(),
+  planId: integer('planId').references(() => paymentPlans.id),
+  expiresAt: timestamp('expiresAt'),
+  maxUses: integer('maxUses'),
+  usedCount: integer('usedCount').default(0).notNull(),
+  active: boolean('active').default(true).notNull(),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+});
+
+export const coupons = pgTable('coupons', {
+  id: serial('id').primaryKey(),
+  code: text('code').notNull().unique(),
+  type: text('type').notNull(), // 'percentage', 'fixed'
+  value: integer('value').notNull(),
+  maxUses: integer('maxUses'),
+  usedCount: integer('usedCount').default(0).notNull(),
+  expiresAt: timestamp('expiresAt'),
+  planIds: text('planIds'), // JSON array of applicable plan IDs
+  active: boolean('active').default(true).notNull(),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+});
+
+export const paymentTransactions = pgTable('paymentTransactions', {
+  id: serial('id').primaryKey(),
+  uuid: text('uuid').notNull().unique(),
+  userId: text('userId').references(() => user.id),
+  planId: integer('planId').references(() => paymentPlans.id),
+  gatewayId: integer('gatewayId').references(() => paymentGateways.id),
+  amount: integer('amount').notNull(),
+  currency: text('currency').default('usd').notNull(),
+  status: text('status').notNull(), // 'pending', 'completed', 'failed', 'refunded'
+  gatewayTransactionId: text('gatewayTransactionId'),
+  couponId: integer('couponId').references(() => coupons.id),
+  metadata: text('metadata'), // JSON
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+  updatedAt: timestamp('updatedAt').defaultNow().notNull(),
+});
+
+export const webhookLogs = pgTable('webhookLogs', {
+  id: serial('id').primaryKey(),
+  gatewayId: integer('gatewayId').references(() => paymentGateways.id),
+  event: text('event').notNull(),
+  payload: text('payload').notNull(), // JSON
+  status: text('status').notNull(), // 'success', 'failed'
+  error: text('error'),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+});

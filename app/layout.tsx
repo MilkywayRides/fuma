@@ -4,6 +4,7 @@ import { Inter } from 'next/font/google';
 import { Providers } from '@/components/providers';
 import { Toaster } from '@/components/ui/toaster';
 import { OnboardingCheck } from '@/components/onboarding-check';
+import { RefreshProvider } from '@/contexts/refresh-context';
 import { Metadata } from 'next';
 
 const inter = Inter({
@@ -34,7 +35,9 @@ export default function Layout({ children }: LayoutProps<'/'>) {
     <html lang="en" className={inter.className} suppressHydrationWarning>
       <body className="flex flex-col min-h-screen" suppressHydrationWarning>
         <Providers>
-          <OnboardingCheck>{children}</OnboardingCheck>
+          <RefreshProvider>
+            <OnboardingCheck>{children}</OnboardingCheck>
+          </RefreshProvider>
         </Providers>
         <Toaster />
       </body>

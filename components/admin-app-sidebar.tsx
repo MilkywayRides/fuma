@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, Workflow, Settings, MessageSquare, Users, FileText, Megaphone, Code, GitBranch, Mail, Home, Plus, CreditCard, Book, Key } from "lucide-react"
+import { LayoutDashboard, Workflow, Settings, MessageSquare, Users, FileText, Megaphone, Code, GitBranch, Mail, Home, Plus, CreditCard, Book, Key, Wallet } from "lucide-react"
 import { APP_NAME } from "@/lib/config"
 import { NavUser } from "@/components/nav-user"
 import { Badge } from "@/components/ui/badge"
@@ -62,6 +62,7 @@ export function AdminAppSidebar({
     { href: '/admin/comments', label: 'Comments', icon: MessageSquare, badge: getRouteBadge('/admin/comments') },
     { href: '/admin/users', label: 'Users', icon: Users, badge: getRouteBadge('/admin/users') },
     { href: '/admin/ads', label: 'Advertisements', icon: Megaphone, badge: getRouteBadge('/admin/ads') },
+    { href: '/admin/payments', label: 'Payments', icon: Wallet, badge: getRouteBadge('/admin/payments') },
     { href: '/admin/subscription', label: 'Subscription', icon: CreditCard, badge: getRouteBadge('/admin/subscription') },
     { href: '/admin/oauth', label: 'OAuth Apps', icon: Key, badge: getRouteBadge('/admin/oauth') },
     ...(developerMode ? [{ href: '/admin/developer', label: 'Developer API', icon: Code, badge: getRouteBadge('/admin/developer') }] : []),

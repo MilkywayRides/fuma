@@ -13,6 +13,7 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:init-settings": "tsx lib/init-settings.ts",
+    "db:create-payment-tables": "tsx scripts/create-payment-tables.ts",
     "set-admin": "tsx lib/set-admin.ts",
     "drop-user": "tsx lib/drop-user.ts"
   },

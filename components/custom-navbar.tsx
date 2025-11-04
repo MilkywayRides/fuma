@@ -18,18 +18,18 @@ import { cn } from '@/lib/utils'
 export function CustomNavbar() {
   return (
     <nav className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center justify-between">
-        <div className="flex items-center gap-8">
-          <Link href="/" className="flex items-center gap-2 font-semibold">
+      <div className="container flex h-16 items-center justify-between px-4">
+        <div className="flex items-center gap-4 md:gap-8">
+          <Link href="/" className="flex items-center gap-2 font-semibold text-sm md:text-base">
             <svg
-              width="24"
-              height="24"
+              className="w-5 h-5 md:w-6 md:h-6 flex-shrink-0"
+              viewBox="0 0 24 24"
               xmlns="http://www.w3.org/2000/svg"
               aria-label="Logo"
             >
               <circle cx={12} cy={12} r={12} fill="currentColor" />
             </svg>
-            <span>{APP_NAME}</span>
+            <span className="truncate max-w-[120px] md:max-w-none">{APP_NAME}</span>
           </Link>
           
           <div className="hidden md:flex items-center">
@@ -99,8 +99,10 @@ export function CustomNavbar() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <SearchTrigger />
+        <div className="flex items-center gap-1 md:gap-2">
+          <div className="hidden sm:block">
+            <SearchTrigger />
+          </div>
           <ThemeToggleClient />
           <div className="hidden md:block">
             <NavbarUserWrapper />

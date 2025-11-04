@@ -1,6 +1,9 @@
 import { source } from '@/lib/source';
 import { createFromSource } from 'fumadocs-core/search/server';
 import { getAllBlogPosts } from '@/lib/blog-source';
+import { db } from '@/lib/db';
+import { books } from '@/lib/db/schema';
+import { like, or } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -104,10 +107,16 @@ export async function GET(request: Request) {
 
   const trimmedQuery = query.trim();
 
-  // Fetch docs and blog results in parallel for speed
-  const [docsResponse, blogPosts] = await Promise.all([
+  // Fetch docs, blog, and books results in parallel for speed
+  const [docsResponse, blogPosts, booksData] = await Promise.all([
     searchAPI.GET(request),
-    getAllBlogPosts()
+    getAllBlogPosts(),
+    db.select().from(books).where(
+      or(
+        like(books.title, `%${trimmedQuery}%`),
+        like(books.description, `%${trimmedQuery}%`)
+      )
+    )
   ]);
 
   const docsData = await docsResponse.json();
@@ -138,5 +147,32 @@ export async function GET(request: Request) {
     };
   });
 
-  return Response.json([...blogResults, ...docsData]);
+  // Process books results
+  const bookResults = booksData.map(book => {
+    const snippet = book.description 
+      ? extractRelevantSnippet(book.description, trimmedQuery, 150)
+      : book.title;
+
+    return {
+      id: `book-${book.id}`,
+      title: book.title,
+      content: snippet,
+      url: `/books/${book.uuid}`,
+      structured: {
+        heading: 'Books',
+        tag: book.title,
+      },
+    };
+  });
+
+  // Add category heading to docs results
+  const docsWithCategory = docsData.map((doc: any) => ({
+    ...doc,
+    structured: {
+      ...doc.structured,
+      heading: 'Docs',
+    },
+  }));
+
+  return Response.json([...blogResults, ...bookResults, ...docsWithCategory]);
 }

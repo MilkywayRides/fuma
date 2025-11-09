@@ -1,30 +1,20 @@
-const cache = new Map<string, { data: any; timestamp: number }>();
+import { unstable_cache } from 'next/cache';
 
-export function getCached<T>(key: string, ttl: number = 60000): T | null {
-  const cached = cache.get(key);
-  if (!cached) return null;
-  
-  if (Date.now() - cached.timestamp > ttl) {
-    cache.delete(key);
-    return null;
+export const getCachedData = <T>(
+  fn: () => Promise<T>,
+  keys: string[],
+  options?: {
+    revalidate?: number | false;
+    tags?: string[];
   }
-  
-  return cached.data as T;
-}
+) => {
+  return unstable_cache(fn, keys, {
+    revalidate: options?.revalidate ?? 3600,
+    tags: options?.tags,
+  });
+};
 
-export function setCache(key: string, data: any): void {
-  cache.set(key, { data, timestamp: Date.now() });
-  
-  if (cache.size > 100) {
-    const firstKey = cache.keys().next().value;
-    if (firstKey) cache.delete(firstKey);
-  }
-}
-
-export function clearCache(key?: string): void {
-  if (key) {
-    cache.delete(key);
-  } else {
-    cache.clear();
-  }
-}
+export const revalidateCache = async (tag: string) => {
+  const { revalidateTag } = await import('next/cache');
+  revalidateTag(tag);
+};

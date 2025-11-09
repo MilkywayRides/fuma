@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 
@@ -22,6 +23,7 @@ export function OAuthAppSettings({ app }: { app: any }) {
   const [allowedScopes, setAllowedScopes] = useState<string[]>(
     app.allowedScopes ? app.allowedScopes.split(',') : ['profile', 'email']
   );
+  const [applicationType, setApplicationType] = useState(app.applicationType || 'web');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
@@ -31,7 +33,10 @@ export function OAuthAppSettings({ app }: { app: any }) {
       const res = await fetch(`/api/oauth/applications/${app.id}/scopes`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ allowedScopes: allowedScopes.join(',') }),
+        body: JSON.stringify({ 
+          allowedScopes: allowedScopes.join(','),
+          applicationType 
+        }),
       });
 
       if (!res.ok) throw new Error('Failed to update');
@@ -72,6 +77,20 @@ export function OAuthAppSettings({ app }: { app: any }) {
           <div>
             <Label className="text-sm font-medium">Callback URL</Label>
             <p className="text-sm text-muted-foreground mt-1">{app.callbackUrl}</p>
+          </div>
+          <div>
+            <Label className="text-sm font-medium">Application Type</Label>
+            <Select value={applicationType} onValueChange={setApplicationType}>
+              <SelectTrigger className="mt-1">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="web">Web Application</SelectItem>
+                <SelectItem value="cli">CLI Tool</SelectItem>
+                <SelectItem value="desktop">Desktop App</SelectItem>
+                <SelectItem value="mobile">Mobile App</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>

@@ -1,9 +1,15 @@
 // Run this script to set a user as Admin or SuperAdmin
 // Usage: npx tsx lib/set-admin.ts <email> <role>
 
-import { db } from './db';
+import { config } from 'dotenv';
+import { drizzle } from 'drizzle-orm/neon-http';
+import { neon } from '@neondatabase/serverless';
 import { user } from './db/schema';
 import { eq } from 'drizzle-orm';
+
+config();
+const sql = neon(process.env.DATABASE_URL!);
+const db = drizzle(sql);
 
 const email = process.argv[2];
 const role = process.argv[3] as 'User' | 'Admin' | 'SuperAdmin';

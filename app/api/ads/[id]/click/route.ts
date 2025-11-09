@@ -9,27 +9,18 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
-    const adId = parseInt(id, 10);
     
-    if (Number.isNaN(adId)) {
-      return NextResponse.json({ error: 'Invalid ad id' }, { status: 400 });
-    }
-    
-    const [ad] = await db.select().from(advertisements).where(eq(advertisements.id, adId)).limit(1);
+    const [ad] = await db.select().from(advertisements).where(eq(advertisements.id, id)).limit(1);
     if (!ad) {
-      console.error('Ad not found for click tracking:', adId);
+      console.error('Ad not found for click tracking:', id);
       return NextResponse.json({ error: 'Ad not found' }, { status: 404 });
     }
 
     const ipAddress = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
     const userAgent = request.headers.get('user-agent') || 'unknown';
 
-    // Use timestamp + random to ensure uniqueness
-    const newId = Date.now() * 1000 + Math.floor(Math.random() * 1000);
-
     await db.insert(adClicks).values({
-      id: newId,
-      adId,
+      adId: id,
       ipAddress,
       userAgent,
     });

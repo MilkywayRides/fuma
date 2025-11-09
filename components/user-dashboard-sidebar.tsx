@@ -1,6 +1,6 @@
 'use client'
 
-import { Home, Book, Coins, Crown, Settings } from 'lucide-react'
+import { Home, Book, Coins, Crown, Shield } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
@@ -21,6 +21,7 @@ const items = [
   { title: 'My Books', url: '/dashboard/books', icon: Book },
   { title: 'Credits', url: '/dashboard/credits', icon: Coins },
   { title: 'Subscription', url: '/dashboard/subscription', icon: Crown },
+  { title: 'Authorized Apps', url: '/dashboard/apps', icon: Shield },
 ]
 
 export function UserDashboardSidebar({ userData, isPro, emailCount, emailLimit }: { userData: any; isPro: boolean; emailCount?: number; emailLimit?: number }) {

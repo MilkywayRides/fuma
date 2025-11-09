@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Plus, Copy, Check } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 
@@ -27,6 +28,7 @@ export function CreateOAuthAppDialog() {
       description: formData.get('description') as string,
       homepageUrl: formData.get('homepageUrl') as string,
       callbackUrl: formData.get('callbackUrl') as string,
+      applicationType: formData.get('applicationType') as string,
     };
 
     try {
@@ -150,6 +152,20 @@ export function CreateOAuthAppDialog() {
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
             <Textarea id="description" name="description" placeholder="What does your application do?" rows={3} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="applicationType">Application Type</Label>
+            <Select name="applicationType" defaultValue="web">
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="web">Web Application</SelectItem>
+                <SelectItem value="cli">CLI Tool</SelectItem>
+                <SelectItem value="desktop">Desktop App</SelectItem>
+                <SelectItem value="mobile">Mobile App</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="homepageUrl">Homepage URL</Label>

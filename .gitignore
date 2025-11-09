@@ -1,36 +1,44 @@
 # dependencies
 /node_modules
-/test-auth
+/.pnp
+.pnp.js
 
-# AI server
-ai-server/__pycache__/
-ai-server/venv/
-ai-server/*.pyc
-
-# generated content
-.contentlayer
-.content-collections
-.source
-
-# test & build
+# testing
 /coverage
+
+# next.js
 /.next/
 /out/
+
+# production
 /build
-backend/
-*.tsbuildinfo
 
 # misc
 .DS_Store
 *.pem
-/.pnp
-.pnp.js
+
+# debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# environment
-.env
+# local env files
 .env*.local
+.env
+
+# vercel
 .vercel
+
+# typescript
+*.tsbuildinfo
 next-env.d.ts
+
+# drizzle
+drizzle/
+
+# IDE
+.vscode/
+.idea/
+
+# cache
+.turbo

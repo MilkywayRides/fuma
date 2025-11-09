@@ -1,7 +1,8 @@
 import 'server-only';
 import { drizzle } from 'drizzle-orm/neon-http';
-import { neon } from '@neondatabase/serverless';
+import { neon, NeonQueryFunction } from '@neondatabase/serverless';
 import * as schema from './schema';
+import * as paymentSchema from './payment-schema';
 
 const databaseUrl = process.env.DATABASE_URL;
 
@@ -11,6 +12,14 @@ if (!databaseUrl) {
   );
 }
 
-const sql = neon(databaseUrl);
+// Configure Neon with optimizations
+const sql: NeonQueryFunction<false, false> = neon(databaseUrl, {
+  fetchOptions: {
+    cache: 'no-store',
+  },
+});
 
-export const db = drizzle(sql, { schema });
+export const db = drizzle(sql, { 
+  schema: { ...schema, ...paymentSchema },
+  logger: process.env.NODE_ENV === 'development',
+});

@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { name, description, homepageUrl, callbackUrl } = body;
+    const { name, description, homepageUrl, callbackUrl, applicationType } = body;
 
     if (!name || !homepageUrl || !callbackUrl) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });

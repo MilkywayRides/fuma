@@ -35,6 +35,7 @@ export function AdminSidebar({ userName, userEmail, developerMode }: { userName:
     { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/admin/blogs', label: 'Blogs', icon: FileText },
     { href: '/admin/flow', label: 'Flowcharts', icon: Workflow },
+    { href: '/admin/circuits', label: 'Circuits', icon: Workflow },
     { href: '/admin/scripts', label: 'Flow Scripts', icon: GitBranch },
     { href: '/admin/comments', label: 'Comments', icon: MessageSquare },
     { href: '/admin/users', label: 'Users', icon: Users },

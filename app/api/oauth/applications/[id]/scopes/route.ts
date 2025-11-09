@@ -28,7 +28,10 @@ export async function PATCH(
     const { allowedScopes } = body;
 
     await db.update(oauthApplications)
-      .set({ allowedScopes, updatedAt: new Date() })
+      .set({ 
+        allowedScopes,
+        updatedAt: new Date() 
+      })
       .where(
         and(
           eq(oauthApplications.id, id),

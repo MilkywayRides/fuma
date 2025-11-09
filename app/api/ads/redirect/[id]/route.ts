@@ -9,26 +9,20 @@ export async function GET(
 ) {
   try {
     const { id: adId } = await params;
-    const adIdNum = Number(adId);
-    
-    if (Number.isNaN(adIdNum)) {
-      console.error('Invalid ad ID:', adId);
-      return NextResponse.redirect(new URL('/', request.url));
-    }
 
     const [ad] = await db
       .select({ link: advertisements.link })
       .from(advertisements)
-      .where(eq(advertisements.id, adIdNum))
+      .where(eq(advertisements.id, adId))
       .limit(1);
     
     if (!ad) {
-      console.error('Ad not found:', adIdNum);
+      console.error('Ad not found:', adId);
       return NextResponse.redirect(new URL('/', request.url));
     }
 
     if (!ad.link) {
-      console.error('Ad has no link:', adIdNum);
+      console.error('Ad has no link:', adId);
       return NextResponse.redirect(new URL('/', request.url));
     }
 
@@ -36,12 +30,8 @@ export async function GET(
     const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
     const userAgent = request.headers.get('user-agent') || '';
     
-    // Use timestamp + random to ensure uniqueness
-    const newId = Date.now() * 1000 + Math.floor(Math.random() * 1000);
-    
     await db.insert(adClicks).values({
-      id: newId,
-      adId: adIdNum,
+      adId: adId,
       ipAddress: ip,
       userAgent: userAgent
     }).catch((err) => console.error('Failed to track click:', err));

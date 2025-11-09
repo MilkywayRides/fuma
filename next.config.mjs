@@ -4,7 +4,7 @@ const withMDX = createMDX();
 
 /** @type {import('next').NextConfig} */
 const config = {
-  reactStrictMode: true,
+  reactStrictMode: false, // Disable in dev for faster HMR
   images: {
     remotePatterns: [
       {
@@ -17,18 +17,39 @@ const config = {
       },
     ],
     formats: ['image/avif', 'image/webp'],
-    minimumCacheTTL: 60,
+    minimumCacheTTL: 3600,
   },
 
   compress: true,
   poweredByHeader: false,
   experimental: {
-    optimizePackageImports: ['lucide-react', 'react-icons', '@radix-ui/react-icons', 'framer-motion'],
+    optimizePackageImports: [
+      'lucide-react',
+      'react-icons',
+      '@radix-ui/react-icons',
+      'framer-motion',
+      '@radix-ui/react-dialog',
+      '@radix-ui/react-dropdown-menu',
+      '@radix-ui/react-select',
+      'recharts',
+    ],
+    turbo: {
+      rules: {
+        '*.svg': {
+          loaders: ['@svgr/webpack'],
+          as: '*.js',
+        },
+      },
+    },
   },
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
   },
-  cacheMaxMemorySize: 50 * 1024 * 1024,
+  cacheMaxMemorySize: 100 * 1024 * 1024,
+  onDemandEntries: {
+    maxInactiveAge: 60 * 1000,
+    pagesBufferLength: 5,
+  },
 };
 
 export default withMDX(config);

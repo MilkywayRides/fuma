@@ -1,4 +1,5 @@
-import { pgTable, text, timestamp, boolean, integer, serial } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, boolean, integer, serial, bigint } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 
 export const user = pgTable('user', {
   id: text('id').primaryKey(),
@@ -67,7 +68,7 @@ export const flowScript = pgTable('flowScript', {
 });
 
 export const flowExecution = pgTable('flowExecution', {
-  id: integer('id').notNull().primaryKey(),
+  id: integer('id').primaryKey(),
   flowId: text('flowId')
     .notNull()
     .references(() => flowScript.id),
@@ -91,7 +92,7 @@ export const verification = pgTable('verification', {
 });
 
 export const blogPosts = pgTable('blogPosts', {
-  id: integer('id').notNull().primaryKey(),
+  id: integer('id').primaryKey(),
   title: text('title').notNull(),
   content: text('content').notNull(),
   excerpt: text('excerpt'),
@@ -116,8 +117,20 @@ export const flowcharts = pgTable('flowcharts', {
   updatedAt: timestamp('updatedAt').defaultNow().notNull(),
 });
 
+export const circuits = pgTable('circuits', {
+  id: text('id').primaryKey(),
+  title: text('title').notNull(),
+  data: text('data').notNull(),
+  published: boolean('published').default(false).notNull(),
+  authorId: text('authorId')
+    .notNull()
+    .references(() => user.id),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+  updatedAt: timestamp('updatedAt').defaultNow().notNull(),
+});
+
 export const comments = pgTable('comments', {
-  id: integer('id').notNull().primaryKey(),
+  id: integer('id').primaryKey(),
   content: text('content').notNull(),
   postId: integer('postId')
     .notNull()
@@ -132,7 +145,7 @@ export const comments = pgTable('comments', {
 });
 
 export const commentReactions = pgTable('commentReactions', {
-  id: integer('id').notNull().primaryKey(),
+  id: integer('id').primaryKey(),
   commentId: integer('commentId')
     .notNull()
     .references(() => comments.id, { onDelete: 'cascade' }),
@@ -144,13 +157,13 @@ export const commentReactions = pgTable('commentReactions', {
 });
 
 export const systemSettings = pgTable('system_settings', {
-  id: integer('id').notNull().primaryKey(),
+  id: integer('id').primaryKey(),
   onboardingEnabled: boolean('onboardingEnabled').default(true).notNull(),
   updatedAt: timestamp('updatedAt').defaultNow().notNull(),
 });
 
 export const siteVisits = pgTable('siteVisits', {
-  id: integer('id').notNull().primaryKey(),
+  id: integer('id').primaryKey(),
   userId: text('userId').references(() => user.id),
   ipAddress: text('ipAddress'),
   userAgent: text('userAgent'),
@@ -159,7 +172,7 @@ export const siteVisits = pgTable('siteVisits', {
 });
 
 export const flowchartEmbeds = pgTable('flowchartEmbeds', {
-  id: integer('id').notNull().primaryKey(),
+  id: integer('id').primaryKey(),
   flowchartId: text('flowchartId')
     .notNull()
     .references(() => flowcharts.id, { onDelete: 'cascade' }),
@@ -171,7 +184,7 @@ export const flowchartEmbeds = pgTable('flowchartEmbeds', {
 });
 
 export const advertisements = pgTable('advertisements', {
-  id: integer('id').notNull().primaryKey(),
+  id: text('id').primaryKey().$defaultFn(() => Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)),
   title: text('title').notNull(),
   content: text('content').notNull(),
   link: text('link'),
@@ -183,26 +196,22 @@ export const advertisements = pgTable('advertisements', {
 });
 
 export const adClicks = pgTable('adClicks', {
-  id: integer('id').notNull().primaryKey(),
-  adId: integer('adId')
-    .notNull()
-    .references(() => advertisements.id, { onDelete: 'cascade' }),
+  id: serial('id').primaryKey(),
+  adId: text('adId').notNull(),
   ipAddress: text('ipAddress'),
   userAgent: text('userAgent'),
   createdAt: timestamp('createdAt').defaultNow().notNull(),
 });
 
 export const adViews = pgTable('adViews', {
-  id: integer('id').notNull().primaryKey(),
-  adId: integer('adId')
-    .notNull()
-    .references(() => advertisements.id, { onDelete: 'cascade' }),
+  id: serial('id').primaryKey(),
+  adId: text('adId').notNull(),
   ipAddress: text('ipAddress'),
   createdAt: timestamp('createdAt').defaultNow().notNull(),
 });
 
 export const apiKeys = pgTable('apiKeys', {
-  id: integer('id').notNull().primaryKey(),
+  id: integer('id').primaryKey(),
   key: text('key').notNull().unique(),
   name: text('name').notNull(),
   userId: text('userId')
@@ -213,7 +222,7 @@ export const apiKeys = pgTable('apiKeys', {
 });
 
 export const chatMessages = pgTable('chatMessages', {
-  id: integer('id').notNull().primaryKey(),
+  id: integer('id').primaryKey(),
   content: text('content').notNull(),
   role: text('role').notNull(), // 'user' or 'assistant'
   userId: text('userId')
@@ -225,7 +234,7 @@ export const chatMessages = pgTable('chatMessages', {
 });
 
 export const directMessages = pgTable('directMessages', {
-  id: integer('id').notNull().primaryKey(),
+  id: bigint('id', { mode: 'number' }).primaryKey(),
   content: text('content').notNull(),
   fromId: text('fromId')
     .notNull()
@@ -238,7 +247,7 @@ export const directMessages = pgTable('directMessages', {
 });
 
 export const sentEmails = pgTable('sentEmails', {
-  id: integer('id').notNull().primaryKey(),
+  id: integer('id').primaryKey(),
   emailAddressId: integer('emailAddressId')
     .notNull()
     .references(() => emailAddresses.id, { onDelete: 'cascade' }),
@@ -251,7 +260,7 @@ export const sentEmails = pgTable('sentEmails', {
 });
 
 export const emailAddresses = pgTable('emailAddresses', {
-  id: integer('id').notNull().primaryKey(),
+  id: integer('id').primaryKey(),
   uuid: text('uuid').notNull().unique(),
   address: text('address').notNull().unique(),
   userId: text('userId')
@@ -262,7 +271,7 @@ export const emailAddresses = pgTable('emailAddresses', {
 });
 
 export const emails = pgTable('emails', {
-  id: integer('id').notNull().primaryKey(),
+  id: integer('id').primaryKey(),
   emailAddressId: integer('emailAddressId')
     .notNull()
     .references(() => emailAddresses.id, { onDelete: 'cascade' }),
@@ -278,7 +287,7 @@ export const emails = pgTable('emails', {
 });
 
 export const subscriptions = pgTable('subscriptions', {
-  id: integer('id').notNull().primaryKey(),
+  id: integer('id').primaryKey(),
   userId: text('userId')
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
@@ -296,7 +305,7 @@ export const subscriptions = pgTable('subscriptions', {
 });
 
 export const books = pgTable('books', {
-  id: integer('id').notNull().primaryKey(),
+  id: integer('id').primaryKey(),
   uuid: text('uuid').notNull().unique(),
   title: text('title').notNull(),
   description: text('description'),
@@ -311,7 +320,7 @@ export const books = pgTable('books', {
 });
 
 export const bookPages = pgTable('bookPages', {
-  id: integer('id').notNull().primaryKey(),
+  id: integer('id').primaryKey(),
   bookId: integer('bookId')
     .notNull()
     .references(() => books.id, { onDelete: 'cascade' }),
@@ -324,7 +333,7 @@ export const bookPages = pgTable('bookPages', {
 });
 
 export const bookPurchases = pgTable('bookPurchases', {
-  id: integer('id').notNull().primaryKey(),
+  id: integer('id').primaryKey(),
   userId: text('userId')
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
@@ -336,7 +345,7 @@ export const bookPurchases = pgTable('bookPurchases', {
 });
 
 export const subscriptionPlans = pgTable('subscriptionPlans', {
-  id: integer('id').notNull().primaryKey(),
+  id: integer('id').primaryKey(),
   name: text('name').notNull(),
   price: integer('price').notNull(),
   credits: integer('credits').default(0).notNull(),
@@ -346,7 +355,7 @@ export const subscriptionPlans = pgTable('subscriptionPlans', {
 });
 
 export const bookReviews = pgTable('bookReviews', {
-  id: integer('id').notNull().primaryKey(),
+  id: integer('id').primaryKey(),
   bookId: integer('bookId')
     .notNull()
     .references(() => books.id, { onDelete: 'cascade' }),

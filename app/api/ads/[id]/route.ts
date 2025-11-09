@@ -13,7 +13,7 @@ export async function GET(
   const [ad] = await db
     .select()
     .from(advertisements)
-    .where(eq(advertisements.id, parseInt(id, 10)))
+    .where(eq(advertisements.id, id))
     .limit(1);
 
   if (!ad) {
@@ -34,18 +34,13 @@ export async function PUT(
     }
 
     const { id } = await params;
-    const adId = parseInt(id, 10);
-    
-    if (Number.isNaN(adId)) {
-      return NextResponse.json({ error: 'Invalid ad ID' }, { status: 400 });
-    }
 
     const body = await request.json();
     const { title, content, link, imageUrl, position, active } = body;
 
     const [ad] = await db.update(advertisements)
       .set({ title, content, link, imageUrl, position, active, updatedAt: new Date() })
-      .where(eq(advertisements.id, adId))
+      .where(eq(advertisements.id, id))
       .returning();
 
     if (!ad) {
@@ -70,13 +65,8 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    const adId = parseInt(id, 10);
-    
-    if (Number.isNaN(adId)) {
-      return NextResponse.json({ error: 'Invalid ad ID' }, { status: 400 });
-    }
 
-    const result = await db.delete(advertisements).where(eq(advertisements.id, adId)).returning();
+    const result = await db.delete(advertisements).where(eq(advertisements.id, id)).returning();
     
     if (result.length === 0) {
       return NextResponse.json({ error: 'Ad not found' }, { status: 404 });

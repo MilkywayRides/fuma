@@ -5,10 +5,8 @@ import { desc, eq } from 'drizzle-orm';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 
-function generateId(): number {
-  // Generate a numeric id to satisfy the current schema (integer primary key).
-  // In production this should be replaced by an auto-incrementing/identity column.
-  return Math.floor(Math.random() * 1_000_000_000);
+function generateId(): string {
+  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 }
 
 export async function GET() {
@@ -26,7 +24,6 @@ export async function POST(request: Request) {
   const { title, content, link, imageUrl, position } = body;
 
   const [ad] = await db.insert(advertisements).values({
-    id: generateId(),
     title,
     content,
     link,

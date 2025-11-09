@@ -1,8 +1,7 @@
 'use client';
 
-import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
-import { useRefreshShortcut } from '@/hooks/use-refresh-shortcut';
 import { useRouter } from 'next/navigation';
 
 interface RefreshContextType {
@@ -22,7 +21,16 @@ export function RefreshProvider({ children }: { children: ReactNode }) {
     setTimeout(() => setIsRefreshing(false), 500);
   }, [router]);
 
-  useRefreshShortcut(triggerRefresh);
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'r') {
+        e.preventDefault();
+        triggerRefresh();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [triggerRefresh]);
 
   return (
     <RefreshContext.Provider value={{ isRefreshing, triggerRefresh }}>

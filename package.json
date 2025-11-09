@@ -5,7 +5,8 @@
   "private": true,
   "scripts": {
     "build": "next build",
-    "dev": "node scripts/banner.js && node --max-old-space-size=4096 server.mjs",
+    "dev": "next dev --turbopack",
+    "dev:old": "node --max-old-space-size=4096 server.mjs",
     "start": "NODE_ENV=production node --max-old-space-size=4096 server.mjs",
     "postinstall": "fumadocs-mdx",
     "db:generate": "drizzle-kit generate",
@@ -14,6 +15,7 @@
     "db:studio": "drizzle-kit studio",
     "db:init-settings": "tsx lib/init-settings.ts",
     "db:create-payment-tables": "tsx scripts/create-payment-tables.ts",
+    "db:init-payment": "tsx scripts/init-payment-tables.ts",
     "set-admin": "tsx lib/set-admin.ts",
     "drop-user": "tsx lib/drop-user.ts"
   },

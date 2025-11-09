@@ -14,7 +14,7 @@ export const getCachedData = <T>(
   });
 };
 
-export const revalidateCache = async (tag: string) => {
-  const { revalidateTag } = await import('next/cache');
+export const revalidateCache = (tag: string) => {
+  const { revalidateTag } = require('next/cache');
   revalidateTag(tag);
 };

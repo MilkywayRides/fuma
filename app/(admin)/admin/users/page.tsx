@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { db } from '@/lib/db';
 import { user } from '@/lib/db/schema';
 import { auth } from '@/lib/auth';

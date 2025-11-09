@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { Metadata } from 'next';
 import { CreateFlowButton } from '@/components/create-flow-button';
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: 'Flowcharts - Admin',
 };

@@ -43,11 +43,7 @@ const config = {
     removeConsole: process.env.NODE_ENV === 'production',
   },
   swcMinify: true,
-  modularizeImports: {
-    'lucide-react': {
-      transform: 'lucide-react/dist/esm/icons/{{kebabCase member}}',
-    },
-  },
+
   headers: async () => [
     {
       source: '/(.*)',

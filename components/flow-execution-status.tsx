@@ -33,7 +33,7 @@ export function FlowExecutionStatus({ flowId }: FlowExecutionStatusProps) {
                   execution.status === 'running'
                     ? 'default'
                     : execution.status === 'completed'
-                    ? 'success'
+                    ? 'default'
                     : 'destructive'
                 }
               >

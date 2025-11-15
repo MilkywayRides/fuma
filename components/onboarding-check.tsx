@@ -10,7 +10,7 @@ interface OnboardingCheckProps {
 }
 
 function OnboardingCheckContent({ children }: OnboardingCheckProps): ReactElement | null {
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [loading, setLoading] = useState(true);
   const forceOnboarding = useOnboarding();
 
@@ -29,19 +29,31 @@ function OnboardingCheckContent({ children }: OnboardingCheckProps): ReactElemen
           return;
         }
 
-        // Get settings
-        const res = await fetch('/api/admin/settings/onboarding');
-        if (!res.ok) {
-          throw new Error('Failed to fetch onboarding settings');
+        // Check if forced via URL param
+        if (forceOnboarding) {
+          setShowOnboarding(true);
+          setLoading(false);
+          return;
         }
 
-        const data = await res.json();
+        // Get user profile to check onboarding status
+        const userRes = await fetch('/api/user/profile');
+        if (!userRes.ok) {
+          throw new Error('Failed to fetch user profile');
+        }
+        const userData = await userRes.json();
 
-        // Only update state if component is still mounted
+        // Get system onboarding settings
+        const settingsRes = await fetch('/api/admin/settings/onboarding');
+        if (!settingsRes.ok) {
+          throw new Error('Failed to fetch onboarding settings');
+        }
+        const settingsData = await settingsRes.json();
+
+        // Show onboarding if enabled and user hasn't completed it
         if (mounted) {
-          if (data.enabled || forceOnboarding) {
-            setDialogOpen(true);
-          }
+          const shouldShow = settingsData.enabled && !userData.user?.onboardingCompleted;
+          setShowOnboarding(shouldShow);
           setLoading(false);
         }
       } catch (error) {
@@ -65,7 +77,7 @@ function OnboardingCheckContent({ children }: OnboardingCheckProps): ReactElemen
 
   return (
     <>
-      <OnboardingDialog />
+      {showOnboarding && <OnboardingDialog />}
       {children}
     </>
   );

@@ -15,6 +15,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 function OnboardingDialogContent() {
   const isOnboarding = useOnboarding();
+  const [open, setOpen] = React.useState(true);
   const [step, setStep] = React.useState(1);
   const [interests, setInterests] = React.useState<string[]>([]);
   const [phoneNumber, setPhoneNumber] = React.useState('');
@@ -32,15 +33,26 @@ function OnboardingDialogContent() {
       const res = await fetch('/api/user/profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ interests, phoneNumber: `${countryCode}${phoneNumber}`, onboardingCompleted: true }),
+        body: JSON.stringify({ 
+          interests, 
+          phoneNumber: phoneNumber ? `${countryCode}${phoneNumber}` : null, 
+          onboardingCompleted: true 
+        }),
       });
 
       if (!res.ok) {
         throw new Error('Failed to update profile');
       }
 
-      // Redirect to root URL instead of reloading to avoid keeping the onboarding=true param
-      window.location.href = '/';
+      setOpen(false);
+      
+      // Redirect to root URL without onboarding param
+      if (isOnboarding) {
+        window.location.href = '/';
+      } else {
+        // Just refresh the page to update the UI
+        window.location.reload();
+      }
     } catch (error) {
       console.error('Failed to finish onboarding:', error);
       toast({
@@ -59,7 +71,7 @@ function OnboardingDialogContent() {
   };
 
   return (
-    <Dialog open={isOnboarding}>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <motion.div

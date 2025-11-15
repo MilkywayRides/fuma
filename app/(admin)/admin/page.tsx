@@ -1,11 +1,14 @@
 import { db } from '@/lib/db';
-import { user, blogPosts, comments, flowcharts, siteVisits, chatMessages, bookPurchases, sentEmails } from '@/lib/db/schema';
+import { user, blogPosts, comments, flowcharts, siteVisits, chatMessages, bookPurchases, sentEmails, papers } from '@/lib/db/schema';
 import { count, sql, desc, sum } from 'drizzle-orm';
 import { ChartAreaInteractive } from '@/components/chart-area-interactive';
 import { EarningsChart } from '@/components/earnings-chart';
 import { EmailsChart } from '@/components/emails-chart';
 import { SectionCards } from '@/components/section-cards';
 import { RecentPostsTable } from '@/components/recent-posts-table';
+import { Button } from '@/components/ui/button';
+import { FileText } from 'lucide-react';
+import Link from 'next/link';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -15,15 +18,16 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic';
 
 export default async function AdminPage() {
-  let totalUsers: any, totalPosts: any, totalComments: any, totalFlowcharts: any, totalEarnings: any, postStats: any, trafficData: any[] = [], earningsData: any[] = [], emailsData: any[] = [], recentPosts: any[] = [], recentComments: any[] = [], hypedMessages: any[] = [];
+  let totalUsers: any, totalPosts: any, totalComments: any, totalFlowcharts: any, totalEarnings: any, totalPapers: any, postStats: any, trafficData: any[] = [], earningsData: any[] = [], emailsData: any[] = [], recentPosts: any[] = [], recentComments: any[] = [], hypedMessages: any[] = [];
 
   try {
-    [[totalUsers], [totalPosts], [totalComments], [totalFlowcharts], [totalEarnings]] = await Promise.all([
+    [[totalUsers], [totalPosts], [totalComments], [totalFlowcharts], [totalEarnings], [totalPapers]] = await Promise.all([
       db.select({ count: count() }).from(user),
       db.select({ count: count() }).from(blogPosts),
       db.select({ count: count() }).from(comments),
       db.select({ count: count() }).from(flowcharts),
       db.select({ total: sql<number>`COALESCE(SUM(${bookPurchases.creditsSpent}), 0)` }).from(bookPurchases),
+      db.select({ count: count() }).from(papers).catch(() => [{ count: 0 }]),
     ]);
   } catch (error) {
     totalUsers = { count: 0 };
@@ -31,6 +35,7 @@ export default async function AdminPage() {
     totalComments = { count: 0 };
     totalFlowcharts = { count: 0 };
     totalEarnings = { total: 0 };
+    totalPapers = { count: 0 };
   }
 
   try {
@@ -130,6 +135,15 @@ export default async function AdminPage() {
   return (
     <div className="@container/main flex flex-1 flex-col gap-2">
       <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+        <div className="flex justify-between items-center px-4 lg:px-6">
+          <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+          <Link href="/admin/papers">
+            <Button>
+              <FileText className="mr-2 h-4 w-4" />
+              Create Paper
+            </Button>
+          </Link>
+        </div>
         <SectionCards 
           totalUsers={totalUsers?.count || 0}
           totalPosts={totalPosts?.count || 0}

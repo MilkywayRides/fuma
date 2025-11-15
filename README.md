@@ -1,6 +1,6 @@
-# Blog Application
+# Blog Application with Live Streaming Platform
 
-A modern blog application built with Next.js, Better Auth, and Neon Database.
+A modern blog application with integrated live streaming and live classes platform, built with Next.js, Better Auth, and Neon Database.
 
 ## Features
 
@@ -13,6 +13,17 @@ A modern blog application built with Next.js, Better Auth, and Neon Database.
 - 🎨 Beautiful UI with Tailwind CSS and Fumadocs
 - 💾 PostgreSQL database with Neon
 - 🚀 Built on Next.js 15
+
+### Live Streaming Features
+
+- 📺 **Live Streaming**: RTMP ingest with HLS playback
+- 🎓 **Live Classes**: Scheduled classes with enrollment system
+- 💬 **Real-time Chat**: Socket.IO powered live chat during streams
+- 💰 **Paid Streams**: Stripe integration for paid access
+- 🎥 **VOD Publishing**: Automatic recording and VOD availability
+- 📊 **Analytics**: View counts, attendance tracking
+- 🔑 **Stream Keys**: Secure RTMP authentication
+- 🎬 **OBS Integration**: Stream directly from OBS Studio
 
 ## Setup
 
@@ -77,6 +88,10 @@ npm run set-admin <email> <role>
 - `/blog` - Blog listing with sidebar navigation (published posts only)
 - `/blog/[slug]` - Individual blog post
 - `/docs` - Documentation pages
+- `/streams` - Live streams and classes listing
+- `/stream/[id]` - Watch live stream or VOD
+- `/streams/create` - Create new stream (authenticated)
+- `/streams/dashboard/[id]` - Stream dashboard for teachers
 - Search bar includes both docs and blog posts
 
 ## Database Scripts
@@ -102,6 +117,19 @@ Secure OAuth 2.0 implementation for third-party integrations:
 - **Full Documentation**: Available at `/docs/oauth-integration`
 
 See [OAUTH_SETUP.md](OAUTH_SETUP.md) for setup instructions.
+
+## Live Streaming Setup
+
+Complete RTMP + HLS streaming infrastructure:
+
+- **RTMP Ingest**: Nginx RTMP module for receiving streams
+- **HLS Transcoding**: FFmpeg for converting to HLS format
+- **Real-time Chat**: Socket.IO for live messaging
+- **VOD Storage**: Cloudflare R2 or AWS S3 integration
+- **Stream Authentication**: Secure stream key validation
+- **Payment Integration**: Stripe for paid streams/classes
+
+See [STREAMING_SETUP.md](STREAMING_SETUP.md) for detailed setup instructions.
 
 ## Tech Stack
 

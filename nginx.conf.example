@@ -1,0 +1,71 @@
+# Nginx RTMP Configuration for Live Streaming
+# Copy this to /etc/nginx/nginx.conf (Linux) or /usr/local/etc/nginx/nginx.conf (macOS)
+
+worker_processes auto;
+events {
+    worker_connections 1024;
+}
+
+# RTMP Configuration
+rtmp {
+    server {
+        listen 1935;
+        chunk_size 4096;
+        
+        application live {
+            live on;
+            record off;
+            
+            # Enable HLS
+            hls on;
+            hls_path /tmp/hls;
+            hls_fragment 3;
+            hls_playlist_length 60;
+            
+            # Disable until stream is published
+            deny play all;
+            
+            # Authentication callback
+            on_publish http://localhost:3000/api/streams/auth;
+            
+            # Notify when stream starts/stops
+            on_publish_done http://localhost:3000/api/streams/webhook;
+            on_done http://localhost:3000/api/streams/webhook;
+        }
+    }
+}
+
+# HTTP Configuration
+http {
+    include mime.types;
+    default_type application/octet-stream;
+    
+    sendfile on;
+    keepalive_timeout 65;
+    
+    server {
+        listen 8080;
+        server_name localhost;
+        
+        # Serve HLS files
+        location /hls {
+            types {
+                application/vnd.apple.mpegurl m3u8;
+                video/mp2t ts;
+            }
+            root /tmp;
+            add_header Cache-Control no-cache;
+            add_header Access-Control-Allow-Origin *;
+        }
+        
+        # RTMP statistics
+        location /stat {
+            rtmp_stat all;
+            rtmp_stat_stylesheet stat.xsl;
+        }
+        
+        location /stat.xsl {
+            root /usr/local/share/nginx/html;
+        }
+    }
+}

@@ -1,0 +1,18 @@
+FROM alpine:latest
+
+# Install Nginx with RTMP module and FFmpeg
+RUN apk add --no-cache \
+    nginx \
+    nginx-mod-rtmp \
+    ffmpeg \
+    && mkdir -p /tmp/hls \
+    && chmod 777 /tmp/hls
+
+# Copy nginx configuration
+COPY nginx.conf.example /etc/nginx/nginx.conf
+
+# Expose RTMP and HTTP ports
+EXPOSE 1935 8080
+
+# Start Nginx
+CMD ["nginx", "-g", "daemon off;"]

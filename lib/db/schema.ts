@@ -535,3 +535,64 @@ export const webhookLogs = pgTable('webhookLogs', {
   error: text('error'),
   createdAt: timestamp('createdAt').defaultNow().notNull(),
 });
+
+// Live Streaming Tables
+export const streams = pgTable('streams', {
+  id: serial('id').primaryKey(),
+  uuid: text('uuid').notNull().unique(),
+  title: text('title').notNull(),
+  description: text('description'),
+  streamKey: text('streamKey').notNull().unique(),
+  status: text('status').default('idle').notNull(), // 'idle', 'live', 'ended'
+  isClass: boolean('isClass').default(false).notNull(),
+  isPaid: boolean('isPaid').default(false).notNull(),
+  price: integer('price').default(0).notNull(),
+  scheduledAt: timestamp('scheduledAt'),
+  startedAt: timestamp('startedAt'),
+  endedAt: timestamp('endedAt'),
+  vodUrl: text('vodUrl'),
+  thumbnailUrl: text('thumbnailUrl'),
+  teacherId: text('teacherId')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  viewCount: integer('viewCount').default(0).notNull(),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+  updatedAt: timestamp('updatedAt').defaultNow().notNull(),
+});
+
+export const streamEnrollments = pgTable('streamEnrollments', {
+  id: serial('id').primaryKey(),
+  streamId: integer('streamId')
+    .notNull()
+    .references(() => streams.id, { onDelete: 'cascade' }),
+  userId: text('userId')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  transactionId: integer('transactionId').references(() => paymentTransactions.id),
+  attended: boolean('attended').default(false).notNull(),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+});
+
+export const streamMessages = pgTable('streamMessages', {
+  id: serial('id').primaryKey(),
+  streamId: integer('streamId')
+    .notNull()
+    .references(() => streams.id, { onDelete: 'cascade' }),
+  userId: text('userId')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  message: text('message').notNull(),
+  deleted: boolean('deleted').default(false).notNull(),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+});
+
+export const papers = pgTable('papers', {
+  id: text('id').primaryKey(),
+  title: text('title').notNull(),
+  content: text('content').notNull(),
+  authorId: text('authorId')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+  updatedAt: timestamp('updatedAt').defaultNow().notNull(),
+});

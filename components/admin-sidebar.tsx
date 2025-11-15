@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { LayoutDashboard, Workflow, Settings, MessageSquare, Users, FileText, Megaphone, Menu, X, Code, GitBranch, Mail, ChevronDown, Plus, Home } from 'lucide-react';
+import { LayoutDashboard, Workflow, Settings, MessageSquare, Users, FileText, Megaphone, Menu, X, Code, GitBranch, Mail, ChevronDown, Plus, Home, Video } from 'lucide-react';
 import { APP_NAME } from '@/lib/config';
 import { UserButton } from './user-button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -34,6 +34,7 @@ export function AdminSidebar({ userName, userEmail, developerMode }: { userName:
   const navItems = [
     { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/admin/blogs', label: 'Blogs', icon: FileText },
+    { href: '/admin/streams', label: 'Streams', icon: Video },
     { href: '/admin/flow', label: 'Flowcharts', icon: Workflow },
     { href: '/admin/circuits', label: 'Circuits', icon: Workflow },
     { href: '/admin/scripts', label: 'Flow Scripts', icon: GitBranch },

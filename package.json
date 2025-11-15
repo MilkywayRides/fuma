@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "build": "next build",
+    "build:analyze": "ANALYZE=true next build",
     "dev": "next dev --turbopack",
     "dev:socket": "node server.mjs",
     "dev:rtmp": "node rtmp-server.js",
@@ -20,7 +21,8 @@
     "db:create-payment-tables": "tsx scripts/create-payment-tables.ts",
     "db:init-payment": "tsx scripts/init-payment-tables.ts",
     "set-admin": "tsx lib/set-admin.ts",
-    "drop-user": "tsx lib/drop-user.ts"
+    "drop-user": "tsx lib/drop-user.ts",
+    "perf": "next build && next start"
   },
   "dependencies": {
     "@daveyplate/better-auth-ui": "^3.2.5",

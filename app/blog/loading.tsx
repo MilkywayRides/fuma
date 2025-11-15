@@ -1,5 +1,5 @@
-import { LoadingSpinner } from '@/components/loading-spinner';
+import { PageSpinner } from '@/components/ui/spinner';
 
-export default function BlogLoading() {
-  return <LoadingSpinner fullScreen />;
+export default function Loading() {
+  return <PageSpinner />;
 }

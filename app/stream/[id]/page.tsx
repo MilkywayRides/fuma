@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useSocket } from '@/hooks/use-socket';
+import { PageSpinner } from '@/components/ui/spinner';
 
 export default function StreamPage() {
   const params = useParams();
@@ -16,18 +17,20 @@ export default function StreamPage() {
   const [messages, setMessages] = useState<any[]>([]);
   const [message, setMessage] = useState('');
   const [enrolled, setEnrolled] = useState(false);
-  const socket = useSocket();
+  const [loading, setLoading] = useState(true);
+  const { socket } = useSocket();
 
   useEffect(() => {
-    fetch(`/api/streams/${params.id}`)
-      .then(res => res.json())
-      .then(setStream)
-      .catch(err => console.error('Error loading stream:', err));
-
-    fetch(`/api/streams/${params.id}/enroll`)
-      .then(res => res.json())
-      .then(data => setEnrolled(data.enrolled))
-      .catch(err => console.error('Error checking enrollment:', err));
+    Promise.all([
+      fetch(`/api/streams/${params.id}`).then(res => res.json()),
+      fetch(`/api/streams/${params.id}/enroll`).then(res => res.json())
+    ])
+    .then(([streamData, enrollData]) => {
+      setStream(streamData);
+      setEnrolled(enrollData.enrolled);
+    })
+    .catch(err => console.error('Error loading stream:', err))
+    .finally(() => setLoading(false));
 
     fetch(`/api/streams/${params.id}/chat`)
       .then(res => res.json())
@@ -79,7 +82,9 @@ export default function StreamPage() {
     setEnrolled(true);
   };
 
-  if (!stream) return <div>Loading...</div>;
+  if (loading) return <PageSpinner />;
+
+  if (!stream) return <div>Stream not found</div>;
 
   if (stream.isPaid && !enrolled) {
     return (

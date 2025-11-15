@@ -4,7 +4,7 @@ const withMDX = createMDX();
 
 /** @type {import('next').NextConfig} */
 const config = {
-  reactStrictMode: false, // Disable in dev for faster HMR
+  reactStrictMode: false,
   images: {
     remotePatterns: [
       {
@@ -17,9 +17,10 @@ const config = {
       },
     ],
     formats: ['image/avif', 'image/webp'],
-    minimumCacheTTL: 3600,
+    minimumCacheTTL: 86400, // 24 hours
+    dangerouslyAllowSVG: true,
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
-
   compress: true,
   poweredByHeader: false,
   experimental: {
@@ -32,16 +33,49 @@ const config = {
       '@radix-ui/react-dropdown-menu',
       '@radix-ui/react-select',
       'recharts',
+      'socket.io-client',
+      'date-fns',
     ],
+    webpackBuildWorker: true,
+    optimizeCss: true,
   },
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
   },
-  cacheMaxMemorySize: 100 * 1024 * 1024,
-  onDemandEntries: {
-    maxInactiveAge: 60 * 1000,
-    pagesBufferLength: 5,
+  swcMinify: true,
+  modularizeImports: {
+    'lucide-react': {
+      transform: 'lucide-react/dist/esm/icons/{{kebabCase member}}',
+    },
   },
+  headers: async () => [
+    {
+      source: '/(.*)',
+      headers: [
+        {
+          key: 'X-Content-Type-Options',
+          value: 'nosniff',
+        },
+        {
+          key: 'X-Frame-Options',
+          value: 'DENY',
+        },
+        {
+          key: 'X-XSS-Protection',
+          value: '1; mode=block',
+        },
+      ],
+    },
+    {
+      source: '/api/(.*)',
+      headers: [
+        {
+          key: 'Cache-Control',
+          value: 'public, max-age=300, s-maxage=300',
+        },
+      ],
+    },
+  ],
 };
 
 export default withMDX(config);

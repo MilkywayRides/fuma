@@ -15,6 +15,20 @@
       "when": 1763190091827,
       "tag": "0001_gorgeous_punisher",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1763208331887,
+      "tag": "0002_magenta_the_executioner",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1763208629136,
+      "tag": "0003_quiet_wendigo",
+      "breakpoints": true
     }
   ]
 }

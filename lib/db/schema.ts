@@ -382,8 +382,23 @@ export const oauthApplications = pgTable('oauthApplications', {
     .references(() => user.id, { onDelete: 'cascade' }),
   active: boolean('active').default(true).notNull(),
   allowedScopes: text('allowedScopes').default('profile,email').notNull(),
+  dataPermissions: text('dataPermissions').default('{}').notNull(), // JSON string of enabled permissions
   createdAt: timestamp('createdAt').defaultNow().notNull(),
   updatedAt: timestamp('updatedAt').defaultNow().notNull(),
+});
+
+export const oauthDeviceFlow = pgTable('oauthDeviceFlow', {
+  id: serial('id').primaryKey(),
+  deviceCode: text('deviceCode').notNull().unique(),
+  userCode: text('userCode').notNull().unique(), // 6-character UUID
+  applicationId: integer('applicationId')
+    .notNull()
+    .references(() => oauthApplications.id, { onDelete: 'cascade' }),
+  userId: text('userId').references(() => user.id, { onDelete: 'cascade' }),
+  scope: text('scope').default('read').notNull(),
+  verified: boolean('verified').default(false).notNull(),
+  expiresAt: timestamp('expiresAt').notNull(),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
 });
 
 export const oauthTokens = pgTable('oauthTokens', {
@@ -433,6 +448,7 @@ export const oauthApiLogs = pgTable('oauthApiLogs', {
 // Payment Management Tables
 export const paymentGateways = pgTable('paymentGateways', {
   id: serial('id').primaryKey(),
+  uuid: text('uuid').notNull().unique(),
   name: text('name').notNull(),
   provider: text('provider').notNull(), // 'stripe', 'polar', 'razorpay', etc.
   apiKey: text('apiKey').notNull(),
@@ -445,6 +461,7 @@ export const paymentGateways = pgTable('paymentGateways', {
 
 export const paymentPlans = pgTable('paymentPlans', {
   id: serial('id').primaryKey(),
+  uuid: text('uuid').notNull().unique(),
   name: text('name').notNull(),
   description: text('description'),
   amount: integer('amount').notNull(), // in cents

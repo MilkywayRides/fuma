@@ -6,6 +6,8 @@ import { Toaster } from '@/components/ui/toaster';
 import { OnboardingCheck } from '@/components/onboarding-check';
 import { RefreshProvider } from '@/contexts/refresh-context';
 import { Metadata } from 'next';
+import { Suspense } from 'react';
+import { PageSpinner } from '@/components/ui/spinner';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -23,6 +25,12 @@ export const metadata: Metadata = {
   },
   description: 'Modern blog application with Next.js',
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
+  robots: 'index, follow',
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    siteName: 'BlazeNeuro',
+  },
 };
 
 export const viewport = {
@@ -34,10 +42,17 @@ export const viewport = {
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={inter.className} suppressHydrationWarning>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://api.github.com" />
+      </head>
       <body className="flex flex-col min-h-screen" suppressHydrationWarning>
         <Providers>
           <RefreshProvider>
-            <OnboardingCheck>{children}</OnboardingCheck>
+            <Suspense fallback={<PageSpinner />}>
+              <OnboardingCheck>{children}</OnboardingCheck>
+            </Suspense>
           </RefreshProvider>
         </Providers>
         <Toaster />

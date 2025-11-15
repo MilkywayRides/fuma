@@ -42,6 +42,7 @@ export async function POST(req: NextRequest) {
   }
   
   const [gateway] = await db.insert(paymentGateways).values({
+    uuid: crypto.randomUUID(),
     name: data.name,
     provider: data.provider,
     apiKey: data.apiKey,

@@ -27,5 +27,5 @@ export function useSocket() {
     };
   }, []);
 
-  return socket;
+  return { socket, isConnected };
 }

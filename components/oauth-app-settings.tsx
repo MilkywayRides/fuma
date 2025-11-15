@@ -19,9 +19,26 @@ const AVAILABLE_SCOPES = [
   { id: 'all', label: 'Full Access', description: 'Access to all user data' },
 ];
 
+const DATA_PERMISSIONS = [
+  { id: 'id', label: 'User ID', description: 'Unique user identifier' },
+  { id: 'name', label: 'Full Name', description: 'User display name' },
+  { id: 'email', label: 'Email Address', description: 'User email address' },
+  { id: 'image', label: 'Profile Image', description: 'User avatar/profile picture' },
+  { id: 'role', label: 'Account Role', description: 'User role (User/Admin/SuperAdmin)' },
+  { id: 'userType', label: 'User Type', description: 'Account type classification' },
+  { id: 'phoneNumber', label: 'Phone Number', description: 'User phone number' },
+  { id: 'credits', label: 'Credits Balance', description: 'User account credits' },
+  { id: 'createdAt', label: 'Account Created', description: 'Account creation date' },
+  { id: 'emailVerified', label: 'Email Verified', description: 'Email verification status' },
+  { id: 'phoneVerified', label: 'Phone Verified', description: 'Phone verification status' },
+];
+
 export function OAuthAppSettings({ app }: { app: any }) {
   const [allowedScopes, setAllowedScopes] = useState<string[]>(
     app.allowedScopes ? app.allowedScopes.split(',') : ['profile', 'email']
+  );
+  const [dataPermissions, setDataPermissions] = useState<Record<string, boolean>>(
+    app.dataPermissions ? JSON.parse(app.dataPermissions) : { id: true, name: true, email: true }
   );
   const [applicationType, setApplicationType] = useState(app.applicationType || 'web');
   const [loading, setLoading] = useState(false);
@@ -30,21 +47,22 @@ export function OAuthAppSettings({ app }: { app: any }) {
   async function handleSave() {
     setLoading(true);
     try {
-      const res = await fetch(`/api/oauth/applications/${app.id}/scopes`, {
+      const res = await fetch(`/api/oauth/applications/${app.id}/settings`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           allowedScopes: allowedScopes.join(','),
+          dataPermissions: JSON.stringify(dataPermissions),
           applicationType 
         }),
       });
 
       if (!res.ok) throw new Error('Failed to update');
 
-      toast.success('Permissions updated');
+      toast.success('Settings updated');
       router.refresh();
     } catch (error) {
-      toast.error('Failed to update permissions');
+      toast.error('Failed to update settings');
     } finally {
       setLoading(false);
     }
@@ -99,7 +117,35 @@ export function OAuthAppSettings({ app }: { app: any }) {
         <CardHeader>
           <CardTitle>Data Permissions</CardTitle>
           <CardDescription>
-            Control what user data this application can access
+            Control exactly what user data this application can access
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {DATA_PERMISSIONS.map((permission) => (
+            <div key={permission.id} className="flex items-start space-x-3 p-3 border rounded-lg">
+              <Checkbox
+                id={permission.id}
+                checked={dataPermissions[permission.id] || false}
+                onCheckedChange={(checked) => 
+                  setDataPermissions(prev => ({ ...prev, [permission.id]: !!checked }))
+                }
+              />
+              <div className="flex-1">
+                <Label htmlFor={permission.id} className="font-medium cursor-pointer">
+                  {permission.label}
+                </Label>
+                <p className="text-sm text-muted-foreground">{permission.description}</p>
+              </div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>OAuth Scopes</CardTitle>
+          <CardDescription>
+            General permission scopes for this application
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -119,7 +165,7 @@ export function OAuthAppSettings({ app }: { app: any }) {
             </div>
           ))}
           <Button onClick={handleSave} disabled={loading || allowedScopes.length === 0}>
-            {loading ? 'Saving...' : 'Save Permissions'}
+            {loading ? 'Saving...' : 'Save Settings'}
           </Button>
         </CardContent>
       </Card>

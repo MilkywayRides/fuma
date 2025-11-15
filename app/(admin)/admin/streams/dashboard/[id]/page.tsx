@@ -27,7 +27,8 @@ export default function StreamDashboard() {
   };
 
   const copyRTMPUrl = () => {
-    navigator.clipboard.writeText(`rtmp://localhost:1935/live`);
+    const rtmpUrl = process.env.NEXT_PUBLIC_RTMP_SERVER_URL || 'rtmp://localhost:1935/live';
+    navigator.clipboard.writeText(rtmpUrl);
     toast.success('RTMP URL copied!');
   };
 
@@ -156,7 +157,7 @@ export default function StreamDashboard() {
               <label className="text-sm font-medium">RTMP URL</label>
               <div className="flex gap-2 mt-1">
                 <code className="flex-1 p-2 bg-muted rounded text-sm break-all">
-                  rtmp://localhost:1935/live
+                  {process.env.NEXT_PUBLIC_RTMP_SERVER_URL || 'rtmp://localhost:1935/live'}
                 </code>
                 <Button size="sm" variant="outline" onClick={copyRTMPUrl}>
                   <Copy className="h-4 w-4" />

@@ -24,7 +24,8 @@ export function StreamDashboard({ stream }: StreamDashboardProps) {
   };
 
   const copyStreamUrl = () => {
-    const url = `rtmp://localhost:1935/live/${stream.streamKey}`;
+    const rtmpUrl = process.env.NEXT_PUBLIC_RTMP_SERVER_URL || 'rtmp://localhost:1935/live';
+    const url = `${rtmpUrl}/${stream.streamKey}`;
     navigator.clipboard.writeText(url);
     toast({
       title: 'Copied!',
@@ -119,7 +120,7 @@ export function StreamDashboard({ stream }: StreamDashboardProps) {
                 <label className="text-sm font-medium">RTMP URL</label>
                 <div className="flex gap-2 mt-1">
                   <code className="flex-1 p-2 bg-muted rounded text-sm font-mono">
-                    rtmp://localhost:1935/live/{stream.streamKey}
+                    {process.env.NEXT_PUBLIC_RTMP_SERVER_URL || 'rtmp://localhost:1935/live'}/{stream.streamKey}
                   </code>
                   <Button variant="outline" size="sm" onClick={copyStreamUrl}>
                     <Copy className="h-4 w-4" />
